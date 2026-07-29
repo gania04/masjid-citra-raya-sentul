@@ -1,0 +1,6 @@
+{
+  "name": "Masjid Citra Sentul Raya",
+  "description": "Website Resmi dan Portal Wakaf Pembangunan Masjid Citra Sentul Raya Bogor",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
