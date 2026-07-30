@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
 import { DaftarProgram } from './components/DaftarProgram';
@@ -15,6 +15,7 @@ import { LoginModal } from './components/LoginModal';
 import { AiAsistenModal } from './components/AiAsistenModal';
 import { INITIAL_STATS } from './data/mockData';
 import { supabase } from './lib/supabase';
+import { Sun, Moon } from 'lucide-react';
 
 export default function App() {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -24,6 +25,40 @@ export default function App() {
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [isQuranModalOpen, setIsQuranModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // Day & Night Dark Mode State Logic
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      return savedTheme === 'dark';
+    }
+    // Auto Day & Night Detection: 18:00 - 06:00 is Night Mode (Dark)
+    const hour = new Date().getHours();
+    return hour >= 18 || hour < 6;
+  });
+
+  const [isAutoNight, setIsAutoNight] = useState<boolean>(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) return false;
+    const hour = new Date().getHours();
+    return hour >= 18 || hour < 6;
+  });
+
+  // Sync dark class to html element
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
+
+  const toggleDarkMode = () => {
+    const nextMode = !isDarkMode;
+    setIsDarkMode(nextMode);
+    setIsAutoNight(false);
+    localStorage.setItem('theme', nextMode ? 'dark' : 'light');
+  };
   
   const defaultPrograms = [
     {
@@ -73,7 +108,7 @@ export default function App() {
     showTentang: true,
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchPrograms = async () => {
       try {
         const { data, error } = await supabase.from('programs').select('*').order('id');
@@ -140,12 +175,19 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F9F8F4] text-[#1A1A1A] font-sans selection:bg-lime-500 selection:text-white relative">
+    <div className={`min-h-screen font-sans transition-colors duration-300 relative ${
+      isDarkMode 
+        ? 'dark bg-slate-950 text-slate-100 selection:bg-emerald-500 selection:text-white' 
+        : 'bg-[#F9F8F4] text-[#1A1A1A] selection:bg-lime-500 selection:text-white'
+    }`}>
       {/* Navigation Header */}
       <Header 
         onLoginClick={() => setIsLoginModalOpen(true)} 
         onAiClick={() => setIsAiModalOpen(true)} 
         onQuranClick={() => setIsQuranModalOpen(true)}
+        isDarkMode={isDarkMode}
+        onToggleDarkMode={toggleDarkMode}
+        isAutoNight={isAutoNight}
       />
 
       <main>
@@ -183,6 +225,29 @@ export default function App() {
 
       {/* Footer */}
       <Footer onNavigate={() => {}} onOpenWakafModal={() => {}} />
+
+      {/* Floating Theme Switcher Button */}
+      <button
+        onClick={toggleDarkMode}
+        className={`fixed bottom-6 right-6 z-40 p-3.5 rounded-full shadow-2xl border-2 transition-all transform hover:scale-110 active:scale-95 flex items-center gap-2 cursor-pointer ${
+          isDarkMode 
+            ? 'bg-slate-900 border-amber-400/50 text-amber-300 hover:bg-slate-800' 
+            : 'bg-white border-slate-300 text-slate-800 hover:bg-slate-50'
+        }`}
+        title={isDarkMode ? 'Beralih ke Mode Siang ☀️' : 'Beralih ke Mode Malam 🌙'}
+      >
+        {isDarkMode ? (
+          <>
+            <Sun className="w-5 h-5 text-amber-400 animate-spin-slow" />
+            <span className="text-xs font-bold hidden sm:inline text-amber-300">Mode Siang</span>
+          </>
+        ) : (
+          <>
+            <Moon className="w-5 h-5 text-indigo-600" />
+            <span className="text-xs font-bold hidden sm:inline text-slate-700">Mode Malam</span>
+          </>
+        )}
+      </button>
 
       {/* Modals */}
       <LoginModal 
