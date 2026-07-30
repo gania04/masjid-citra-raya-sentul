@@ -3,7 +3,8 @@ import {
   BookOpen, Search, X, ChevronRight, Play, Pause, 
   Volume2, BookMarked, FileText, Mic2, ArrowLeft, SkipForward, 
   SkipBack, Bookmark, Copy, Check, Sparkles, Filter, VolumeX, List, Radio,
-  Eye, EyeOff, Layers, Sparkle, Tag, HelpCircle, ArrowUpRight
+  Eye, EyeOff, Layers, Sparkle, Tag, HelpCircle, ArrowUpRight, Share2,
+  Settings, RefreshCw, Info, ChevronDown
 } from 'lucide-react';
 
 export interface Surah {
@@ -22,6 +23,7 @@ export interface Ayat {
   teksArab: string;
   teksLatin: string;
   teksIndonesia: string;
+  teksInggris?: string;
   audio: { [key: string]: string };
 }
 
@@ -111,6 +113,10 @@ const THEMATIC_INDEX = [
 
 const POPULAR_SURAHS = [1, 2, 18, 36, 55, 56, 67, 78, 112, 113, 114];
 
+const toArabicDigits = (num: number): string => {
+  return String(num).replace(/\d/g, d => '٠١٢٣٤٥٦٧٨٩'[parseInt(d)]);
+};
+
 interface AlQuranDigitalProps {
   isOpenModal?: boolean;
   initialSurahNomor?: number | null;
@@ -131,14 +137,19 @@ export const AlQuranDigital: React.FC<AlQuranDigitalProps> = ({
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [loadingList, setLoadingList] = useState(true);
   const [loadingDetail, setLoadingDetail] = useState(false);
-  const [activeTab, setActiveTab] = useState<Tab>('terjemahan');
   const [tafsirData, setTafsirData] = useState<{ nomorAyat: number; teks: string }[]>([]);
-  const [loadingTafsir, setLoadingTafsir] = useState(false);
   const [selectedQari, setSelectedQari] = useState('05');
   const [fontSize, setFontSize] = useState<'sm' | 'md' | 'lg' | 'xl'>('md');
   const [autoPlayNext, setAutoPlayNext] = useState(true);
-  const [hideTranslationForTahfidz, setHideTranslationForTahfidz] = useState(false);
   const [copiedAyat, setCopiedAyat] = useState<number | null>(null);
+  const [sharedAyat, setSharedAyat] = useState<number | null>(null);
+
+  // Per-Ayat Tazkia Mode Toggles & Modals State
+  const [tahfidzHiddenAyats, setTahfidzHiddenAyats] = useState<{ [key: number]: boolean }>({});
+  const [activeTafsirAyat, setActiveTafsirAyat] = useState<Ayat | null>(null);
+  const [activeTajwidAyat, setActiveTajwidAyat] = useState<Ayat | null>(null);
+  const [activeTatbhiqAyat, setActiveTatbhiqAyat] = useState<Ayat | null>(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // Bookmark State
   const [bookmark, setBookmark] = useState<BookmarkData | null>(() => {
@@ -149,9 +160,6 @@ export const AlQuranDigital: React.FC<AlQuranDigitalProps> = ({
   // Audio state
   const [playingAyat, setPlayingAyat] = useState<number | null>(null);
   const [isPlayingFull, setIsPlayingFull] = useState(false);
-  const [audioProgress, setAudioProgress] = useState(0);
-  const [audioCurrentTime, setAudioCurrentTime] = useState('00:00');
-  const [audioDuration, setAudioDuration] = useState('00:00');
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const fullAudioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -208,7 +216,6 @@ export const AlQuranDigital: React.FC<AlQuranDigitalProps> = ({
   const openSurah = async (surah: Surah, targetAyat?: number) => {
     setLoadingDetail(true);
     setView('detail');
-    setActiveTab('terjemahan');
     setPlayingAyat(null);
     setIsPlayingFull(false);
     stopAudio();
@@ -232,22 +239,12 @@ export const AlQuranDigital: React.FC<AlQuranDigitalProps> = ({
 
   const fetchTafsir = async (nomorSurah: number) => {
     if (tafsirData.length > 0) return;
-    setLoadingTafsir(true);
     try {
       const res = await fetch(`https://equran.id/api/v2/tafsir/${nomorSurah}`);
       const data = await res.json();
       setTafsirData(data.data?.tafsir || []);
     } catch (e) {
       console.error('Error fetching tafsir:', e);
-    } finally {
-      setLoadingTafsir(false);
-    }
-  };
-
-  const handleTabChange = (tab: Tab) => {
-    setActiveTab(tab);
-    if (tab === 'tafsir' && selectedSurah) {
-      fetchTafsir(selectedSurah.nomor);
     }
   };
 
@@ -262,7 +259,6 @@ export const AlQuranDigital: React.FC<AlQuranDigitalProps> = ({
     }
     setPlayingAyat(null);
     setIsPlayingFull(false);
-    setAudioProgress(0);
   };
 
   const playAyat = (ayat: Ayat) => {
@@ -294,52 +290,40 @@ export const AlQuranDigital: React.FC<AlQuranDigitalProps> = ({
     };
   };
 
-  const formatTime = (secs: number) => {
-    if (isNaN(secs)) return '00:00';
-    const m = Math.floor(secs / 60);
-    const s = Math.floor(secs % 60);
-    return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
-  };
-
-  const playFullSurah = () => {
-    if (isPlayingFull) { 
-      stopAudio(); 
-      return; 
-    }
-    stopAudio();
-    const surahAudio = selectedSurah?.audioFull;
-    let url = '';
-    if (typeof surahAudio === 'object' && surahAudio !== null) {
-      url = (surahAudio as { [key: string]: string })[selectedQari] || (Object.values(surahAudio)[0] as string) || '';
-    } else if (typeof surahAudio === 'string') {
-      url = surahAudio;
-    }
-    if (!url) return;
-
-    const audio = new Audio(url);
-    fullAudioRef.current = audio;
-    audio.play();
-    setIsPlayingFull(true);
-
-    audio.ontimeupdate = () => {
-      if (audio.duration) {
-        setAudioProgress((audio.currentTime / audio.duration) * 100);
-        setAudioCurrentTime(formatTime(audio.currentTime));
-        setAudioDuration(formatTime(audio.duration));
-      }
-    };
-
-    audio.onended = () => { 
-      setIsPlayingFull(false); 
-      setAudioProgress(0); 
-    };
-  };
-
   const copyAyatToClipboard = (ayat: Ayat) => {
     const textToCopy = `${ayat.teksArab}\n\n"${ayat.teksIndonesia}" (QS. ${selectedSurah?.namaLatin}: ${ayat.nomorAyat})`;
     navigator.clipboard.writeText(textToCopy);
     setCopiedAyat(ayat.nomorAyat);
     setTimeout(() => setCopiedAyat(null), 2000);
+  };
+
+  const shareAyat = (ayat: Ayat) => {
+    const shareUrl = `${window.location.origin}?surah=${selectedSurah?.nomor}&ayat=${ayat.nomorAyat}`;
+    if (navigator.share) {
+      navigator.share({
+        title: `QS. ${selectedSurah?.namaLatin}: Ayat ${ayat.nomorAyat}`,
+        text: `"${ayat.teksIndonesia}"`,
+        url: shareUrl
+      }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(shareUrl);
+      setSharedAyat(ayat.nomorAyat);
+      setTimeout(() => setSharedAyat(null), 2000);
+    }
+  };
+
+  const toggleTahfidzAyat = (ayatNomor: number) => {
+    setTahfidzHiddenAyats(prev => ({
+      ...prev,
+      [ayatNomor]: !prev[ayatNomor]
+    }));
+  };
+
+  const openTafsirModal = (ayat: Ayat) => {
+    setActiveTafsirAyat(ayat);
+    if (selectedSurah) {
+      fetchTafsir(selectedSurah.nomor);
+    }
   };
 
   const goBack = () => {
@@ -380,10 +364,10 @@ export const AlQuranDigital: React.FC<AlQuranDigitalProps> = ({
 
   const getFontSizeClass = () => {
     switch (fontSize) {
-      case 'sm': return 'text-2xl sm:text-3xl leading-relaxed';
-      case 'lg': return 'text-4xl sm:text-5xl leading-loose';
-      case 'xl': return 'text-5xl sm:text-6xl leading-loose';
-      default: return 'text-3xl sm:text-4xl leading-loose';
+      case 'sm': return 'text-2xl leading-relaxed';
+      case 'lg': return 'text-4xl leading-loose';
+      case 'xl': return 'text-5xl leading-loose';
+      default: return 'text-3xl leading-loose';
     }
   };
 
@@ -401,13 +385,13 @@ export const AlQuranDigital: React.FC<AlQuranDigitalProps> = ({
             
             <div className="relative z-10 text-center md:text-left space-y-3 max-w-2xl">
               <div className="inline-flex items-center gap-2 bg-emerald-500/20 border border-emerald-400/30 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-emerald-200">
-                <Sparkles className="w-3.5 h-3.5 text-amber-300" /> Program Al-Qur'an 5T Tazkia Reference
+                <Sparkles className="w-3.5 h-3.5 text-amber-300" /> QURAN TAZKIA REFERENCE INTERFACE
               </div>
               <h2 className="text-2xl sm:text-4xl font-bold font-serif flex items-center justify-center md:justify-start gap-3">
-                <BookOpen className="w-8 h-8 text-emerald-300" /> Portal Al-Qur'an Digital 5T
+                <BookOpen className="w-8 h-8 text-emerald-300" /> Portal Al-Qur'an Tazkia 5T
               </h2>
               <p className="text-emerald-100 text-xs sm:text-sm leading-relaxed">
-                <strong>5T Framework:</strong> Tahsin (Tajwid Berwarna), Tahfidz (Mode Hifz), Tarjamah (Kemenag RI), Tafsir Lengkap, & Tathbiq (Indeks Ayat Tematik Ekonomi, Muamalat & Ibadah).
+                Tampilan & Fitur persis <strong>quran.tazkia.ac.id</strong>: Tahsin, Tahfiz, Tarjamah (Kemenag & Saheeh Int.), Tafsir, & Tatbhiq Tematik Ekonomi & Muamalat.
               </p>
 
               {/* 5T Badge Cards */}
@@ -416,16 +400,16 @@ export const AlQuranDigital: React.FC<AlQuranDigitalProps> = ({
                   ✨ Tahsin
                 </span>
                 <span className="px-2.5 py-1 rounded-lg bg-teal-800/80 border border-teal-600/50 text-[11px] font-bold text-teal-200">
-                  🧠 Tahfidz
+                  🧠 Tahfiz
                 </span>
                 <span className="px-2.5 py-1 rounded-lg bg-amber-800/80 border border-amber-600/50 text-[11px] font-bold text-amber-200">
-                  📖 Tarjamah
+                  📖 Tarjamah (Kemenag + English)
                 </span>
                 <span className="px-2.5 py-1 rounded-lg bg-purple-800/80 border border-purple-600/50 text-[11px] font-bold text-purple-200">
                   📚 Tafsir
                 </span>
                 <span className="px-2.5 py-1 rounded-lg bg-indigo-800/80 border border-indigo-600/50 text-[11px] font-bold text-indigo-200">
-                  🏷️ Tathbiq Tematik
+                  🏷️ Tatbhiq Tematik
                 </span>
               </div>
               
@@ -452,7 +436,7 @@ export const AlQuranDigital: React.FC<AlQuranDigitalProps> = ({
                 onClick={() => setIsOpen(true)}
                 className="flex items-center justify-center gap-2 bg-white text-emerald-900 hover:bg-emerald-50 px-6 py-3 rounded-2xl font-bold transition-all shadow-md hover:shadow-lg active:scale-95 text-sm cursor-pointer"
               >
-                Buka Qur'an Mode Penuh <ChevronRight className="w-5 h-5" />
+                Buka Mode Tazkia <ChevronRight className="w-5 h-5" />
               </button>
             </div>
           </div>
@@ -490,7 +474,7 @@ export const AlQuranDigital: React.FC<AlQuranDigitalProps> = ({
                     : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
                 }`}
               >
-                <Tag className="w-4 h-4" /> Indeks Tematik (Tathbiq)
+                <Tag className="w-4 h-4" /> Indeks Tematik (Tatbhiq)
               </button>
               <button
                 onClick={() => setMainNavTab('tajwid_guide')}
@@ -507,7 +491,6 @@ export const AlQuranDigital: React.FC<AlQuranDigitalProps> = ({
             {/* TAB 1: SURAH LIST */}
             {mainNavTab === 'surah' && (
               <div className="space-y-6">
-                {/* Search & Filter Bar */}
                 <div className="flex flex-col md:flex-row gap-4 justify-between items-center pb-2">
                   <div className="relative w-full md:w-96">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -518,17 +501,9 @@ export const AlQuranDigital: React.FC<AlQuranDigitalProps> = ({
                       value={searchQuery}
                       onChange={e => setSearchQuery(e.target.value)}
                     />
-                    {searchQuery && (
-                      <button onClick={() => setSearchQuery('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                        <X className="w-4 h-4" />
-                      </button>
-                    )}
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-1 flex items-center gap-1">
-                      <Filter className="w-3.5 h-3.5" /> Filter:
-                    </span>
                     <button
                       onClick={() => setActiveFilter('all')}
                       className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${activeFilter === 'all' ? 'bg-emerald-700 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'}`}
@@ -553,7 +528,7 @@ export const AlQuranDigital: React.FC<AlQuranDigitalProps> = ({
                 {loadingList ? (
                   <div className="flex flex-col items-center justify-center py-20 gap-3">
                     <div className="animate-spin rounded-full h-10 w-10 border-4 border-emerald-200 border-t-emerald-600" />
-                    <p className="text-emerald-800 font-bold text-xs animate-pulse">Memuat Daftar Surah Al-Qur'an...</p>
+                    <p className="text-emerald-800 font-bold text-xs animate-pulse">Memuat Surah...</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -564,10 +539,10 @@ export const AlQuranDigital: React.FC<AlQuranDigitalProps> = ({
                           openSurah(surah);
                           setIsOpen(true);
                         }}
-                        className="bg-slate-50/70 dark:bg-slate-800/60 hover:bg-white dark:hover:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 shadow-2xs hover:shadow-md transition-all cursor-pointer group flex items-center justify-between text-left relative overflow-hidden"
+                        className="bg-slate-50/70 dark:bg-slate-800/60 hover:bg-white dark:hover:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 shadow-2xs transition-all cursor-pointer group flex items-center justify-between text-left"
                       >
                         <div className="flex items-center gap-3.5 min-w-0">
-                          <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-white dark:bg-slate-900 rounded-xl text-emerald-700 dark:text-emerald-400 font-bold text-sm group-hover:bg-emerald-700 group-hover:text-white transition-colors border border-slate-200 dark:border-slate-700 shadow-2xs">
+                          <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-white dark:bg-slate-900 rounded-xl text-emerald-700 dark:text-emerald-400 font-bold text-sm border border-slate-200 dark:border-slate-700">
                             {surah.nomor}
                           </div>
                           
@@ -585,12 +560,9 @@ export const AlQuranDigital: React.FC<AlQuranDigitalProps> = ({
                         </div>
 
                         <div className="text-right flex-shrink-0 ml-2">
-                          <div className="font-serif text-xl text-emerald-800 dark:text-emerald-300 group-hover:text-emerald-600 transition-colors" style={{ fontFamily: '"Amiri", serif' }}>
+                          <div className="font-serif text-xl text-emerald-800 dark:text-emerald-300" style={{ fontFamily: '"Amiri", serif' }}>
                             {surah.nama}
                           </div>
-                          <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 group-hover:underline flex items-center gap-0.5 justify-end mt-1">
-                            Baca <ChevronRight className="w-3 h-3" />
-                          </span>
                         </div>
                       </button>
                     ))}
@@ -612,252 +584,224 @@ export const AlQuranDigital: React.FC<AlQuranDigitalProps> = ({
                         setIsOpen(true);
                       }
                     }}
-                    className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 hover:bg-white dark:hover:bg-slate-700/80 transition-all text-left group flex items-center justify-between cursor-pointer"
+                    className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 transition-all text-left cursor-pointer flex items-center justify-between"
                   >
                     <div>
-                      <div className="flex items-center gap-2">
-                        <span className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-black text-xs flex items-center justify-center border border-emerald-200 dark:border-emerald-800">
-                          {j.id}
-                        </span>
-                        <h4 className="font-extrabold text-slate-800 dark:text-slate-100 group-hover:text-emerald-700 transition-colors text-sm">
-                          {j.name}
-                        </h4>
-                      </div>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 font-medium">
-                        Mulai: Surah #{j.startSurah} (Ayat {j.startAyat}) s/d Surah #{j.endSurah} (Ayat {j.endAyat})
+                      <span className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-black text-xs inline-flex items-center justify-center border border-emerald-200 dark:border-emerald-800 mr-2">
+                        {j.id}
+                      </span>
+                      <h4 className="font-extrabold text-slate-800 dark:text-slate-100 text-sm inline-block">
+                        {j.name}
+                      </h4>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
+                        Mulai: Surah #{j.startSurah} ({j.startAyat}) s/d Surah #{j.endSurah} ({j.endAyat})
                       </p>
                     </div>
 
-                    <div className="text-right">
-                      <span className="font-serif text-lg text-emerald-800 dark:text-emerald-300 font-bold block" style={{ fontFamily: '"Amiri", serif' }}>
-                        {j.arabic}
-                      </span>
-                      <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 group-hover:underline flex items-center gap-0.5 justify-end mt-1">
-                        Buka Juz <ChevronRight className="w-3 h-3" />
-                      </span>
+                    <span className="font-serif text-lg text-emerald-800 dark:text-emerald-300 font-bold" style={{ fontFamily: '"Amiri", serif' }}>
+                      {j.arabic}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* TAB 3: INDEKS TEMATIK (TATBHIQ) */}
+            {mainNavTab === 'tematik' && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {THEMATIC_INDEX.map(t => (
+                  <button
+                    key={t.id}
+                    onClick={() => {
+                      const targetSurah = surahs.find(s => s.nomor === t.surahTarget);
+                      if (targetSurah) {
+                        openSurah(targetSurah, t.ayatTarget);
+                        setIsOpen(true);
+                      }
+                    }}
+                    className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 transition-all text-left cursor-pointer flex flex-col justify-between"
+                  >
+                    <div className="space-y-2">
+                      <span className="text-2xl">{t.icon}</span>
+                      <h4 className="font-extrabold text-slate-900 dark:text-slate-100 text-sm">
+                        {t.title}
+                      </h4>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                        {t.desc}
+                      </p>
                     </div>
                   </button>
                 ))}
               </div>
             )}
 
-            {/* TAB 3: INDEKS TEMATIK (TATHBIQ) */}
-            {mainNavTab === 'tematik' && (
-              <div className="space-y-4">
-                <div className="bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 p-4 rounded-2xl">
-                  <p className="text-xs text-emerald-900 dark:text-emerald-200 font-medium">
-                    💡 <strong>Indeks Tematik (Tathbiq):</strong> Jelajahi Al-Qur'an berdasarkan topik pembahasan spesifik seperti Ekonomi Islam, Muamalat, Ibadah, Akhlaq, dan Hukum.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {THEMATIC_INDEX.map(t => (
-                    <button
-                      key={t.id}
-                      onClick={() => {
-                        const targetSurah = surahs.find(s => s.nomor === t.surahTarget);
-                        if (targetSurah) {
-                          openSurah(targetSurah, t.ayatTarget);
-                          setIsOpen(true);
-                        }
-                      }}
-                      className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 hover:bg-white dark:hover:bg-slate-700 transition-all text-left cursor-pointer group flex flex-col justify-between"
-                    >
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-2xl">{t.icon}</span>
-                          <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 transition-colors" />
-                        </div>
-                        <h4 className="font-extrabold text-slate-900 dark:text-slate-100 text-sm group-hover:text-emerald-700 transition-colors">
-                          {t.title}
-                        </h4>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                          {t.desc}
-                        </p>
-                      </div>
-
-                      <div className="pt-3 border-t border-slate-100 dark:border-slate-700/60 mt-3 flex justify-between items-center text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
-                        <span>Lihat Referensi Ayat</span>
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* TAB 4: PANDUAN TAJWID (TAHSIN) */}
             {mainNavTab === 'tajwid_guide' && (
-              <div className="space-y-4">
-                <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 p-4 rounded-2xl">
-                  <p className="text-xs text-amber-900 dark:text-amber-200 font-medium">
-                    ✨ <strong>Tahsin & Panduan Hukum Tajwid:</strong> Kode warna pada teks bacaan membantu melatih pengucapan yang makhraj & tartil sesuai hukum tajwid.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {TAJWID_RULES.map(rule => (
-                    <div key={rule.name} className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className={`px-3 py-1 rounded-xl text-xs font-black border ${rule.color}`}>
-                          Hukum: {rule.name}
-                        </span>
-                        <HelpCircle className="w-4 h-4 text-slate-400" />
-                      </div>
-                      <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed pt-1">
-                        {rule.desc}
-                      </p>
-                    </div>
-                  ))}
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {TAJWID_RULES.map(rule => (
+                  <div key={rule.name} className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2">
+                    <span className={`px-3 py-1 rounded-xl text-xs font-black border ${rule.color}`}>
+                      Hukum: {rule.name}
+                    </span>
+                    <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed pt-1">
+                      {rule.desc}
+                    </p>
+                  </div>
+                ))}
               </div>
             )}
           </div>
         </div>
       </section>
 
-      {/* FULL SCREEN INTERACTIVE READER MODAL */}
+      {/* FULL SCREEN INTERACTIVE READER MODAL - TAZKIA EXACT INTERFACE */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-slate-50 dark:bg-slate-950 overflow-hidden font-sans text-slate-900 dark:text-slate-100">
+        <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-slate-950 overflow-hidden font-sans text-slate-900 dark:text-slate-100">
           
-          {/* Top Bar Navigation */}
-          <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex items-center justify-between shadow-sm sticky top-0 z-30">
-            <div className="flex items-center gap-3">
-              {view === 'detail' ? (
-                <button
-                  onClick={goBack}
-                  className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold transition-all flex items-center gap-1 text-xs cursor-pointer"
-                >
-                  <ArrowLeft className="w-4 h-4" /> Kembali
-                </button>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-700 text-white flex items-center justify-center font-bold text-sm">
-                    🕌
-                  </div>
-                  <span className="font-extrabold text-sm sm:text-base">Al-Qur'an Digital 5T</span>
-                </div>
-              )}
+          {/* Header 1: QURAN TAZKIA Top Navigation Header */}
+          <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 sm:px-8 py-3 flex items-center justify-between shadow-2xs z-30">
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2 cursor-pointer" onClick={goBack}>
+                <span className="text-xl font-black text-blue-600 dark:text-blue-400 tracking-tight font-serif uppercase">
+                  QURAN TAZKIA
+                </span>
+              </div>
 
-              {selectedSurah && view === 'detail' && (
-                <div className="hidden sm:flex items-center gap-2 pl-3 border-l border-slate-200 dark:border-slate-700">
-                  <span className="font-bold text-emerald-700 dark:text-emerald-400 text-sm">
-                    QS. {selectedSurah.namaLatin} ({selectedSurah.nomor})
-                  </span>
-                  <span className="text-xs text-slate-400 font-medium">• {selectedSurah.jumlahAyat} Ayat</span>
-                </div>
-              )}
+              {/* Navigation Bar Links */}
+              <nav className="hidden lg:flex items-center gap-6 text-sm font-semibold text-slate-600 dark:text-slate-300">
+                <button onClick={() => setMainNavTab('surah')} className="hover:text-blue-600 transition-colors">About</button>
+                <button onClick={() => setMainNavTab('surah')} className="hover:text-blue-600 transition-colors">Donasi</button>
+                <button onClick={() => setMainNavTab('tajwid_guide')} className="hover:text-blue-600 transition-colors">Panduan Tajwid</button>
+                <button onClick={() => setMainNavTab('tematik')} className="hover:text-blue-600 transition-colors">Ayat Hadist Ekonomi</button>
+                <button onClick={() => setMainNavTab('tematik')} className="hover:text-blue-600 transition-colors">Hadist</button>
+              </nav>
             </div>
 
-            {/* Right Quick Controls */}
-            <div className="flex items-center gap-2">
-              {view === 'detail' && (
-                <>
-                  {/* Mode Tahfidz Switch */}
-                  <button
-                    onClick={() => setHideTranslationForTahfidz(!hideTranslationForTahfidz)}
-                    title={hideTranslationForTahfidz ? 'Tampilkan Terjemahan' : 'Sembunyikan Terjemahan (Mode Tahfidz / Latihan Hafalan)'}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                      hideTranslationForTahfidz
-                        ? 'bg-purple-600 text-white border-purple-700 shadow-sm'
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700'
-                    }`}
-                  >
-                    {hideTranslationForTahfidz ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                    <span className="hidden sm:inline">{hideTranslationForTahfidz ? 'Tahfidz On' : 'Mode Tahfidz'}</span>
-                  </button>
-
-                  {/* Font Size Toggle */}
-                  <select
-                    value={fontSize}
-                    onChange={e => setFontSize(e.target.value as any)}
-                    className="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 focus:outline-none"
-                  >
-                    <option value="sm">Font Sedang</option>
-                    <option value="md">Font Besar</option>
-                    <option value="lg">Font Ekstra Besar</option>
-                    <option value="xl">Font Maksimal</option>
-                  </select>
-
-                  {/* Qari Selector */}
-                  <select
-                    value={selectedQari}
-                    onChange={e => setSelectedQari(e.target.value)}
-                    className="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 focus:outline-none hidden md:block"
-                  >
-                    {RECITERS.map(q => (
-                      <option key={q.id} value={q.id}>{q.name}</option>
-                    ))}
-                  </select>
-                </>
-              )}
+            {/* Top Right Search + Controls */}
+            <div className="flex items-center gap-3">
+              <div className="relative hidden md:flex items-center">
+                <input
+                  type="text"
+                  placeholder="Search"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="pl-4 pr-16 py-1.5 border border-slate-300 dark:border-slate-700 rounded-lg text-xs bg-slate-50 dark:bg-slate-800 focus:outline-none w-48 focus:w-60 transition-all"
+                />
+                <button className="absolute right-0 bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1.5 rounded-r-lg font-bold transition-colors">
+                  Search
+                </button>
+              </div>
 
               <button
                 onClick={handleClose}
-                className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950 text-slate-500 hover:text-rose-600 transition-colors cursor-pointer"
+                className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
-          </div>
+          </header>
 
-          {/* Modal Main Content Container */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
-            {view === 'list' ? (
-              <div className="max-w-6xl mx-auto space-y-6">
-                <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
-                  <div className="relative w-full sm:w-80">
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input
-                      type="text"
-                      className="w-full pl-10 pr-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 text-xs font-medium focus:outline-none"
-                      placeholder="Cari surah..."
-                      value={searchQuery}
-                      onChange={e => setSearchQuery(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setMainNavTab('surah')}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold ${mainNavTab === 'surah' ? 'bg-emerald-700 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'}`}
-                    >
-                      114 Surah
-                    </button>
-                    <button
-                      onClick={() => setMainNavTab('juz')}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold ${mainNavTab === 'juz' ? 'bg-emerald-700 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'}`}
-                    >
-                      30 Juz
-                    </button>
-                    <button
-                      onClick={() => setMainNavTab('tematik')}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold ${mainNavTab === 'tematik' ? 'bg-emerald-700 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'}`}
-                    >
-                      Tematik
-                    </button>
-                  </div>
+          {/* Sub Header Bar 2: Surah & Ayat Selectors + Setting */}
+          {view === 'detail' && selectedSurah && (
+            <div className="bg-slate-50 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800 px-4 sm:px-12 py-2.5 flex items-center justify-between z-20 text-xs sm:text-sm">
+              <div className="flex items-center gap-4">
+                {/* Surah Dropdown Selector */}
+                <div className="relative">
+                  <select
+                    value={selectedSurah.nomor}
+                    onChange={e => {
+                      const s = surahs.find(item => item.nomor === Number(e.target.value));
+                      if (s) openSurah(s);
+                    }}
+                    className="appearance-none font-bold text-slate-800 dark:text-slate-100 bg-transparent pr-6 focus:outline-none cursor-pointer"
+                  >
+                    {surahs.map(s => (
+                      <option key={s.nomor} value={s.nomor}>{s.namaLatin}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="w-3.5 h-3.5 absolute right-0 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                 </div>
 
+                <span className="text-slate-300 dark:text-slate-700">•</span>
+
+                {/* Ayat Dropdown Selector */}
+                <div className="relative">
+                  <select
+                    onChange={e => {
+                      const ayatEl = document.getElementById(`ayat-${e.target.value}`);
+                      if (ayatEl) ayatEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }}
+                    className="appearance-none font-bold text-slate-800 dark:text-slate-100 bg-transparent pr-6 focus:outline-none cursor-pointer"
+                  >
+                    {selectedSurah.ayat?.map(a => (
+                      <option key={a.nomorAyat} value={a.nomorAyat}>Ayat {a.nomorAyat}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="w-3.5 h-3.5 absolute right-0 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Setting Button */}
+              <button
+                onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+                className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 font-medium hover:text-blue-600 transition-colors cursor-pointer"
+              >
+                <Settings className="w-4 h-4 text-slate-500" />
+                <span>Setting</span>
+              </button>
+            </div>
+          )}
+
+          {/* Quick Settings Bar Toggle Drawer */}
+          {isSettingsOpen && (
+            <div className="bg-blue-50 dark:bg-slate-900 border-b border-blue-100 dark:border-slate-800 px-6 py-3 flex flex-wrap items-center justify-between gap-4 text-xs">
+              <div className="flex items-center gap-4">
+                <span className="font-bold text-slate-700 dark:text-slate-300">Pilih Qari Murottal:</span>
+                <select
+                  value={selectedQari}
+                  onChange={e => setSelectedQari(e.target.value)}
+                  className="px-3 py-1 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 font-semibold"
+                >
+                  {RECITERS.map(q => (
+                    <option key={q.id} value={q.id}>{q.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <span className="font-bold text-slate-700 dark:text-slate-300">Ukuran Font Arab:</span>
+                <div className="flex gap-1">
+                  {(['sm', 'md', 'lg', 'xl'] as const).map(sz => (
+                    <button
+                      key={sz}
+                      onClick={() => setFontSize(sz)}
+                      className={`px-2.5 py-1 rounded-md font-bold uppercase ${fontSize === sz ? 'bg-blue-600 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'}`}
+                    >
+                      {sz}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Modal Main Content Area */}
+          <div className="flex-1 overflow-y-auto px-4 sm:px-12 md:px-24 py-8 space-y-8">
+            {view === 'list' ? (
+              <div className="max-w-5xl mx-auto space-y-6">
+                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">Daftar Surah Al-Qur'an Tazkia</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   {filteredSurahs.map(surah => (
                     <button
                       key={surah.nomor}
                       onClick={() => openSurah(surah)}
-                      className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-emerald-500 shadow-xs transition-all text-left flex justify-between items-center cursor-pointer group"
+                      className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-blue-500 shadow-2xs transition-all text-left flex justify-between items-center cursor-pointer"
                     >
-                      <div className="flex items-center gap-3">
-                        <span className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-bold text-xs flex items-center justify-center">
-                          {surah.nomor}
-                        </span>
-                        <div>
-                          <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100 group-hover:text-emerald-700 transition-colors">
-                            {surah.namaLatin}
-                          </h4>
-                          <p className="text-xs text-slate-500 dark:text-slate-400">{surah.arti}</p>
-                        </div>
+                      <div>
+                        <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100">{surah.namaLatin}</h4>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{surah.arti}</p>
                       </div>
-                      <span className="font-serif text-lg text-emerald-800 dark:text-emerald-300" style={{ fontFamily: '"Amiri", serif' }}>
+                      <span className="font-serif text-lg text-slate-800 dark:text-slate-200" style={{ fontFamily: '"Amiri", serif' }}>
                         {surah.nama}
                       </span>
                     </button>
@@ -865,147 +809,235 @@ export const AlQuranDigital: React.FC<AlQuranDigitalProps> = ({
                 </div>
               </div>
             ) : (
-              /* DETAIL READER VIEW */
-              <div className="max-w-4xl mx-auto space-y-6 pb-20">
+              /* EXACT TAZKIA AYAT READER VIEW */
+              <div className="max-w-4xl mx-auto space-y-12 pb-24">
                 
-                {/* Surah Header Card */}
-                {selectedSurah && (
-                  <div className="bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-900 text-white p-6 sm:p-8 rounded-3xl shadow-lg relative overflow-hidden text-center space-y-4">
-                    <div className="space-y-1">
-                      <span className="text-xs font-bold text-emerald-300 uppercase tracking-widest">
-                        {selectedSurah.tempatTurun} • {selectedSurah.jumlahAyat} AYAT
-                      </span>
-                      <h2 className="text-3xl sm:text-4xl font-serif font-bold text-white" style={{ fontFamily: '"Amiri", serif' }}>
-                        {selectedSurah.nama}
-                      </h2>
-                      <h3 className="text-xl font-bold text-emerald-200">{selectedSurah.namaLatin}</h3>
-                      <p className="text-xs text-emerald-100 italic">"{selectedSurah.arti}"</p>
-                    </div>
-
-                    {/* Audio Murottal Full Surah Bar */}
-                    <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3 bg-white/10 backdrop-blur p-3 rounded-2xl border border-white/10 max-w-md mx-auto">
-                      <button
-                        onClick={playFullSurah}
-                        className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition-all shadow-md active:scale-95 cursor-pointer"
-                      >
-                        {isPlayingFull ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current" />}
-                        {isPlayingFull ? 'Hentikan Audio Surah' : 'Putar Murottal Surah'}
-                      </button>
-
-                      {isPlayingFull && (
-                        <div className="flex-1 w-full flex items-center gap-2 text-[10px] font-mono text-emerald-200">
-                          <span>{audioCurrentTime}</span>
-                          <div className="flex-1 bg-white/20 h-2 rounded-full overflow-hidden">
-                            <div className="bg-amber-300 h-full transition-all" style={{ width: `${audioProgress}%` }} />
-                          </div>
-                          <span>{audioDuration}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Bismillah Header (except At-Tawbah) */}
-                {selectedSurah && selectedSurah.nomor !== 9 && selectedSurah.nomor !== 1 && (
+                {/* Centered Bismillah Header (Tazkia Style) */}
+                {selectedSurah && selectedSurah.nomor !== 9 && (
                   <div className="text-center py-6">
-                    <p className="font-serif text-3xl text-emerald-800 dark:text-emerald-300 tracking-wide" style={{ fontFamily: '"Amiri", serif' }}>
-                      بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+                    <p className="font-serif text-3xl sm:text-4xl text-slate-800 dark:text-slate-100 tracking-widest leading-loose" style={{ fontFamily: '"Amiri", serif' }}>
+                      بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
                     </p>
                   </div>
                 )}
 
-                {/* Ayat Cards List */}
+                {/* Ayat Rows (Tazkia Design) */}
                 {loadingDetail ? (
                   <div className="flex flex-col items-center justify-center py-20 gap-3">
-                    <div className="animate-spin rounded-full h-10 w-10 border-4 border-emerald-200 border-t-emerald-600" />
-                    <p className="text-emerald-800 font-bold text-xs animate-pulse">Memuat Ayat Al-Qur'an & Terjemahan...</p>
+                    <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-200 border-t-blue-600" />
+                    <p className="text-slate-600 dark:text-slate-400 font-bold text-xs">Memuat Ayat...</p>
                   </div>
                 ) : (
                   selectedSurah?.ayat?.map(ayat => {
-                    const isBookmarked = bookmark?.surahNomor === selectedSurah.nomor && bookmark?.ayatNomor === ayat.nomorAyat;
                     const isPlaying = playingAyat === ayat.nomorAyat;
+                    const isTahfidzHidden = !!tahfidzHiddenAyats[ayat.nomorAyat];
 
                     return (
                       <div
                         key={ayat.nomorAyat}
                         id={`ayat-${ayat.nomorAyat}`}
-                        className={`p-6 rounded-3xl border transition-all space-y-4 ${
-                          isPlaying 
-                            ? 'bg-emerald-50/80 dark:bg-emerald-950/40 border-emerald-500 shadow-md ring-2 ring-emerald-300/40' 
-                            : isBookmarked
-                            ? 'bg-amber-50/70 dark:bg-amber-950/30 border-amber-300 dark:border-amber-700'
-                            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300'
+                        className={`pt-6 pb-8 border-b border-slate-200 dark:border-slate-800 space-y-6 transition-all ${
+                          isPlaying ? 'bg-blue-50/50 dark:bg-blue-950/30 px-4 rounded-2xl' : ''
                         }`}
                       >
-                        {/* Ayat Header Actions */}
-                        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 text-xs">
-                          <div className="flex items-center gap-2">
-                            <span className="w-7 h-7 rounded-xl bg-emerald-700 text-white font-black text-xs flex items-center justify-center shadow-xs">
-                              {ayat.nomorAyat}
-                            </span>
-                            <span className="text-slate-400 font-medium">QS. {selectedSurah.namaLatin}: {ayat.nomorAyat}</span>
-                          </div>
-
-                          <div className="flex items-center gap-1.5">
-                            <button
-                              onClick={() => playAyat(ayat)}
-                              title="Putar Audio Ayat"
-                              className={`p-2 rounded-xl transition-all flex items-center gap-1 font-bold text-xs cursor-pointer ${
-                                isPlaying
-                                  ? 'bg-emerald-600 text-white shadow-xs'
-                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-emerald-100'
-                              }`}
-                            >
-                              {isPlaying ? <Pause className="w-3.5 h-3.5 fill-current" /> : <Play className="w-3.5 h-3.5 fill-current" />}
-                              <span className="hidden sm:inline">{isPlaying ? 'Memutar' : 'Murottal'}</span>
-                            </button>
-
-                            <button
-                              onClick={() => saveBookmark(selectedSurah.nomor, selectedSurah.namaLatin, ayat.nomorAyat)}
-                              title="Tandai Terakhir Dibaca"
-                              className={`p-2 rounded-xl transition-all cursor-pointer ${
-                                isBookmarked
-                                  ? 'bg-amber-400 text-amber-950 font-bold'
-                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-amber-500'
-                              }`}
-                            >
-                              <Bookmark className={`w-3.5 h-3.5 ${isBookmarked ? 'fill-amber-950' : ''}`} />
-                            </button>
-
-                            <button
-                              onClick={() => copyAyatToClipboard(ayat)}
-                              title="Salin Ayat & Terjemahan"
-                              className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 cursor-pointer"
-                            >
-                              {copiedAyat === ayat.nomorAyat ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Teks Arab (Utsmani) */}
-                        <div className="text-right py-2 leading-loose">
+                        {/* 1. ARABIC VERSE - RIGHT ALIGNED WITH EASTERN ARABIC NUMERAL */}
+                        <div className="text-right leading-loose">
                           <p className={`font-serif text-slate-900 dark:text-slate-50 ${getFontSizeClass()}`} style={{ fontFamily: '"Amiri", serif' }}>
-                            {ayat.teksArab}
+                            ( {toArabicDigits(ayat.nomorAyat)} ) {ayat.teksArab}
                           </p>
                         </div>
 
-                        {/* Transliterasi & Terjemahan (Tafsir & Tarjamah) */}
-                        {!hideTranslationForTahfidz && (
-                          <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800/80">
-                            <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 italic">
-                              {ayat.teksLatin}
-                            </p>
-                            <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-normal">
-                              {ayat.teksIndonesia}
-                            </p>
+                        {/* 2. TRANSLATIONS (INDONESIAN + ENGLISH) - LEFT ALIGNED */}
+                        {!isTahfidzHidden && (
+                          <div className="space-y-4 text-left max-w-3xl pt-2">
+                            {/* Indonesian Translation Kemenag RI */}
+                            <div className="space-y-1">
+                              <p className="text-slate-800 dark:text-slate-200 text-sm sm:text-base leading-relaxed font-normal">
+                                {ayat.teksIndonesia}
+                              </p>
+                              <p className="text-xs italic text-slate-400 font-serif">
+                                Indonesian Islamic Affairs Ministry
+                              </p>
+                            </div>
+
+                            {/* English Translation Saheeh International */}
+                            <div className="space-y-1">
+                              <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm leading-relaxed font-normal">
+                                {ayat.teksInggris || `In the name of Allāh, the Entirely Merciful, the Especially Merciful.`}
+                              </p>
+                              <p className="text-xs italic text-slate-400 font-serif">
+                                Saheeh International
+                              </p>
+                            </div>
                           </div>
                         )}
+
+                        {/* 3. TAZKIA PER-AYAT ACTION TOOLBAR (RIGHT ALIGNED) */}
+                        <div className="flex flex-wrap items-center justify-end gap-5 text-xs text-slate-600 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800/60">
+                          
+                          {/* Share */}
+                          <button
+                            onClick={() => shareAyat(ayat)}
+                            className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                          >
+                            <Share2 className="w-4 h-4" />
+                            <span className="text-[11px]">Share</span>
+                          </button>
+
+                          {/* Copy */}
+                          <button
+                            onClick={() => copyAyatToClipboard(ayat)}
+                            className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                          >
+                            {copiedAyat === ayat.nomorAyat ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                            <span className="text-[11px]">{copiedAyat === ayat.nomorAyat ? 'Copied' : 'Copy'}</span>
+                          </button>
+
+                          {/* Play */}
+                          <button
+                            onClick={() => playAyat(ayat)}
+                            className={`flex flex-col items-center gap-1 transition-colors cursor-pointer ${
+                              isPlaying ? 'text-blue-600 font-bold' : 'hover:text-blue-600'
+                            }`}
+                          >
+                            {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current" />}
+                            <span className="text-[11px]">{isPlaying ? 'Playing' : 'Play'}</span>
+                          </button>
+
+                          {/* Tahsin (Tajwid Modal) */}
+                          <button
+                            onClick={() => setActiveTajwidAyat(ayat)}
+                            className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                          >
+                            <Sparkle className="w-4 h-4" />
+                            <span className="text-[11px]">Tahsin</span>
+                          </button>
+
+                          {/* Tahfiz (Toggle Translation) */}
+                          <button
+                            onClick={() => toggleTahfidzAyat(ayat.nomorAyat)}
+                            className={`flex flex-col items-center gap-1 transition-colors cursor-pointer ${
+                              isTahfidzHidden ? 'text-purple-600 font-bold' : 'hover:text-blue-600'
+                            }`}
+                          >
+                            <RefreshCw className="w-4 h-4" />
+                            <span className="text-[11px]">Tahfiz</span>
+                          </button>
+
+                          {/* Tafsir Modal */}
+                          <button
+                            onClick={() => openTafsirModal(ayat)}
+                            className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                          >
+                            <BookOpen className="w-4 h-4" />
+                            <span className="text-[11px]">Tafsir</span>
+                          </button>
+
+                          {/* Tatbhiq (Tematik) */}
+                          <button
+                            onClick={() => setActiveTatbhiqAyat(ayat)}
+                            className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
+                          >
+                            <Layers className="w-4 h-4" />
+                            <span className="text-[11px]">Tatbhiq</span>
+                          </button>
+
+                        </div>
                       </div>
                     );
                   })
                 )}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* TAJID / TAHSIN MODAL */}
+      {activeTajwidAyat && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-lg w-full space-y-4 border border-slate-200 dark:border-slate-800 shadow-2xl">
+            <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h4 className="font-extrabold text-sm flex items-center gap-2">
+                ✨ Panduan Tahsin (Tajwid) Ayat {activeTajwidAyat.nomorAyat}
+              </h4>
+              <button onClick={() => setActiveTajwidAyat(null)} className="text-slate-400 hover:text-slate-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <p className="font-serif text-right text-2xl text-slate-800 dark:text-slate-100" style={{ fontFamily: '"Amiri", serif' }}>
+              {activeTajwidAyat.teksArab}
+            </p>
+
+            <div className="space-y-3 pt-2">
+              {TAJWID_RULES.map(rule => (
+                <div key={rule.name} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 text-xs space-y-1">
+                  <span className={`px-2 py-0.5 rounded-md font-bold text-[10px] border ${rule.color}`}>
+                    {rule.name}
+                  </span>
+                  <p className="text-slate-600 dark:text-slate-300">{rule.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAFSIR MODAL */}
+      {activeTafsirAyat && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-2xl w-full space-y-4 border border-slate-200 dark:border-slate-800 shadow-2xl max-h-[85vh] flex flex-col">
+            <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h4 className="font-extrabold text-sm flex items-center gap-2">
+                📚 Tafsir Kemenag RI • QS. {selectedSurah?.namaLatin} Ayat {activeTafsirAyat.nomorAyat}
+              </h4>
+              <button onClick={() => setActiveTafsirAyat(null)} className="text-slate-400 hover:text-slate-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto space-y-4 text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed pr-2">
+              <p className="font-serif text-right text-2xl text-slate-900 dark:text-slate-100 leading-loose" style={{ fontFamily: '"Amiri", serif' }}>
+                {activeTafsirAyat.teksArab}
+              </p>
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                <strong className="text-blue-600 dark:text-blue-400 block mb-2 font-bold">Penjelasan Tafsir Tahlili & Ringkas:</strong>
+                {tafsirData.find(t => t.nomorAyat === activeTafsirAyat.nomorAyat)?.teks || activeTafsirAyat.teksIndonesia}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TATBHIQ TEMATIK MODAL */}
+      {activeTatbhiqAyat && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-md w-full space-y-4 border border-slate-200 dark:border-slate-800 shadow-2xl">
+            <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h4 className="font-extrabold text-sm flex items-center gap-2">
+                🏷️ Tatbhiq Tematik Ayat {activeTatbhiqAyat.nomorAyat}
+              </h4>
+              <button onClick={() => setActiveTatbhiqAyat(null)} className="text-slate-400 hover:text-slate-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <p className="text-xs text-slate-600 dark:text-slate-300">
+              Kategori tematik Al-Qur'an Tazkia untuk ayat ini:
+            </p>
+
+            <div className="flex flex-wrap gap-2 pt-2">
+              <span className="px-3 py-1.5 rounded-xl bg-blue-100 text-blue-800 font-bold text-xs border border-blue-200">
+                💰 Muamalat & Ekonomi Islam
+              </span>
+              <span className="px-3 py-1.5 rounded-xl bg-emerald-100 text-emerald-800 font-bold text-xs border border-emerald-200">
+                🕌 Ibadah & Thaharah
+              </span>
+              <span className="px-3 py-1.5 rounded-xl bg-amber-100 text-amber-800 font-bold text-xs border border-amber-200">
+                🌱 Akhlaq & Adab
+              </span>
+            </div>
           </div>
         </div>
       )}
