@@ -373,286 +373,6 @@ export const AlQuranDigital: React.FC<AlQuranDigitalProps> = ({
 
   return (
     <>
-      {/* Homepage Integrated Al-Quran Section */}
-      <section className="py-12 bg-gradient-to-b from-slate-50 via-lime-50/40 to-white dark:from-slate-950 dark:via-emerald-950/20 dark:to-slate-900 transition-colors" id="quran">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-          
-          {/* Header Banner - Reference Tazkia 5T */}
-          <div className="bg-gradient-to-r from-emerald-900 via-teal-800 to-emerald-950 rounded-3xl p-6 sm:p-10 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
-            <div className="absolute top-0 right-0 opacity-10 pointer-events-none">
-              <BookOpen className="w-80 h-80 -mt-16 -mr-16 text-emerald-200" />
-            </div>
-            
-            <div className="relative z-10 text-center md:text-left space-y-3 max-w-2xl">
-              <div className="inline-flex items-center gap-2 bg-emerald-500/20 border border-emerald-400/30 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-emerald-200">
-                <Sparkles className="w-3.5 h-3.5 text-amber-300" /> QURAN TAZKIA REFERENCE INTERFACE
-              </div>
-              <h2 className="text-2xl sm:text-4xl font-bold font-serif flex items-center justify-center md:justify-start gap-3">
-                <BookOpen className="w-8 h-8 text-emerald-300" /> Portal Al-Qur'an Tazkia 5T
-              </h2>
-              <p className="text-emerald-100 text-xs sm:text-sm leading-relaxed">
-                Tampilan & Fitur persis <strong>quran.tazkia.ac.id</strong>: Tahsin, Tahfiz, Tarjamah (Kemenag & Saheeh Int.), Tafsir, & Tatbhiq Tematik Ekonomi & Muamalat.
-              </p>
-
-              {/* 5T Badge Cards */}
-              <div className="flex flex-wrap gap-2 pt-1">
-                <span className="px-2.5 py-1 rounded-lg bg-emerald-800/80 border border-emerald-600/50 text-[11px] font-bold text-emerald-200">
-                  ✨ Tahsin
-                </span>
-                <span className="px-2.5 py-1 rounded-lg bg-teal-800/80 border border-teal-600/50 text-[11px] font-bold text-teal-200">
-                  🧠 Tahfiz
-                </span>
-                <span className="px-2.5 py-1 rounded-lg bg-amber-800/80 border border-amber-600/50 text-[11px] font-bold text-amber-200">
-                  📖 Tarjamah (Kemenag + English)
-                </span>
-                <span className="px-2.5 py-1 rounded-lg bg-purple-800/80 border border-purple-600/50 text-[11px] font-bold text-purple-200">
-                  📚 Tafsir
-                </span>
-                <span className="px-2.5 py-1 rounded-lg bg-indigo-800/80 border border-indigo-600/50 text-[11px] font-bold text-indigo-200">
-                  🏷️ Tatbhiq Tematik
-                </span>
-              </div>
-              
-              {bookmark && (
-                <div className="pt-2 flex items-center justify-center md:justify-start gap-2">
-                  <span className="text-xs bg-emerald-950/80 px-3.5 py-1.5 rounded-xl text-emerald-200 flex items-center gap-2 border border-emerald-500/40 shadow-xs">
-                    <Bookmark className="w-4 h-4 text-amber-300 fill-amber-300" /> 
-                    Terakhir Dibaca: <strong className="text-white font-bold">{bookmark.surahNama} (Ayat {bookmark.ayatNomor})</strong>
-                  </span>
-                </div>
-              )}
-            </div>
-
-            <div className="relative z-10 flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-              {bookmark && (
-                <button
-                  onClick={jumpToBookmark}
-                  className="flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-300 text-amber-950 px-5 py-3 rounded-2xl font-bold transition-all shadow-md hover:shadow-lg active:scale-95 text-sm"
-                >
-                  <Bookmark className="w-4 h-4 fill-amber-950" /> Lanjutkan Membaca
-                </button>
-              )}
-              <button
-                onClick={() => setIsOpen(true)}
-                className="flex items-center justify-center gap-2 bg-white text-emerald-900 hover:bg-emerald-50 px-6 py-3 rounded-2xl font-bold transition-all shadow-md hover:shadow-lg active:scale-95 text-sm cursor-pointer"
-              >
-                Buka Mode Tazkia <ChevronRight className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Embedded Navigation Tabs (Surah | Juz | Indeks Tematik | Tajwid) */}
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6 transition-colors">
-            
-            {/* 4 Main Tabs */}
-            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 border-b border-slate-100 dark:border-slate-800">
-              <button
-                onClick={() => setMainNavTab('surah')}
-                className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all cursor-pointer ${
-                  mainNavTab === 'surah'
-                    ? 'bg-emerald-700 text-white shadow-md'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
-                }`}
-              >
-                <BookOpen className="w-4 h-4" /> Daftar Surah (114)
-              </button>
-              <button
-                onClick={() => setMainNavTab('juz')}
-                className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all cursor-pointer ${
-                  mainNavTab === 'juz'
-                    ? 'bg-emerald-700 text-white shadow-md'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
-                }`}
-              >
-                <Layers className="w-4 h-4" /> Daftar Juz (30)
-              </button>
-              <button
-                onClick={() => setMainNavTab('tematik')}
-                className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all cursor-pointer ${
-                  mainNavTab === 'tematik'
-                    ? 'bg-emerald-700 text-white shadow-md'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
-                }`}
-              >
-                <Tag className="w-4 h-4" /> Indeks Tematik (Tatbhiq)
-              </button>
-              <button
-                onClick={() => setMainNavTab('tajwid_guide')}
-                className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all cursor-pointer ${
-                  mainNavTab === 'tajwid_guide'
-                    ? 'bg-emerald-700 text-white shadow-md'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
-                }`}
-              >
-                <Sparkle className="w-4 h-4" /> Panduan Tajwid (Tahsin)
-              </button>
-            </div>
-
-            {/* TAB 1: SURAH LIST */}
-            {mainNavTab === 'surah' && (
-              <div className="space-y-6">
-                <div className="flex flex-col md:flex-row gap-4 justify-between items-center pb-2">
-                  <div className="relative w-full md:w-96">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input
-                      type="text"
-                      className="w-full pl-11 pr-4 py-3 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-emerald-500 transition-all text-sm font-medium"
-                      placeholder="Cari surah (Al-Fatihah, Yasin, 36)..."
-                      value={searchQuery}
-                      onChange={e => setSearchQuery(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-                    <button
-                      onClick={() => setActiveFilter('all')}
-                      className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${activeFilter === 'all' ? 'bg-emerald-700 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'}`}
-                    >
-                      Semua Surah (114)
-                    </button>
-                    <button
-                      onClick={() => setActiveFilter('popular')}
-                      className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${activeFilter === 'popular' ? 'bg-emerald-700 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'}`}
-                    >
-                      ⭐ Populer
-                    </button>
-                    <button
-                      onClick={() => setActiveFilter('juz30')}
-                      className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${activeFilter === 'juz30' ? 'bg-emerald-700 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'}`}
-                    >
-                      📖 Juz 'Amma
-                    </button>
-                  </div>
-                </div>
-
-                {loadingList ? (
-                  <div className="flex flex-col items-center justify-center py-20 gap-3">
-                    <div className="animate-spin rounded-full h-10 w-10 border-4 border-emerald-200 border-t-emerald-600" />
-                    <p className="text-emerald-800 font-bold text-xs animate-pulse">Memuat Surah...</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredSurahs.map(surah => (
-                      <button
-                        key={surah.nomor}
-                        onClick={() => {
-                          openSurah(surah);
-                          setIsOpen(true);
-                        }}
-                        className="bg-slate-50/70 dark:bg-slate-800/60 hover:bg-white dark:hover:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 shadow-2xs transition-all cursor-pointer group flex items-center justify-between text-left"
-                      >
-                        <div className="flex items-center gap-3.5 min-w-0">
-                          <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-white dark:bg-slate-900 rounded-xl text-emerald-700 dark:text-emerald-400 font-bold text-sm border border-slate-200 dark:border-slate-700">
-                            {surah.nomor}
-                          </div>
-                          
-                          <div className="min-w-0">
-                            <div className="font-bold text-slate-800 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors truncate text-sm">
-                              {surah.namaLatin}
-                            </div>
-                            <div className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                              {surah.arti}
-                            </div>
-                            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-1">
-                              {surah.tempatTurun} • {surah.jumlahAyat} Ayat
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="text-right flex-shrink-0 ml-2">
-                          <div className="font-serif text-xl text-emerald-800 dark:text-emerald-300" style={{ fontFamily: '"Amiri", serif' }}>
-                            {surah.nama}
-                          </div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* TAB 2: JUZ LIST */}
-            {mainNavTab === 'juz' && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                {JUZ_LIST.map(j => (
-                  <button
-                    key={j.id}
-                    onClick={() => {
-                      const targetSurah = surahs.find(s => s.nomor === j.startSurah) || surahs[0];
-                      if (targetSurah) {
-                        openSurah(targetSurah, j.startAyat);
-                        setIsOpen(true);
-                      }
-                    }}
-                    className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 transition-all text-left cursor-pointer flex items-center justify-between"
-                  >
-                    <div>
-                      <span className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-black text-xs inline-flex items-center justify-center border border-emerald-200 dark:border-emerald-800 mr-2">
-                        {j.id}
-                      </span>
-                      <h4 className="font-extrabold text-slate-800 dark:text-slate-100 text-sm inline-block">
-                        {j.name}
-                      </h4>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
-                        Mulai: Surah #{j.startSurah} ({j.startAyat}) s/d Surah #{j.endSurah} ({j.endAyat})
-                      </p>
-                    </div>
-
-                    <span className="font-serif text-lg text-emerald-800 dark:text-emerald-300 font-bold" style={{ fontFamily: '"Amiri", serif' }}>
-                      {j.arabic}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* TAB 3: INDEKS TEMATIK (TATBHIQ) */}
-            {mainNavTab === 'tematik' && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {THEMATIC_INDEX.map(t => (
-                  <button
-                    key={t.id}
-                    onClick={() => {
-                      const targetSurah = surahs.find(s => s.nomor === t.surahTarget);
-                      if (targetSurah) {
-                        openSurah(targetSurah, t.ayatTarget);
-                        setIsOpen(true);
-                      }
-                    }}
-                    className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 transition-all text-left cursor-pointer flex flex-col justify-between"
-                  >
-                    <div className="space-y-2">
-                      <span className="text-2xl">{t.icon}</span>
-                      <h4 className="font-extrabold text-slate-900 dark:text-slate-100 text-sm">
-                        {t.title}
-                      </h4>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                        {t.desc}
-                      </p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* TAB 4: PANDUAN TAJWID (TAHSIN) */}
-            {mainNavTab === 'tajwid_guide' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {TAJWID_RULES.map(rule => (
-                  <div key={rule.name} className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2">
-                    <span className={`px-3 py-1 rounded-xl text-xs font-black border ${rule.color}`}>
-                      Hukum: {rule.name}
-                    </span>
-                    <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed pt-1">
-                      {rule.desc}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
 
       {/* FULL SCREEN INTERACTIVE READER MODAL - TAZKIA EXACT INTERFACE */}
       {isOpen && (
@@ -1001,22 +721,48 @@ export const AlQuranDigital: React.FC<AlQuranDigitalProps> = ({
               <p className="font-serif text-right text-2xl text-slate-900 dark:text-slate-100 leading-loose" style={{ fontFamily: '"Amiri", serif' }}>
                 {activeTafsirAyat.teksArab}
               </p>
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                <strong className="text-blue-600 dark:text-blue-400 block mb-2 font-bold">Penjelasan Tafsir Tahlili & Ringkas:</strong>
-                {tafsirData.find(t => t.nomorAyat === activeTafsirAyat.nomorAyat)?.teks || activeTafsirAyat.teksIndonesia}
+              
+              {/* Terjemahan */}
+              <div className="p-3 rounded-xl bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
+                <strong className="text-green-700 dark:text-green-400 block mb-1 text-xs font-bold">Terjemahan (Kemenag RI):</strong>
+                <p className="text-slate-700 dark:text-slate-300 text-sm italic">"{activeTafsirAyat.teksIndonesia}"</p>
               </div>
+
+              {/* Tafsir Content from API */}
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                <strong className="text-blue-600 dark:text-blue-400 block mb-2 font-bold text-xs">Tafsir Kemenag RI (Tahlili & Ringkas):</strong>
+                {tafsirData.length > 0 ? (
+                  <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed whitespace-pre-line">
+                    {tafsirData.find(t => t.nomorAyat === activeTafsirAyat.nomorAyat)?.teks || 'Tafsir untuk ayat ini belum tersedia dalam database API.'}
+                  </p>
+                ) : (
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-slate-300 border-t-blue-500" />
+                    <span className="text-xs">Memuat data tafsir dari API equran.id...</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Referensi */}
+              <p className="text-[10px] text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800">
+                Sumber Tafsir: Kementerian Agama Republik Indonesia • API: equran.id/api/v2/tafsir/{selectedSurah?.nomor}
+              </p>
             </div>
           </div>
         </div>
       )}
 
       {/* TATBHIQ TEMATIK MODAL */}
-      {activeTatbhiqAyat && (
+      {activeTatbhiqAyat && selectedSurah && (() => {
+        // Dynamically match this ayat's surah against THEMATIC_INDEX references
+        const matchedThemes = THEMATIC_INDEX.filter(t => t.surahTarget === selectedSurah.nomor);
+        const generalThemes = matchedThemes.length > 0 ? matchedThemes : THEMATIC_INDEX.slice(0, 3);
+        return (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-md w-full space-y-4 border border-slate-200 dark:border-slate-800 shadow-2xl">
             <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
               <h4 className="font-extrabold text-sm flex items-center gap-2">
-                🏷️ Tatbhiq Tematik Ayat {activeTatbhiqAyat.nomorAyat}
+                🏷️ Tatbhiq Tematik • QS. {selectedSurah.namaLatin} Ayat {activeTatbhiqAyat.nomorAyat}
               </h4>
               <button onClick={() => setActiveTatbhiqAyat(null)} className="text-slate-400 hover:text-slate-600">
                 <X className="w-5 h-5" />
@@ -1024,23 +770,27 @@ export const AlQuranDigital: React.FC<AlQuranDigitalProps> = ({
             </div>
             
             <p className="text-xs text-slate-600 dark:text-slate-300">
-              Kategori tematik Al-Qur'an Tazkia untuk ayat ini:
+              Kategori tematik Al-Qur'an berdasarkan indeks referensi Tazkia untuk surah ini:
             </p>
 
-            <div className="flex flex-wrap gap-2 pt-2">
-              <span className="px-3 py-1.5 rounded-xl bg-blue-100 text-blue-800 font-bold text-xs border border-blue-200">
-                💰 Muamalat & Ekonomi Islam
-              </span>
-              <span className="px-3 py-1.5 rounded-xl bg-emerald-100 text-emerald-800 font-bold text-xs border border-emerald-200">
-                🕌 Ibadah & Thaharah
-              </span>
-              <span className="px-3 py-1.5 rounded-xl bg-amber-100 text-amber-800 font-bold text-xs border border-amber-200">
-                🌱 Akhlaq & Adab
-              </span>
+            <div className="space-y-2 pt-2">
+              {generalThemes.map(theme => (
+                <div key={theme.id} className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                  <span className="text-xl shrink-0">{theme.icon}</span>
+                  <div>
+                    <h5 className="font-bold text-xs text-slate-800 dark:text-slate-100">{theme.title}</h5>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed mt-0.5">{theme.desc}</p>
+                    <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1">
+                      Ref: QS. {surahs.find(s => s.nomor === theme.surahTarget)?.namaLatin || theme.surahTarget}: {theme.ayatTarget}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
     </>
   );
 };

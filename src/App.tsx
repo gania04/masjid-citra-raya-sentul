@@ -177,8 +177,8 @@ export default function App() {
   return (
     <div className={`min-h-screen font-sans transition-colors duration-300 relative ${
       isDarkMode 
-        ? 'dark bg-slate-950 text-slate-100 selection:bg-emerald-500 selection:text-white' 
-        : 'bg-[#F9F8F4] text-[#1A1A1A] selection:bg-lime-500 selection:text-white'
+        ? 'dark bg-slate-950 text-slate-100 selection:bg-green-400 selection:text-white' 
+        : 'bg-[#F7FBF4] text-[#1A1A1A] selection:bg-green-400 selection:text-white'
     }`}>
       {/* Navigation Header */}
       <Header 
@@ -201,13 +201,11 @@ export default function App() {
         {/* ZISWAF Programs */}
         {homeVisibility.showZiswaf && <DaftarProgram programs={programs} />}
 
-        {/* Al-Quran Digital Banner & Modal */}
-        {homeVisibility.showQuran && (
-          <AlQuranDigital 
-            isOpenModal={isQuranModalOpen} 
-            onCloseModal={() => setIsQuranModalOpen(false)} 
-          />
-        )}
+        {/* Al-Quran Digital - Modal Only (accessible via header nav click) */}
+        <AlQuranDigital 
+          isOpenModal={isQuranModalOpen} 
+          onCloseModal={() => setIsQuranModalOpen(false)} 
+        />
 
         {/* Tentang Kami */}
         {homeVisibility.showTentang && (
@@ -226,26 +224,20 @@ export default function App() {
       {/* Footer */}
       <Footer onNavigate={() => {}} onOpenWakafModal={() => {}} />
 
-      {/* Floating Theme Switcher Button */}
+      {/* Floating Crescent Moon Theme Toggle */}
       <button
         onClick={toggleDarkMode}
-        className={`fixed bottom-6 right-6 z-40 p-3.5 rounded-full shadow-2xl border-2 transition-all transform hover:scale-110 active:scale-95 flex items-center gap-2 cursor-pointer ${
+        className={`fixed bottom-6 right-6 z-40 w-12 h-12 rounded-full shadow-2xl border-2 transition-all transform hover:scale-110 active:scale-95 flex items-center justify-center cursor-pointer ${
           isDarkMode 
             ? 'bg-slate-900 border-amber-400/50 text-amber-300 hover:bg-slate-800' 
-            : 'bg-white border-slate-300 text-slate-800 hover:bg-slate-50'
+            : 'bg-white border-green-300 text-green-700 hover:bg-green-50'
         }`}
         title={isDarkMode ? 'Beralih ke Mode Siang ☀️' : 'Beralih ke Mode Malam 🌙'}
       >
         {isDarkMode ? (
-          <>
-            <Sun className="w-5 h-5 text-amber-400 animate-spin-slow" />
-            <span className="text-xs font-bold hidden sm:inline text-amber-300">Mode Siang</span>
-          </>
+          <Sun className="w-5 h-5 text-amber-400" />
         ) : (
-          <>
-            <Moon className="w-5 h-5 text-indigo-600" />
-            <span className="text-xs font-bold hidden sm:inline text-slate-700">Mode Malam</span>
-          </>
+          <Moon className="w-5 h-5 text-green-700" />
         )}
       </button>
 

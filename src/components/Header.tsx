@@ -61,7 +61,7 @@ export const Header: React.FC<HeaderProps> = ({
     }`}>
       {/* Top Info Bar */}
       <div className={`text-xs py-2 px-4 hidden md:block transition-colors ${
-        isDarkMode ? 'bg-emerald-950 text-emerald-200 border-b border-emerald-900/50' : 'bg-lime-600 text-white'
+        isDarkMode ? 'bg-emerald-950 text-emerald-200 border-b border-emerald-900/50' : 'bg-green-500 text-white'
       }`}>
         <div className="max-w-7xl mx-auto flex justify-between items-center gap-2">
           <div className="flex items-center gap-3">
@@ -92,7 +92,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Logo */}
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-md transition-all ${
-              isDarkMode ? 'bg-emerald-600 text-white border border-emerald-500/30' : 'bg-lime-500 text-white'
+              isDarkMode ? 'bg-emerald-600 text-white border border-emerald-500/30' : 'bg-green-500 text-white'
             }`}>
               <span className="text-2xl">🕌</span>
             </div>
@@ -100,7 +100,7 @@ export const Header: React.FC<HeaderProps> = ({
               <h1 className={`text-xl font-serif font-bold leading-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
                 Masjid Citra Sentul Raya
               </h1>
-              <p className={`text-[10px] tracking-widest uppercase font-bold ${isDarkMode ? 'text-emerald-400' : 'text-slate-500'}`}>
+              <p className={`text-[10px] tracking-widest uppercase font-bold ${isDarkMode ? 'text-emerald-400' : 'text-green-600'}`}>
                 Islamic Center • Bogor
               </p>
             </div>
@@ -115,7 +115,7 @@ export const Header: React.FC<HeaderProps> = ({
                 className={`px-3 py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all cursor-pointer ${
                   isDarkMode 
                     ? 'text-slate-300 hover:text-emerald-400 hover:bg-slate-800' 
-                    : 'text-slate-600 hover:text-lime-600 hover:bg-lime-50'
+                    : 'text-slate-600 hover:text-green-600 hover:bg-green-50'
                 }`}
               >
                 {item.name}
@@ -130,22 +130,16 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={onToggleDarkMode}
               title={isDarkMode ? 'Beralih ke Mode Siang (Light Mode)' : 'Beralih ke Mode Malam (Dark Mode)'}
-              className={`p-2.5 rounded-2xl border transition-all flex items-center gap-1.5 text-xs font-bold shadow-xs active:scale-95 cursor-pointer ${
+              className={`p-2.5 rounded-full border transition-all flex items-center justify-center shadow-xs active:scale-95 cursor-pointer ${
                 isDarkMode 
                   ? 'bg-slate-800 border-slate-700 text-amber-300 hover:bg-slate-700' 
-                  : 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200'
+                  : 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100'
               }`}
             >
               {isDarkMode ? (
-                <>
-                  <Sun className="w-4 h-4 text-amber-400" />
-                  <span className="hidden sm:inline">Siang</span>
-                </>
+                <Sun className="w-4.5 h-4.5 text-amber-400" />
               ) : (
-                <>
-                  <Moon className="w-4 h-4 text-indigo-600" />
-                  <span className="hidden sm:inline">Malam</span>
-                </>
+                <Moon className="w-4.5 h-4.5 text-green-700" />
               )}
             </button>
 
@@ -161,7 +155,7 @@ export const Header: React.FC<HeaderProps> = ({
               className={`flex items-center justify-center gap-1.5 px-4 py-2 border-2 font-bold text-xs sm:text-sm rounded-2xl transition-all shadow-xs uppercase active:scale-95 cursor-pointer ${
                 isDarkMode 
                   ? 'border-emerald-500 bg-emerald-600 text-white hover:bg-emerald-500' 
-                  : 'border-slate-900 text-slate-900 bg-white hover:bg-slate-900 hover:text-white'
+                  : 'border-green-600 text-green-700 bg-white hover:bg-green-600 hover:text-white'
               }`}
             >
               <User className="w-4 h-4" /> Login
