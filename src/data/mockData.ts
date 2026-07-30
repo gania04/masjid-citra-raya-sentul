@@ -207,7 +207,7 @@ Dalam pertemuan ini disepakati skema transparansi keuangan berbasis digital, jad
 export const VIDEOS_DAKWAH: VideoDakwah[] = [
   {
     id: 'v1',
-    youtubeId: '2BVXSTrBwoouBi_9', // Ref Ashabul Yamin TV
+    youtubeId: '7Aty3iox3Zw', // Video asli dari Ashabul Yamin TV
     judul: 'Kajian Rutin Ashabul Yamin TV: Menata Hati dengan Amal Jariyah Wakaf',
     penceramah: 'Ust. H. Ahmad Farhan, M.A.',
     durasi: '45:12',
@@ -216,7 +216,7 @@ export const VIDEOS_DAKWAH: VideoDakwah[] = [
   },
   {
     id: 'v2',
-    youtubeId: '3cZbLp1j6fE',
+    youtubeId: 'VfV_KljBMj4', // Video asli dari Ashabul Yamin TV
     judul: 'Update Rencana Desain & Visual 3D Masjid Citra Sentul Raya Sirkuit Sentul',
     penceramah: 'Tim Arsitek Masjid',
     durasi: '12:40',
@@ -225,7 +225,7 @@ export const VIDEOS_DAKWAH: VideoDakwah[] = [
   },
   {
     id: 'v3',
-    youtubeId: 'L8m9k3p_1x8',
+    youtubeId: '6FdsRZRNEhw', // Video asli dari Ashabul Yamin TV
     judul: 'Doa Bersama Peletakan Batu Pertama & Pengecoran Fondasi Masjid',
     penceramah: 'Dosen Institut Tazkia & Tokoh Warga',
     durasi: '28:15',

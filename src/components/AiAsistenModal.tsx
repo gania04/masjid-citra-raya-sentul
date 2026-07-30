@@ -90,34 +90,35 @@ export const AiAsistenModal: React.FC<AiAsistenModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-hidden">
-      <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col h-[85vh] animate-in zoom-in-95 border-2 border-emerald-500/30">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-emerald-900 via-emerald-800 to-emerald-950 text-white p-4 flex items-center justify-between border-b border-emerald-700">
+      <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col h-[85vh] animate-in zoom-in-95 border-2 border-amber-500/30">
+        
+        {/* Header - Gold / Orange Theme */}
+        <div className="bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-500 text-white p-4 flex items-center justify-between border-b border-amber-700">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-lime-400 text-emerald-950 flex items-center justify-center shadow-md">
-              <Bot className="w-6 h-6 text-emerald-900" />
+            <div className="w-10 h-10 rounded-2xl bg-white text-amber-600 flex items-center justify-center shadow-md">
+              <Bot className="w-6 h-6" />
             </div>
             <div>
               <h3 className="text-sm font-extrabold text-white flex items-center gap-1.5">
                 <span>AI Asisten Masjid Citra Sentul</span>
-                <Sparkles className="w-3.5 h-3.5 text-lime-400 animate-pulse" />
+                <Sparkles className="w-3.5 h-3.5 text-yellow-200 animate-pulse" />
               </h3>
-              <span className="text-[10px] text-emerald-300 block">
-                Konsultasi Fiqih Wakaf & Program Masjid (Gemini AI)
+              <span className="text-[10px] text-amber-100 block font-semibold">
+                Konsultasi Fiqih Wakaf & Program Masjid
               </span>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="p-2 rounded-xl bg-emerald-800/80 hover:bg-emerald-700 text-slate-200 hover:text-white"
+            className="p-2 rounded-xl bg-amber-700/50 hover:bg-amber-700 text-white transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Chat Stream */}
-        <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-slate-50">
+        {/* Chat Stream - Black/White Theme */}
+        <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-slate-100">
           {messages.map((m) => {
             const isAi = m.sender === 'ai';
             return (
@@ -126,26 +127,26 @@ export const AiAsistenModal: React.FC<AiAsistenModalProps> = ({
                 className={`flex items-start gap-2.5 ${isAi ? '' : 'flex-row-reverse'}`}
               >
                 <div
-                  className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${
+                  className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-xs font-bold shadow-sm ${
                     isAi
-                      ? 'bg-emerald-800 text-lime-300'
-                      : 'bg-slate-800 text-white'
+                      ? 'bg-amber-500 text-white'
+                      : 'bg-black text-white'
                   }`}
                 >
-                  {isAi ? '🕌' : <User className="w-4 h-4" />}
+                  {isAi ? <Bot className="w-4 h-4" /> : <User className="w-4 h-4" />}
                 </div>
 
                 <div
-                  className={`max-w-[80%] rounded-2xl p-3.5 text-xs sm:text-sm leading-relaxed space-y-1 ${
+                  className={`max-w-[80%] rounded-2xl p-3.5 text-xs sm:text-sm leading-relaxed space-y-1 shadow-sm border ${
                     isAi
-                      ? 'bg-white text-slate-800 border border-slate-200 shadow-2xs'
-                      : 'bg-emerald-700 text-white font-medium shadow-2xs'
+                      ? 'bg-white text-black border-slate-200 rounded-tl-sm'
+                      : 'bg-black text-white border-black rounded-tr-sm font-medium'
                   }`}
                 >
                   <p className="whitespace-pre-line">{m.text}</p>
                   <span
                     className={`block text-[9px] text-right font-medium ${
-                      isAi ? 'text-slate-400' : 'text-emerald-200'
+                      isAi ? 'text-slate-400' : 'text-slate-300'
                     }`}
                   >
                     {m.timestamp}
@@ -156,22 +157,22 @@ export const AiAsistenModal: React.FC<AiAsistenModalProps> = ({
           })}
 
           {isLoading && (
-            <div className="flex items-center gap-2 text-xs text-slate-500 bg-white p-3 rounded-2xl border border-slate-200 w-fit">
-              <RefreshCw className="w-4 h-4 animate-spin text-emerald-600" />
-              <span>AI Asisten sedang menyiapkan jawaban...</span>
+            <div className="flex items-center gap-2 text-xs text-black bg-white p-3 rounded-2xl border border-slate-200 w-fit rounded-tl-sm shadow-sm">
+              <RefreshCw className="w-4 h-4 animate-spin text-amber-500" />
+              <span className="font-medium">AI Asisten sedang mengetik...</span>
             </div>
           )}
 
           <div ref={chatEndRef} />
         </div>
 
-        {/* Quick Chips */}
-        <div className="p-2 bg-white border-t border-slate-100 flex items-center gap-1.5 overflow-x-auto text-[11px] font-semibold no-scrollbar">
+        {/* Quick Chips - Black/White & Orange */}
+        <div className="p-3 bg-white border-t border-slate-200 flex items-center gap-2 overflow-x-auto text-[11px] font-bold no-scrollbar">
           {quickChips.map((chip) => (
             <button
               key={chip}
               onClick={() => handleSendMessage(chip)}
-              className="px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200 shrink-0 transition-colors"
+              className="px-3 py-1.5 rounded-full bg-white text-black hover:bg-black hover:text-white border-2 border-black shrink-0 transition-all shadow-sm"
             >
               {chip}
             </button>
@@ -179,21 +180,21 @@ export const AiAsistenModal: React.FC<AiAsistenModalProps> = ({
         </div>
 
         {/* Input Bar */}
-        <div className="p-3 bg-white border-t border-slate-200 flex items-center gap-2">
+        <div className="p-3 bg-slate-50 border-t border-slate-200 flex items-center gap-2">
           <input
             type="text"
             value={inputPrompt}
             onChange={(e) => setInputPrompt(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-            placeholder="Ketik pertanyaan Anda..."
-            className="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+            placeholder="Tanya apapun tentang masjid..."
+            className="flex-1 px-4 py-2.5 rounded-xl border-2 border-slate-300 text-xs sm:text-sm text-black font-medium focus:outline-hidden focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all bg-white"
           />
           <button
             onClick={() => handleSendMessage()}
             disabled={isLoading || !inputPrompt.trim()}
-            className="p-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white transition-colors"
+            className="p-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-50 disabled:bg-slate-300 text-white transition-colors shadow-sm"
           >
-            <Send className="w-4 h-4" />
+            <Send className="w-5 h-5" />
           </button>
         </div>
       </div>

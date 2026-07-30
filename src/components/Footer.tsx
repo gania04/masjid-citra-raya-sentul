@@ -55,6 +55,11 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenWakafModal }) 
                 </button>
               </li>
               <li>
+                <button onClick={() => { const el = document.getElementById('quran'); if(el) el.scrollIntoView({behavior: 'smooth'}) }} className="hover:text-lime-300 transition-colors">
+                  • Al-Qur'an Digital
+                </button>
+              </li>
+              <li>
                 <button onClick={() => { const el = document.getElementById('ziswaf'); if(el) el.scrollIntoView({behavior: 'smooth'}) }} className="hover:text-lime-300 transition-colors">
                   • Program ZISWAF
                 </button>

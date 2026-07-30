@@ -1,0 +1,612 @@
+import React, { useState } from 'react';
+import { 
+  ClipboardList, CheckCircle, Clock, XCircle, ChevronDown, ChevronUp, 
+  AlertTriangle, PlusCircle, ShieldCheck, UserCheck, Check, X, FileText 
+} from 'lucide-react';
+import { 
+  INITIAL_ANGGARAN_LIST, INITIAL_PENGAJUAN_LIST, INITIAL_CHART_OF_ACCOUNTS, 
+  AnggaranItem, PengajuanPengeluaran, JurnalEntry 
+} from '../data/akuntansiData';
+
+const formatRp = (n: number) =>
+  new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
+
+const STATUS_COLOR: Record<string, string> = {
+  'Draft': 'bg-slate-100 text-slate-600 border-slate-200',
+  'Menunggu Persetujuan Bendahara': 'bg-amber-100 text-amber-800 border-amber-200',
+  'Menunggu Bendahara': 'bg-amber-100 text-amber-800 border-amber-200',
+  'Menunggu Persetujuan Ketua': 'bg-orange-100 text-orange-800 border-orange-200',
+  'Menunggu Ketua': 'bg-orange-100 text-orange-800 border-orange-200',
+  'Menunggu Persetujuan Direktur': 'bg-purple-100 text-purple-800 border-purple-200',
+  'Menunggu Direktur': 'bg-purple-100 text-purple-800 border-purple-200',
+  'Disetujui': 'bg-emerald-100 text-emerald-800 border-emerald-200',
+  'Ditolak': 'bg-rose-100 text-rose-800 border-rose-200',
+};
+
+const APPROVAL_LEVELS = [
+  { level: 1, role: 'Bendahara', name: 'H. Ahmad', color: 'bg-amber-500' },
+  { level: 2, role: 'Ketua DKM', name: 'Ustadz H. M. Zainuddin', color: 'bg-orange-500' },
+  { level: 3, role: 'Direktur', name: 'Prof. Dr. M. Syafii Antonio', color: 'bg-purple-600' },
+];
+
+interface ModulAnggaranApprovalProps {
+  onAutoPostJournal?: (entry: JurnalEntry) => void;
+}
+
+export const ModulAnggaranApproval: React.FC<ModulAnggaranApprovalProps> = ({ onAutoPostJournal }) => {
+  const [tab, setTab] = useState<'anggaran' | 'pengajuan' | 'tambah'>('pengajuan');
+  const [anggaranList, setAnggaranList] = useState<AnggaranItem[]>(INITIAL_ANGGARAN_LIST);
+  const [pengajuanList, setPengajuanList] = useState<PengajuanPengeluaran[]>(INITIAL_PENGAJUAN_LIST);
+  const [expandedId, setExpandedId] = useState<string | null>('PG-001');
+
+  // Interactive Testing Role (Bendahara | Ketua DKM | Direktur)
+  const [currentTestingRole, setCurrentTestingRole] = useState<'Bendahara' | 'Ketua DKM' | 'Direktur'>('Bendahara');
+  const [approvalNote, setApprovalNote] = useState('');
+
+  // Form Pengajuan State
+  const [formJudul, setFormJudul] = useState('');
+  const [formKodeAkun, setFormKodeAkun] = useState('5-1200');
+  const [formJumlah, setFormJumlah] = useState('');
+  const [formKeterangan, setFormKeterangan] = useState('');
+  const [formPermohon, setFormPermohon] = useState('Staf Operasional Masjid');
+
+  const totalAnggaran = anggaranList.reduce((s, a) => s + a.jumlahDianggarkan, 0);
+  const totalRealisasi = anggaranList.reduce((s, a) => s + a.jumlahRealisasi, 0);
+  const pendingCount = pengajuanList.filter(p => p.status !== 'Disetujui' && p.status !== 'Ditolak').length;
+
+  // Execute Approval action for a request
+  const handleApprovalAction = (pengajuanId: string, action: 'Disetujui' | 'Ditolak') => {
+    const updated = pengajuanList.map(p => {
+      if (p.id !== pengajuanId) return p;
+
+      const currentStepIdx = p.riwayatApproval.findIndex(r => r.role === currentTestingRole);
+      if (currentStepIdx === -1) return p;
+
+      const newRiwayat = [...p.riwayatApproval];
+      newRiwayat[currentStepIdx] = {
+        ...newRiwayat[currentStepIdx],
+        aksi: action,
+        catatan: approvalNote || (action === 'Disetujui' ? 'Disetujui & diverifikasi' : 'Ditolak'),
+        tanggal: new Date().toISOString().split('T')[0],
+      };
+
+      let newStatus = p.status;
+      let newStepAktif = p.stepAktif;
+
+      if (action === 'Ditolak') {
+        newStatus = 'Ditolak';
+      } else {
+        if (currentTestingRole === 'Bendahara') {
+          newStatus = 'Menunggu Ketua';
+          newStepAktif = 2;
+        } else if (currentTestingRole === 'Ketua DKM') {
+          newStatus = 'Menunggu Direktur';
+          newStepAktif = 3;
+        } else if (currentTestingRole === 'Direktur') {
+          newStatus = 'Disetujui';
+          newStepAktif = 4;
+
+          // Auto Post Journal Entry upon Level 3 (Direktur) Final Signoff
+          const autoJournal: JurnalEntry = {
+            id: `JU-AUTO-${Date.now()}`,
+            tanggal: new Date().toISOString().split('T')[0],
+            noBukti: `BKK-${p.noPengajuan}`,
+            keterangan: `Pencairan Pengeluaran Anggaran: ${p.judul} (Persetujuan Direktur)`,
+            sumber: 'Anggaran',
+            baris: [
+              { kodeAkun: p.kodeAkun, namaAkun: `${p.namaAkun} (Debit)`, debit: p.jumlah, kredit: 0 },
+              { kodeAkun: '1-1200', namaAkun: 'Bank BSI - Rekening Operasional (Kredit)', debit: 0, kredit: p.jumlah },
+            ],
+            status: 'Posted',
+            dibuatOleh: 'Sistem Approval Direktur',
+            tanggalBuat: new Date().toISOString().split('T')[0],
+          };
+
+          if (onAutoPostJournal) onAutoPostJournal(autoJournal);
+
+          // Update Anggaran realization
+          setAnggaranList(prev => prev.map(a => {
+            if (a.kodeAkun === p.kodeAkun) {
+              return { ...a, jumlahRealisasi: a.jumlahRealisasi + p.jumlah };
+            }
+            return a;
+          }));
+        }
+      }
+
+      return {
+        ...p,
+        status: newStatus,
+        stepAktif: newStepAktif,
+        riwayatApproval: newRiwayat,
+      };
+    });
+
+    setPengajuanList(updated);
+    setApprovalNote('');
+    alert(
+      action === 'Disetujui'
+        ? `Pengeluaran disetujui oleh ${currentTestingRole}! ${
+            currentTestingRole === 'Direktur'
+              ? '✨ Final Approval Direktur tercapai. Jurnal pencairan otomatis diposting!'
+              : 'Diteruskan ke level approval berikutnya.'
+          }`
+        : `Pengeluaran ditolak oleh ${currentTestingRole}.`
+    );
+  };
+
+  const handleCreatePengajuan = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formJudul || !formJumlah) return;
+
+    const selectedAkunObj = INITIAL_CHART_OF_ACCOUNTS.find(a => a.kode === formKodeAkun);
+    const nominal = parseInt(formJumlah.replace(/\D/g, ''), 10) || 0;
+
+    const newPengajuan: PengajuanPengeluaran = {
+      id: `PG-${Date.now()}`,
+      tanggal: new Date().toISOString().split('T')[0],
+      noPengajuan: `PGJ-2026-07-00${pengajuanList.length + 1}`,
+      judul: formJudul,
+      keterangan: formKeterangan || formJudul,
+      kodeAkun: formKodeAkun,
+      namaAkun: selectedAkunObj ? selectedAkunObj.nama : 'Beban Operasional',
+      jumlah: nominal,
+      dibuatOleh: 'Jamaah / Staf DKM',
+      rolePermohon: formPermohon,
+      status: 'Menunggu Bendahara',
+      stepAktif: 1,
+      riwayatApproval: [
+        { level: 1, role: 'Bendahara', nama: 'H. Ahmad', aksi: 'Menunggu' },
+        { level: 2, role: 'Ketua DKM', nama: 'Ustadz H. M. Zainuddin', aksi: 'Menunggu' },
+        { level: 3, role: 'Direktur', nama: 'Prof. Dr. M. Syafii Antonio', aksi: 'Menunggu' },
+      ],
+    };
+
+    setPengajuanList([newPengajuan, ...pengajuanList]);
+    setTab('pengajuan');
+    setExpandedId(newPengajuan.id);
+
+    // Reset Form
+    setFormJudul('');
+    setFormJumlah('');
+    setFormKeterangan('');
+    alert('Pengajuan pengeluaran berhasil dikirim! Sekarang masuk ke alur review Bendahara.');
+  };
+
+  return (
+    <div className="space-y-6 animate-in fade-in">
+      
+      {/* Banner Header */}
+      <div className="bg-gradient-to-r from-purple-900 via-indigo-900 to-violet-800 rounded-3xl p-6 sm:p-8 text-white shadow-xl">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center">
+              <ClipboardList className="w-6 h-6 text-purple-200" />
+            </div>
+            <div>
+              <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight">Rencana Anggaran & Approval Direktur</h2>
+              <p className="text-purple-200 text-xs sm:text-sm">Workflow Persetujuan Bertingkat (Bendahara → Ketua DKM → Direktur)</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Dynamic Metric Cards */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="bg-white/10 backdrop-blur rounded-2xl p-4 border border-white/10">
+            <p className="text-xs text-purple-200 mb-1">Total Pagu Anggaran (RAPB)</p>
+            <p className="font-black text-lg sm:text-xl font-mono">{formatRp(totalAnggaran)}</p>
+          </div>
+          <div className="bg-white/10 backdrop-blur rounded-2xl p-4 border border-white/10">
+            <p className="text-xs text-purple-200 mb-1">Realisasi Pengeluaran</p>
+            <p className="font-black text-lg sm:text-xl font-mono text-emerald-300">{formatRp(totalRealisasi)}</p>
+          </div>
+          <div className="bg-white/10 backdrop-blur rounded-2xl p-4 border border-white/10">
+            <p className="text-xs text-purple-200 mb-1">Menunggu Persetujuan</p>
+            <p className="font-black text-lg sm:text-xl text-amber-300">{pendingCount} <span className="text-xs font-normal">Pengajuan</span></p>
+          </div>
+        </div>
+      </div>
+
+      {/* Role Selector Simulator Bar */}
+      <div className="bg-amber-50 border border-amber-200 rounded-3xl p-5 shadow-xs space-y-3">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-2 text-amber-900">
+            <ShieldCheck className="w-5 h-5 text-amber-700 shrink-0" />
+            <span className="font-extrabold text-xs sm:text-sm">Simulasi Otorisasi Role Approval:</span>
+          </div>
+          <span className="text-xs font-semibold text-amber-800">
+            Pilih Role Anda saat ini untuk menguji tombol Setujui / Tolak:
+          </span>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3">
+          {APPROVAL_LEVELS.map(l => (
+            <button
+              key={l.role}
+              onClick={() => setCurrentTestingRole(l.role as any)}
+              className={`p-3.5 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
+                currentTestingRole === l.role
+                  ? 'bg-purple-900 text-white border-purple-950 shadow-md ring-2 ring-purple-400 font-bold'
+                  : 'bg-white hover:bg-amber-100/50 border-amber-200 text-slate-700'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className={`w-6 h-6 rounded-full text-xs font-black flex items-center justify-center ${
+                  currentTestingRole === l.role ? 'bg-amber-400 text-amber-950' : 'bg-slate-200 text-slate-700'
+                }`}>
+                  L{l.level}
+                </span>
+                {currentTestingRole === l.role && <UserCheck className="w-4 h-4 text-amber-300" />}
+              </div>
+              <p className="text-xs sm:text-sm font-extrabold mt-2">{l.role}</p>
+              <p className={`text-[10px] ${currentTestingRole === l.role ? 'text-purple-200' : 'text-slate-400'}`}>
+                {l.name}
+              </p>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Tabs Selector */}
+      <div className="flex gap-2 bg-white p-2 rounded-2xl border border-slate-200 shadow-xs">
+        <button
+          onClick={() => setTab('pengajuan')}
+          className={`flex-1 py-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${
+            tab === 'pengajuan'
+              ? 'bg-purple-800 text-white shadow-md'
+              : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          Pengajuan Pengeluaran
+          {pendingCount > 0 && (
+            <span className="bg-amber-400 text-amber-950 text-xs font-black px-2 py-0.5 rounded-full">
+              {pendingCount}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => setTab('anggaran')}
+          className={`flex-1 py-3 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+            tab === 'anggaran'
+              ? 'bg-purple-800 text-white shadow-md'
+              : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          Rencana Anggaran RAPB 2026
+        </button>
+        <button
+          onClick={() => setTab('tambah')}
+          className={`flex-1 py-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${
+            tab === 'tambah'
+              ? 'bg-purple-800 text-white shadow-md'
+              : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          <PlusCircle className="w-4 h-4" /> + Buat Pengajuan Baru
+        </button>
+      </div>
+
+      {/* PENGAJUAN PENGELUARAN TAB */}
+      {tab === 'pengajuan' && (
+        <div className="space-y-4">
+          {pengajuanList.map(item => {
+            const isExpanded = expandedId === item.id;
+            const needsActionFromCurrentRole = 
+              (currentTestingRole === 'Bendahara' && item.status === 'Menunggu Bendahara') ||
+              (currentTestingRole === 'Ketua DKM' && item.status === 'Menunggu Ketua') ||
+              (currentTestingRole === 'Direktur' && item.status === 'Menunggu Direktur');
+
+            return (
+              <div key={item.id} className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-xs hover:shadow-md transition-shadow">
+                
+                {/* Accordion Bar */}
+                <button
+                  onClick={() => setExpandedId(isExpanded ? null : item.id)}
+                  className="w-full p-5 sm:p-6 text-left hover:bg-slate-50/80 transition-colors cursor-pointer"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-mono text-xs font-bold text-purple-700 bg-purple-50 border border-purple-200 px-2.5 py-0.5 rounded-lg">
+                          {item.noPengajuan}
+                        </span>
+                        <span className={`text-xs font-bold px-3 py-0.5 rounded-full border ${STATUS_COLOR[item.status] || 'bg-slate-100 text-slate-600'}`}>
+                          {item.status}
+                        </span>
+                        {needsActionFromCurrentRole && (
+                          <span className="bg-amber-400 text-amber-950 font-black text-[10px] px-2 py-0.5 rounded-md animate-pulse">
+                            ⚠️ Butuh Persetujuan {currentTestingRole} Anda!
+                          </span>
+                        )}
+                      </div>
+
+                      <h3 className="font-extrabold text-slate-900 text-base sm:text-lg">{item.judul}</h3>
+                      <p className="text-xs text-slate-500">
+                        Diajukan oleh: <span className="font-semibold text-slate-700">{item.dibuatOleh} ({item.rolePermohon})</span> • Tanggal: {item.tanggal}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-4 self-end sm:self-center">
+                      <div className="text-right">
+                        <p className="text-xs text-slate-400 uppercase tracking-wider font-bold">Nominal Pengeluaran</p>
+                        <p className="text-lg sm:text-xl font-black font-mono text-purple-800">{formatRp(item.jumlah)}</p>
+                      </div>
+
+                      <div className="p-2 bg-slate-100 rounded-xl text-slate-500">
+                        {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Visual 3-Level Approval Stepper */}
+                  <div className="mt-5 pt-4 border-t border-slate-100">
+                    <div className="flex items-center justify-between max-w-xl mx-auto">
+                      {item.riwayatApproval.map((step, idx) => (
+                        <React.Fragment key={step.role}>
+                          <div className="flex flex-col items-center">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black text-white transition-all shadow-xs ${
+                              step.aksi === 'Disetujui'
+                                ? 'bg-emerald-500 ring-4 ring-emerald-100'
+                                : step.aksi === 'Ditolak'
+                                ? 'bg-rose-500 ring-4 ring-rose-100'
+                                : 'bg-slate-300'
+                            }`}>
+                              {step.aksi === 'Disetujui' ? '✓' : step.aksi === 'Ditolak' ? '✗' : idx + 1}
+                            </div>
+                            <p className="text-[10px] font-bold text-slate-700 mt-1.5">{step.role}</p>
+                            <p className={`text-[9px] font-semibold ${
+                              step.aksi === 'Disetujui' ? 'text-emerald-600' : step.aksi === 'Ditolak' ? 'text-rose-600' : 'text-slate-400'
+                            }`}>
+                              {step.aksi}
+                            </p>
+                          </div>
+
+                          {idx < item.riwayatApproval.length - 1 && (
+                            <div className={`flex-1 h-1 mx-2 rounded-full ${
+                              item.riwayatApproval[idx + 1].aksi !== 'Menunggu' ? 'bg-emerald-400' : 'bg-slate-200'
+                            }`} />
+                          )}
+                        </React.Fragment>
+                      ))}
+                    </div>
+                  </div>
+                </button>
+
+                {/* Expanded Details & Approval Actions */}
+                {isExpanded && (
+                  <div className="p-6 bg-slate-50 border-t border-slate-200 space-y-5">
+                    
+                    <div className="bg-white p-4 rounded-2xl border border-slate-200 space-y-2">
+                      <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Uraian & Rincian Kebutuhan Pengeluaran</p>
+                      <p className="text-sm font-medium text-slate-800">{item.keterangan}</p>
+                      <div className="flex items-center gap-2 text-xs font-semibold text-purple-700 pt-2 border-t border-slate-100">
+                        <FileText className="w-4 h-4" /> Beban CoA: <span className="font-mono">{item.kodeAkun} – {item.namaAkun}</span>
+                      </div>
+                    </div>
+
+                    {/* Timeline History */}
+                    <div className="space-y-3">
+                      <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Riwayat Pertimbangan & Otorisasi</p>
+                      {item.riwayatApproval.map((r, i) => (
+                        <div key={i} className={`p-4 rounded-2xl border flex items-start gap-3.5 ${
+                          r.aksi === 'Disetujui' 
+                            ? 'bg-emerald-50/60 border-emerald-200' 
+                            : r.aksi === 'Ditolak'
+                            ? 'bg-rose-50/60 border-rose-200'
+                            : 'bg-white border-slate-200'
+                        }`}>
+                          <div className={`w-8 h-8 rounded-2xl flex items-center justify-center font-bold text-white text-xs shrink-0 ${
+                            r.aksi === 'Disetujui' ? 'bg-emerald-600' : r.aksi === 'Ditolak' ? 'bg-rose-600' : 'bg-slate-300'
+                          }`}>
+                            L{r.level}
+                          </div>
+
+                          <div className="flex-1 space-y-1">
+                            <div className="flex items-center justify-between">
+                              <p className="text-xs font-extrabold text-slate-800">{r.role}: {r.nama}</p>
+                              <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
+                                r.aksi === 'Disetujui' ? 'bg-emerald-100 text-emerald-800' : r.aksi === 'Ditolak' ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-600'
+                              }`}>
+                                {r.aksi} {r.tanggal ? `(${r.tanggal})` : ''}
+                              </span>
+                            </div>
+                            {r.catatan && <p className="text-xs text-slate-600 italic">"{r.catatan}"</p>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Action Form if current role can approve */}
+                    {item.status !== 'Disetujui' && item.status !== 'Ditolak' && (
+                      <div className="bg-white p-5 rounded-2xl border-2 border-purple-200 space-y-3">
+                        <div className="flex items-center gap-2">
+                          <ShieldCheck className="w-5 h-5 text-purple-700" />
+                          <h4 className="text-sm font-extrabold text-slate-900">
+                            Aksi Otorisasi ({currentTestingRole})
+                          </h4>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                            Catatan Persetujuan / Penolakan ({currentTestingRole})
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="Contoh: Disetujui, dana operasional mencukupi..."
+                            value={approvalNote}
+                            onChange={e => setApprovalNote(e.target.value)}
+                            className="w-full p-3 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-purple-600"
+                          />
+                        </div>
+
+                        <div className="flex gap-3 pt-2">
+                          <button
+                            onClick={() => handleApprovalAction(item.id, 'Disetujui')}
+                            className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95 cursor-pointer"
+                          >
+                            <Check className="w-4 h-4" /> Setujui Pengeluaran (Sebagai {currentTestingRole})
+                          </button>
+                          <button
+                            onClick={() => handleApprovalAction(item.id, 'Ditolak')}
+                            className="flex-1 py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs sm:text-sm rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95 cursor-pointer"
+                          >
+                            <X className="w-4 h-4" /> Tolak Pengeluaran
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* RENCANA ANGGARAN (RAPB) TAB */}
+      {tab === 'anggaran' && (
+        <div className="space-y-4">
+          {anggaranList.map(item => {
+            const pct = item.jumlahDianggarkan > 0 ? Math.round((item.jumlahRealisasi / item.jumlahDianggarkan) * 100) : 0;
+            return (
+              <div key={item.id} className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-bold bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-lg border border-slate-200">
+                        {item.kategori}
+                      </span>
+                      <span className={`text-xs font-bold px-3 py-0.5 rounded-full border ${STATUS_COLOR[item.status] || 'bg-slate-100 text-slate-600'}`}>
+                        {item.status}
+                      </span>
+                    </div>
+                    <h3 className="text-lg font-extrabold text-slate-900">{item.namaKegiatan}</h3>
+                    <p className="text-xs text-slate-400">Kode CoA: <span className="font-mono font-bold text-purple-700">{item.kodeAkun}</span> • Periode RAPB {item.tahun}/{String(item.bulan).padStart(2, '0')}</p>
+                  </div>
+
+                  <div className="text-right self-end sm:self-center">
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Pagu Dianggarkan</p>
+                    <p className="text-xl font-black font-mono text-purple-800">{formatRp(item.jumlahDianggarkan)}</p>
+                  </div>
+                </div>
+
+                {/* Progress bar */}
+                <div className="space-y-1.5 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                  <div className="flex justify-between text-xs font-bold">
+                    <span className="text-slate-600">Realisasi: <span className="font-mono text-emerald-700">{formatRp(item.jumlahRealisasi)}</span></span>
+                    <span className={pct >= 100 ? 'text-rose-600' : 'text-purple-800'}>{pct}% Serapan</span>
+                  </div>
+                  <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        pct >= 100 ? 'bg-rose-500' : pct >= 75 ? 'bg-amber-500' : 'bg-emerald-500'
+                      }`}
+                      style={{ width: `${Math.min(pct, 100)}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* FORM BUAT PENGAJUAN BARU */}
+      {tab === 'tambah' && (
+        <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+          <div className="border-b border-slate-100 pb-4">
+            <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <PlusCircle className="w-5 h-5 text-purple-700" /> Form Permohonan Pengeluaran Anggaran Baru
+            </h3>
+            <p className="text-xs text-slate-500 mt-1">
+              Pengajuan ini akan diproses secara otomatis melalui alur 3 Tingkat Approval: <strong>Bendahara → Ketua DKM → Direktur</strong>.
+            </p>
+          </div>
+
+          <form onSubmit={handleCreatePengajuan} className="space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Judul Pengeluaran / Kegiatan *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Contoh: Pembelian Karpet Shalat Musholla..."
+                  value={formJudul}
+                  onChange={e => setFormJudul(e.target.value)}
+                  className="w-full p-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-purple-700"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Kode Akun Beban CoA *</label>
+                <select
+                  value={formKodeAkun}
+                  onChange={e => setFormKodeAkun(e.target.value)}
+                  className="w-full p-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-purple-700 font-semibold text-slate-800"
+                >
+                  {INITIAL_CHART_OF_ACCOUNTS.filter(a => a.jenis === 'Beban').map(a => (
+                    <option key={a.kode} value={a.kode}>
+                      {a.kode} - {a.nama} ({a.kelompok})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Nominal Anggaran (Rp) *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Contoh: 3500000"
+                  value={formJumlah}
+                  onChange={e => setFormJumlah(e.target.value)}
+                  className="w-full p-3 border border-slate-200 rounded-xl text-sm font-mono font-bold focus:outline-none focus:border-purple-700 text-purple-900"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Jabatan / Role Pemohon *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Contoh: Staf Operasional, Tim Dakwah, Panitia Pembangunan"
+                  value={formPermohon}
+                  onChange={e => setFormPermohon(e.target.value)}
+                  className="w-full p-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-purple-700"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Deskripsi / Rincian Urgensi Pengeluaran *</label>
+              <textarea
+                rows={3}
+                required
+                placeholder="Jelaskan kebutuhan pengeluaran secara rinci untuk pertimbangan Bendahara, Ketua DKM, dan Direktur..."
+                value={formKeterangan}
+                onChange={e => setFormKeterangan(e.target.value)}
+                className="w-full p-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-purple-700"
+              />
+            </div>
+
+            <div className="pt-3 flex justify-end gap-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setTab('pengajuan')}
+                className="px-5 py-3 border border-slate-200 rounded-xl text-slate-700 font-bold text-xs sm:text-sm hover:bg-slate-100"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                className="px-6 py-3 bg-purple-800 hover:bg-purple-900 text-white rounded-xl font-bold text-xs sm:text-sm transition-all shadow-md active:scale-95"
+              >
+                Kirim Pengajuan Ke Bendahara
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+    </div>
+  );
+};

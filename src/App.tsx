@@ -10,11 +10,19 @@ import { ProfilMasjid } from './components/ProfilMasjid';
 import { LokasiKontak } from './components/LokasiKontak';
 import { Footer } from './components/Footer';
 import { AdminDashboard } from './components/AdminDashboard';
+import { JamaahDashboard } from './components/JamaahDashboard';
+import { LoginModal } from './components/LoginModal';
+import { AiAsistenModal } from './components/AiAsistenModal';
 import { INITIAL_STATS } from './data/mockData';
 import { supabase } from './lib/supabase';
 
 export default function App() {
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isJamaahLoggedIn, setIsJamaahLoggedIn] = useState(false);
+  const [namaJamaah, setNamaJamaah] = useState('Hamba Allah');
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+  const [isQuranModalOpen, setIsQuranModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   
   const defaultPrograms = [
@@ -55,6 +63,15 @@ export default function App() {
 
   // State for ZISWAF Programs
   const [programs, setPrograms] = useState(defaultPrograms);
+  
+  // Home Visibility State managed by Admin
+  const [homeVisibility, setHomeVisibility] = useState({
+    showJadwal: true,
+    showKalender: true,
+    showZiswaf: true,
+    showQuran: true,
+    showTentang: true,
+  });
 
   React.useEffect(() => {
     const fetchPrograms = async () => {
@@ -109,32 +126,53 @@ export default function App() {
   };
 
   if (isAdmin) {
-    return <AdminDashboard onBack={() => setIsAdmin(false)} programs={programs} onAddDonation={handleAddDonation} />;
+    return <AdminDashboard 
+      onBack={() => setIsAdmin(false)} 
+      programs={programs} 
+      onAddDonation={handleAddDonation} 
+      homeVisibility={homeVisibility}
+      setHomeVisibility={setHomeVisibility}
+    />;
+  }
+
+  if (isJamaahLoggedIn) {
+    return <JamaahDashboard nama={namaJamaah} onBack={() => { setIsJamaahLoggedIn(false); setNamaJamaah('Hamba Allah'); }} />;
   }
 
   return (
-    <div className="min-h-screen bg-[#F9F8F4] text-[#1A1A1A] font-sans selection:bg-lime-500 selection:text-white">
+    <div className="min-h-screen bg-[#F9F8F4] text-[#1A1A1A] font-sans selection:bg-lime-500 selection:text-white relative">
       {/* Navigation Header */}
-      <Header onAdminClick={() => setIsAdmin(true)} />
+      <Header 
+        onLoginClick={() => setIsLoginModalOpen(true)} 
+        onAiClick={() => setIsAiModalOpen(true)} 
+        onQuranClick={() => setIsQuranModalOpen(true)}
+      />
 
       <main>
         {/* Home / Beranda Sections */}
         <Hero />
-        <JadwalShalatCard />
+        {homeVisibility.showJadwal && <JadwalShalatCard />}
         
         {/* Kalender Kegiatan */}
-        <KalenderKegiatan />
+        {homeVisibility.showKalender && <KalenderKegiatan />}
 
         {/* ZISWAF Programs */}
-        <DaftarProgram programs={programs} />
+        {homeVisibility.showZiswaf && <DaftarProgram programs={programs} />}
 
-        {/* Al-Quran Digital (Hidden Modal via Banner) */}
-        <AlQuranDigital />
+        {/* Al-Quran Digital Banner & Modal */}
+        {homeVisibility.showQuran && (
+          <AlQuranDigital 
+            isOpenModal={isQuranModalOpen} 
+            onCloseModal={() => setIsQuranModalOpen(false)} 
+          />
+        )}
 
         {/* Tentang Kami */}
-        <div id="tentang">
-          <ProfilMasjid />
-        </div>
+        {homeVisibility.showTentang && (
+          <div id="tentang">
+            <ProfilMasjid />
+          </div>
+        )}
 
         {/* Kontak Kami & Media Sosial */}
         <div id="kontak">
@@ -145,6 +183,22 @@ export default function App() {
 
       {/* Footer */}
       <Footer onNavigate={() => {}} onOpenWakafModal={() => {}} />
+
+      {/* Modals */}
+      <LoginModal 
+        isOpen={isLoginModalOpen} 
+        onClose={() => setIsLoginModalOpen(false)} 
+        onAdminLogin={() => setIsAdmin(true)} 
+        onJamaahLogin={(nama) => { setNamaJamaah(nama); setIsJamaahLoggedIn(true); }}
+      />
+      <AiAsistenModal 
+        isOpen={isAiModalOpen} 
+        onClose={() => setIsAiModalOpen(false)} 
+        onOpenWakaf={() => {
+          setIsAiModalOpen(false);
+          document.getElementById('ziswaf')?.scrollIntoView({ behavior: 'smooth' });
+        }}
+      />
     </div>
   );
 }

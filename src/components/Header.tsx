@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Settings } from 'lucide-react';
+import { Bot, User } from 'lucide-react';
 import { getPrayerTimesSentul, getNextPrayerInfo } from '../utils/prayerTimes';
 
 interface HeaderProps {
-  onAdminClick: () => void;
+  onLoginClick: () => void;
+  onAiClick: () => void;
+  onQuranClick?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onAdminClick }) => {
+export const Header: React.FC<HeaderProps> = ({ onLoginClick, onAiClick, onQuranClick }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const prayerTimes = getPrayerTimesSentul();
   const nextPrayer = getNextPrayerInfo(prayerTimes);
@@ -23,6 +25,7 @@ export const Header: React.FC<HeaderProps> = ({ onAdminClick }) => {
 
   const navItems = [
     { name: 'Home', id: 'home' },
+    { name: "Al-Qur'an Digital", id: 'quran' },
     { name: 'Kalender Kegiatan', id: 'kalender' },
     { name: 'ZISWAF', id: 'ziswaf' },
     { name: 'Tentang Kami', id: 'tentang' },
@@ -32,6 +35,8 @@ export const Header: React.FC<HeaderProps> = ({ onAdminClick }) => {
   const handleScroll = (id: string) => {
     if (id === 'home') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (id === 'quran' && onQuranClick) {
+      onQuranClick();
     } else {
       const el = document.getElementById(id);
       if (el) el.scrollIntoView({ behavior: 'smooth' });
@@ -50,12 +55,6 @@ export const Header: React.FC<HeaderProps> = ({ onAdminClick }) => {
             <span className="bg-white/20 px-2 py-1 rounded">
               {nextPrayer.name}: {nextPrayer.time}
             </span>
-            <button 
-              onClick={onAdminClick}
-              className="flex items-center gap-1 ml-4 hover:text-lime-200 transition-colors bg-black/10 px-2 py-1 rounded"
-            >
-              <Settings className="w-3 h-3" /> Pengelola
-            </button>
           </div>
         </div>
       </div>
@@ -87,13 +86,21 @@ export const Header: React.FC<HeaderProps> = ({ onAdminClick }) => {
             ))}
           </nav>
 
-          {/* Mobile Admin Button */}
-          <button 
-            onClick={onAdminClick}
-            className="md:hidden flex items-center gap-1 text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg"
-          >
-            <Settings className="w-4 h-4" /> Panel
-          </button>
+          {/* Action Buttons */}
+          <div className="flex items-center gap-3 mt-2 md:mt-0">
+            <button 
+              onClick={onAiClick}
+              className="flex items-center justify-center gap-1.5 px-4 py-2 border-2 border-amber-500 bg-amber-50 text-amber-700 font-bold text-sm rounded-full hover:bg-amber-500 hover:text-white transition-colors shadow-sm"
+            >
+              <Bot className="w-4 h-4" /> Tanya AI
+            </button>
+            <button 
+              onClick={onLoginClick}
+              className="flex items-center justify-center gap-1.5 px-4 py-2 border-2 border-slate-900 text-slate-900 bg-white font-bold text-sm rounded-full hover:bg-slate-900 hover:text-white transition-colors shadow-sm uppercase"
+            >
+              <User className="w-4 h-4" /> Login Portal
+            </button>
+          </div>
         </div>
       </div>
     </header>
