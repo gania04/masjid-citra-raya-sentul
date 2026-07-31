@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, User, Calculator, Clock, Calendar, ChevronRight, LogOut, Download, Activity, Image as ImageIcon, LayoutDashboard, Settings, Bell, Camera, Wallet, BookOpen, Volume2, VolumeX, BookMarked, Sparkles, Play, Award, Heart } from 'lucide-react';
+import { ArrowLeft, User, Calculator, Clock, Calendar, ChevronRight, LogOut, Download, Activity, Image as ImageIcon, LayoutDashboard, Settings, Bell, Camera, Wallet, BookOpen, Volume2, VolumeX, BookMarked, Sparkles, Play, Award, Heart, RefreshCw } from 'lucide-react';
 import { AlQuranDigital, BookmarkData } from './AlQuranDigital';
 
 interface JamaahDashboardProps {
@@ -62,88 +62,102 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama }
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
   };
 
-  const NavButton = ({ id, icon: Icon, label }: { id: any, icon: any, label: string }) => (
+  const TabButton = ({ id, icon: Icon, label }: { id: any, icon: any, label: string }) => (
     <button 
       onClick={() => setActiveTab(id)}
-      className={`flex items-center justify-between p-4 rounded-xl font-bold transition-all ${activeTab === id ? 'bg-amber-500 text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-100'}`}
+      className={`flex items-center gap-2 px-5 py-3 rounded-full font-bold text-sm whitespace-nowrap transition-all cursor-pointer ${
+        activeTab === id 
+          ? 'bg-blue-600 text-white shadow-md' 
+          : 'text-slate-600 hover:bg-slate-50'
+      }`}
     >
-      <div className="flex items-center gap-3"><Icon className="w-5 h-5" /> {label}</div>
-      <ChevronRight className="w-4 h-4 opacity-50 hidden md:block" />
+      <Icon className="w-4 h-4" /> {label}
     </button>
   );
 
   const MobileNavButton = ({ id, icon: Icon, label }: { id: any, icon: any, label: string }) => (
-    <button onClick={() => setActiveTab(id)} className={`flex flex-col items-center p-2 min-w-[4rem] ${activeTab === id ? 'text-amber-500' : 'text-slate-400'}`}>
+    <button onClick={() => setActiveTab(id)} className={`flex flex-col items-center p-2 min-w-[4rem] ${activeTab === id ? 'text-blue-600' : 'text-slate-400'}`}>
       <Icon className="w-5 h-5 mb-1" />
       <span className="text-[9px] font-bold">{label}</span>
     </button>
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-800 pb-20 md:pb-0">
-      {/* Mobile/Desktop Header */}
-      <div className="bg-lime-700 text-white shadow-md sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button onClick={onBack} className="p-2 bg-lime-800 hover:bg-lime-900 rounded-lg transition-colors">
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <div>
-              <h1 className="text-lg md:text-xl font-bold flex items-center gap-2">Portal Jamaah</h1>
-              <p className="text-lime-200 text-xs">Selamat datang, <span className="font-bold text-white">{profilName}</span></p>
+    <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-800 pb-20 md:pb-12">
+      {/* Banner Profile (Dark Blue) */}
+      <div className="max-w-7xl mx-auto px-4 mt-6">
+        <div className="bg-[#1e3a8a] rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center gap-6 shadow-lg relative overflow-hidden">
+          {/* Avatar */}
+          <div className="w-24 h-24 rounded-full border-2 border-amber-400 bg-amber-500/10 flex items-center justify-center text-4xl font-bold text-amber-400 shrink-0 shadow-inner z-10">
+            {profilName.charAt(0).toUpperCase()}
+          </div>
+          
+          <div className="flex-1 text-center md:text-left z-10 w-full">
+            <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-2">
+              <span className="bg-amber-400 text-amber-900 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">Anggota Terverifikasi</span>
+              <span className="bg-amber-900/50 border border-amber-500/30 text-amber-200 text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 uppercase tracking-wider"><Award className="w-3 h-3" /> Bronze Muhsinin</span>
+            </div>
+            <h2 className="text-3xl font-bold text-white mb-1">{profilName}</h2>
+            <p className="text-blue-200 text-sm mb-4">081517045406 •</p>
+            
+            <div className="flex flex-wrap justify-center md:justify-start gap-3">
+              <div className="bg-white/10 rounded-xl px-4 py-2 border border-white/10 text-center">
+                <p className="text-[9px] text-blue-200 font-bold uppercase tracking-wider mb-0.5">Total Kebaikan</p>
+                <p className="text-lg font-bold text-amber-400">Rp 1.450.000</p>
+              </div>
+              <div className="bg-white/10 rounded-xl px-4 py-2 border border-white/10 text-center">
+                <p className="text-[9px] text-blue-200 font-bold uppercase tracking-wider mb-0.5">Bergabung Sejak</p>
+                <p className="text-lg font-bold text-white">Jul 2026</p>
+              </div>
+              <button onClick={() => window.location.reload()} className="bg-white/5 hover:bg-white/10 rounded-xl px-4 py-2 border border-white/10 flex flex-col items-center justify-center text-blue-200 transition-colors cursor-pointer">
+                <RefreshCw className="w-4 h-4 mb-0.5" />
+                <span className="text-[9px] font-bold uppercase">Refresh</span>
+              </button>
+              <button onClick={onBack} className="bg-red-500/20 hover:bg-red-500/30 rounded-xl px-4 py-2 border border-red-500/30 flex flex-col items-center justify-center text-red-200 transition-colors cursor-pointer ml-auto md:ml-4">
+                <LogOut className="w-4 h-4 mb-0.5" />
+                <span className="text-[9px] font-bold uppercase">Keluar</span>
+              </button>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button onClick={() => setActiveTab('profil')} className="hidden md:flex items-center gap-2 text-sm bg-lime-800 hover:bg-lime-900 px-3 py-1.5 rounded-lg transition-colors cursor-pointer">
-              <img src={profilePic} alt="Profile" className="w-6 h-6 rounded-full object-cover border border-lime-400" />
-              <span>{profilName}</span>
-            </button>
-            <button onClick={onBack} className="hidden md:flex items-center gap-2 text-sm bg-red-600/80 hover:bg-red-600 px-3 py-1.5 rounded-lg transition-colors font-bold">
-              <LogOut className="w-4 h-4" /> Keluar
-            </button>
-            <button onClick={onBack} className="p-2 text-lime-200 hover:text-white md:hidden">
-              <LogOut className="w-5 h-5" />
-            </button>
-          </div>
+          
+          {/* Decorative background circle */}
+          <div className="absolute right-0 top-0 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl transform translate-x-1/3 -translate-y-1/3 pointer-events-none"></div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-6 md:py-8 flex flex-col md:flex-row gap-6">
-        
-        {/* Sidebar Nav (Desktop) */}
-        <div className="hidden md:flex flex-col w-64 shrink-0 gap-2 h-fit overflow-y-auto max-h-[80vh] pr-2 no-scrollbar">
-          <NavButton id="ringkasan" icon={LayoutDashboard} label="Ringkasan ZISWAF" />
-          <NavButton id="donasi" icon={Calendar} label="Donasi & Pengingat" />
-          <NavButton id="laporan" icon={Activity} label="Laporan Progress" />
-          <NavButton id="quran" icon={BookOpen} label="Al-Quran Digital" />
-          <NavButton id="jadwal" icon={Clock} label="Jadwal & Adzan" />
-          <NavButton id="histori" icon={Clock} label="Histori Transaksi" />
-          <NavButton id="profil" icon={Settings} label="Pengaturan Profil" />
+      {/* Horizontal Nav Tabs */}
+      <div className="max-w-7xl mx-auto px-4 mt-6 hidden md:block">
+        <div className="bg-white rounded-full p-2 shadow-sm border border-slate-200 flex overflow-x-auto no-scrollbar justify-between">
+          <TabButton id="ringkasan" icon={Activity} label="Ringkasan ZISWAF" />
+          <TabButton id="donasi" icon={Wallet} label="Keuangan Pribadi" />
+          <TabButton id="laporan" icon={LayoutDashboard} label="Progress" />
+          <TabButton id="quran" icon={BookOpen} label="Al-Quran Digital" />
+          <TabButton id="jadwal" icon={Clock} label="Jadwal & Adzan" />
+          <TabButton id="histori" icon={Calendar} label="Histori Transaksi" />
+          <TabButton id="profil" icon={Settings} label="Pengaturan Profil" />
         </div>
+      </div>
 
-        {/* Mobile Bottom Nav */}
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-between px-2 py-1 z-50 overflow-x-auto no-scrollbar gap-2">
-          <MobileNavButton id="ringkasan" icon={LayoutDashboard} label="Ringkasan" />
-          <MobileNavButton id="donasi" icon={Calendar} label="Donasi" />
-          <MobileNavButton id="quran" icon={BookOpen} label="Quran" />
-          <MobileNavButton id="jadwal" icon={Clock} label="Jadwal" />
-          <MobileNavButton id="laporan" icon={Activity} label="Progress" />
-          <MobileNavButton id="profil" icon={Settings} label="Profil" />
-        </div>
+      {/* Mobile Bottom Nav */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-between px-2 py-1 z-50 overflow-x-auto no-scrollbar gap-2">
+        <MobileNavButton id="ringkasan" icon={LayoutDashboard} label="Ringkasan" />
+        <MobileNavButton id="donasi" icon={Wallet} label="Keuangan" />
+        <MobileNavButton id="quran" icon={BookOpen} label="Quran" />
+        <MobileNavButton id="jadwal" icon={Clock} label="Jadwal" />
+        <MobileNavButton id="histori" icon={Calendar} label="Histori" />
+        <MobileNavButton id="profil" icon={Settings} label="Profil" />
+      </div>
 
-        {/* Content Area */}
-        <div className="flex-1 overflow-hidden">
+      {/* Content Area */}
+      <div className="max-w-7xl mx-auto px-4 mt-8 pb-12">
           
           {/* TAB 1: RINGKASAN ZISWAF */}
           {activeTab === 'ringkasan' && (
             <div className="space-y-6 animate-in fade-in">
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col sm:flex-row items-center gap-4 justify-between">
-                <div className="flex items-center gap-4">
-                  <img src={profilePic} alt="Profil" className="w-16 h-16 rounded-full border-4 border-lime-100 object-cover" />
-                  <div>
-                    <h2 className="text-xl font-bold text-slate-800">Ahlan wa Sahlan, {profilName}!</h2>
-                    <p className="text-sm text-slate-500">Semoga amal ibadah Anda diterima oleh Allah SWT.</p>
-                  </div>
+              <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col sm:flex-row items-center gap-4 justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-800">Kalkulator Zakat</h2>
+                  <p className="text-sm text-slate-500">Hitung kewajiban zakat Anda dengan mudah dan cepat.</p>
                 </div>
                 <button onClick={() => setShowKalkulator(!showKalkulator)} className="w-full sm:w-auto flex items-center justify-center gap-2 bg-lime-50 text-lime-700 hover:bg-lime-100 px-4 py-2.5 rounded-xl font-bold border border-lime-200 transition-colors">
                   <Calculator className="w-5 h-5" /> Cek Zakat Anda
@@ -152,7 +166,7 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama }
 
               {/* Zakat Calculator Dropdown */}
               {showKalkulator && (
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-amber-200 animate-in slide-in-from-top-2">
+                <div className="bg-white p-6 rounded-3xl shadow-sm border border-amber-200 animate-in slide-in-from-top-2">
                   <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2"><Calculator className="w-5 h-5 text-amber-500" /> Kalkulator Zakat Cepat</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                     <div>
@@ -173,22 +187,22 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama }
                 </div>
               )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-gradient-to-br from-lime-600 to-lime-500 p-6 rounded-2xl text-white shadow-md">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-gradient-to-br from-[#1e3a8a] to-blue-800 p-6 rounded-3xl text-white shadow-md relative overflow-hidden">
                   <Wallet className="w-8 h-8 mb-3 opacity-80" />
-                  <p className="text-xs font-semibold text-lime-100 uppercase tracking-wider">Total Donasi Anda</p>
+                  <p className="text-xs font-semibold text-blue-200 uppercase tracking-wider">Total Donasi Anda</p>
                   <p className="text-2xl font-bold mt-1">Rp 1.450.000</p>
                 </div>
                 <div 
                   onClick={() => setActiveTab('laporan')}
-                  className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm cursor-pointer hover:border-amber-300 hover:bg-amber-50/50 transition-colors"
+                  className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm cursor-pointer hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
                 >
-                  <Activity className="w-8 h-8 mb-3 text-amber-500" />
+                  <Activity className="w-8 h-8 mb-3 text-blue-600" />
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Program Didukung</p>
                   <p className="text-2xl font-bold text-slate-800 mt-1 flex items-center gap-2">3 Program <ChevronRight className="w-4 h-4 text-slate-400" /></p>
                 </div>
-                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-                  <Calendar className="w-8 h-8 mb-3 text-blue-500" />
+                <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                  <Calendar className="w-8 h-8 mb-3 text-emerald-600" />
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Donasi Rutin Aktif</p>
                   <p className="text-2xl font-bold text-slate-800 mt-1">Pengingat Harian</p>
                 </div>
@@ -567,7 +581,6 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama }
           )}
 
         </div>
-      </div>
 
       {/* Al-Quran Digital Reader Modal */}
       <AlQuranDigital 
