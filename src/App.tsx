@@ -160,27 +160,13 @@ export default function App() {
     }
   };
 
-  if (isAdmin) {
-    return <AdminDashboard 
-      onBack={() => setIsAdmin(false)} 
-      programs={programs} 
-      onAddDonation={handleAddDonation} 
-      homeVisibility={homeVisibility}
-      setHomeVisibility={setHomeVisibility}
-    />;
-  }
-
-  if (isJamaahLoggedIn) {
-    return <JamaahDashboard nama={namaJamaah} onBack={() => { setIsJamaahLoggedIn(false); setNamaJamaah('Hamba Allah'); }} />;
-  }
-
   return (
-    <div className={`min-h-screen font-sans transition-colors duration-300 relative ${
+    <div className={`min-h-screen font-sans transition-colors duration-300 relative flex flex-col ${
       isDarkMode 
         ? 'dark bg-slate-950 text-slate-100 selection:bg-green-400 selection:text-white' 
         : 'bg-[#F7FBF4] text-[#1A1A1A] selection:bg-green-400 selection:text-white'
     }`}>
-      {/* Navigation Header */}
+      {/* Navigation Header Always Visible */}
       <Header 
         onLoginClick={() => setIsLoginModalOpen(true)} 
         onAiClick={() => setIsAiModalOpen(true)} 
@@ -189,9 +175,25 @@ export default function App() {
         onToggleDarkMode={toggleDarkMode}
         isAutoNight={isAutoNight}
       />
-
-      <main>
-        {/* Home / Beranda Sections */}
+      
+      <main className="flex-1 flex flex-col">
+        {isAdmin ? (
+          <div className="flex-1">
+            <AdminDashboard 
+              onBack={() => setIsAdmin(false)} 
+              programs={programs} 
+              onAddDonation={handleAddDonation} 
+              homeVisibility={homeVisibility}
+              setHomeVisibility={setHomeVisibility}
+            />
+          </div>
+        ) : isJamaahLoggedIn ? (
+          <div className="flex-1">
+            <JamaahDashboard nama={namaJamaah} onBack={() => { setIsJamaahLoggedIn(false); setNamaJamaah('Hamba Allah'); }} />
+          </div>
+        ) : (
+          <>
+            {/* Home / Beranda Sections */}
         <Hero />
         {homeVisibility.showJadwal && <JadwalShalatCard />}
         
@@ -262,10 +264,12 @@ export default function App() {
           <LokasiKontak />
         </div>
         <MediaSosial />
+          </>
+        )}
       </main>
 
       {/* Footer */}
-      <Footer onNavigate={() => {}} onOpenWakafModal={() => {}} />
+      {!isAdmin && !isJamaahLoggedIn && <Footer onNavigate={() => {}} onOpenWakafModal={() => {}} />}
 
       {/* Modals */}
       <LoginModal 

@@ -1135,17 +1135,19 @@ const getAyatTajwidAnalysis = (ayat: Ayat, surahNomor: number): TajwidAnalysisIt
 interface AlQuranDigitalProps {
   isOpenModal?: boolean;
   initialSurahNomor?: number | null;
+  initialTab?: MainNavTab;
   onCloseModal?: () => void;
 }
 
 export const AlQuranDigital: React.FC<AlQuranDigitalProps> = ({ 
   isOpenModal = false, 
   initialSurahNomor = null,
+  initialTab,
   onCloseModal 
 }) => {
   const [isOpen, setIsOpen] = useState(isOpenModal);
   const [view, setView] = useState<View>('list');
-  const [mainNavTab, setMainNavTab] = useState<MainNavTab>('surah');
+  const [mainNavTab, setMainNavTab] = useState<MainNavTab>(initialTab || 'surah');
   const [surahs, setSurahs] = useState<Surah[]>([]);
   const [selectedSurah, setSelectedSurah] = useState<SurahDetail | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -1224,8 +1226,12 @@ export const AlQuranDigital: React.FC<AlQuranDigitalProps> = ({
   useEffect(() => {
     if (isOpenModal !== undefined) {
       setIsOpen(isOpenModal);
+      if (isOpenModal && initialTab) {
+        setMainNavTab(initialTab);
+        setView('list');
+      }
     }
-  }, [isOpenModal]);
+  }, [isOpenModal, initialTab]);
 
   useEffect(() => {
     if (initialSurahNomor && surahs.length > 0) {
@@ -2459,6 +2465,22 @@ export const AlQuranDigital: React.FC<AlQuranDigitalProps> = ({
                           >
                             <Share2 className="w-4 h-4" />
                             <span className="text-[11px]">Share</span>
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              const bookmarkData: BookmarkData = {
+                                surahNomor: selectedSurah.nomor,
+                                surahNama: selectedSurah.namaLatin,
+                                ayatNomor: ayat.nomorAyat
+                              };
+                              localStorage.setItem('masjid_quran_bookmark', JSON.stringify(bookmarkData));
+                              alert(`Tersimpan sebagai penanda terakhir dibaca: Surah ${selectedSurah.namaLatin} Ayat ${ayat.nomorAyat}`);
+                            }}
+                            className="flex flex-col items-center gap-1 hover:text-amber-500 transition-colors cursor-pointer"
+                          >
+                            <Bookmark className="w-4 h-4 text-amber-500" />
+                            <span className="text-[11px]">Tandai</span>
                           </button>
 
                           <button
