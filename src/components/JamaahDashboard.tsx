@@ -16,6 +16,7 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama }
   const [khatamCount, setKhatamCount] = useState(() => {
     return parseInt(localStorage.getItem('masjid_quran_khatam') || '0');
   });
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem('masjid_quran_bookmark');
@@ -109,9 +110,19 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama }
                 <p className="text-[9px] text-emerald-100 font-bold uppercase tracking-wider mb-0.5">Bergabung Sejak</p>
                 <p className="text-lg font-bold text-white">Jul 2026</p>
               </div>
-              <button onClick={() => window.location.reload()} className="bg-white/5 hover:bg-white/10 rounded-xl px-4 py-2 border border-white/10 flex flex-col items-center justify-center text-emerald-100 transition-colors cursor-pointer">
-                <RefreshCw className="w-4 h-4 mb-0.5" />
-                <span className="text-[9px] font-bold uppercase">Refresh</span>
+              <button 
+                onClick={() => {
+                  if (isRefreshing) return;
+                  setIsRefreshing(true);
+                  // Simulate data fetching/refreshing
+                  setTimeout(() => {
+                    setIsRefreshing(false);
+                  }, 1500);
+                }} 
+                className={`bg-white/5 hover:bg-white/10 rounded-xl px-4 py-2 border border-white/10 flex flex-col items-center justify-center text-emerald-100 transition-colors cursor-pointer ${isRefreshing ? 'opacity-70' : ''}`}
+              >
+                <RefreshCw className={`w-4 h-4 mb-0.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <span className="text-[9px] font-bold uppercase">{isRefreshing ? 'Loading' : 'Refresh'}</span>
               </button>
               <button onClick={onBack} className="bg-red-500/20 hover:bg-red-500/30 rounded-xl px-4 py-2 border border-red-500/30 flex flex-col items-center justify-center text-red-200 transition-colors cursor-pointer ml-auto md:ml-4">
                 <LogOut className="w-4 h-4 mb-0.5" />
