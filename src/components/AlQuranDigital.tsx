@@ -42,9 +42,9 @@ type HadistSubTab = 'buku' | 'tema' | 'kedudukan';
 type DzikirSubTab = 'pagi' | 'petang' | 'shalat' | 'doa_harian' | 'tasbih';
 
 export interface BookmarkData {
-  surah: number;
-  ayat: number;
-  label: string;
+  surahNomor: number;
+  surahNama: string;
+  ayatNomor: number;
 }
 
 const TAFSIR_SOURCES: { id: TafsirSource; name: string; desc: string }[] = [

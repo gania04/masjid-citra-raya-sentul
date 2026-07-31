@@ -156,14 +156,14 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onAdmin
 
                 <div>
                   <label className="block text-sm font-bold text-lime-900 mb-1">ID Petugas / Username:</label>
-                  <input type="text" value={adminUsername} onChange={(e) => setAdminUsername(e.target.value)} placeholder="Masukkan ID Petugas" required className="w-full px-4 py-2.5 rounded-xl border border-lime-200 focus:ring-2 focus:ring-lime-500 focus:outline-none" />
+                  <input type="text" value={adminUsername} onChange={(e) => setAdminUsername(e.target.value)} placeholder="Masukkan ID Petugas" required className="w-full px-4 py-2.5 rounded-xl border border-lime-200 focus:ring-2 focus:ring-lime-500 focus:outline-none text-slate-900" />
                 </div>
 
                 <div>
                   <label className="block text-sm font-bold text-lime-900 mb-1">Kata Sandi (Password):</label>
                   <div className="relative">
                     <Lock className="w-5 h-5 text-lime-300 absolute left-3 top-3" />
-                    <input type={showPassword ? "text" : "password"} value={adminPassword} onChange={(e) => setAdminPassword(e.target.value)} required className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-lime-200 focus:ring-2 focus:ring-lime-500 focus:outline-none text-sm" />
+                    <input type={showPassword ? "text" : "password"} value={adminPassword} onChange={(e) => setAdminPassword(e.target.value)} required className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-lime-200 focus:ring-2 focus:ring-lime-500 focus:outline-none text-sm text-slate-900" />
                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3 text-lime-400 hover:text-lime-600">
                       {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>

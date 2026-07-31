@@ -270,7 +270,7 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama }
                     <option>1 Hari 1 Juz (One Day One Juz)</option>
                     <option>Tanpa Target Khusus</option>
                   </select>
-                  <button className="bg-amber-500 text-white font-bold px-6 py-3 rounded-xl hover:bg-amber-600 transition-colors whitespace-nowrap text-sm shadow-sm">
+                  <button onClick={() => alert('Target berhasil disimpan (Simulasi)')} className="bg-amber-500 text-white font-bold px-6 py-3 rounded-xl hover:bg-amber-600 transition-colors whitespace-nowrap text-sm shadow-sm cursor-pointer">
                     Simpan Target
                   </button>
                 </div>
@@ -432,7 +432,7 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama }
                       </div>
                     </div>
                   )}
-                  <button className="w-full mt-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl transition-colors shadow-md">Simpan Pengaturan</button>
+                  <button onClick={() => alert('Pengaturan Donasi Rutin Berhasil Disimpan!')} className="w-full mt-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl transition-colors shadow-md cursor-pointer">Simpan Pengaturan</button>
                 </div>
               </div>
             </div>
@@ -458,8 +458,8 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama }
                   <div><label className="block text-xs font-bold text-slate-700 mb-1">Email Aktif</label><input type="email" defaultValue="hamba.allah@email.com" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-500 focus:bg-white transition-all text-sm text-slate-800" /></div>
                   <div><label className="block text-xs font-bold text-slate-700 mb-1">Alamat Domisili (Opsional)</label><textarea rows={3} defaultValue="Sirkuit Sentul, Bogor" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-500 focus:bg-white transition-all text-sm text-slate-800"></textarea></div>
                   <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
-                    <button className="px-6 py-2.5 bg-slate-100 text-slate-600 font-bold rounded-lg hover:bg-slate-200 transition-colors text-sm">Batal</button>
-                    <button className="px-6 py-2.5 bg-lime-600 text-white font-bold rounded-lg hover:bg-lime-700 transition-colors shadow-sm text-sm">Simpan Perubahan</button>
+                    <button onClick={() => alert('Perubahan dibatalkan')} className="px-6 py-2.5 bg-slate-100 text-slate-600 font-bold rounded-lg hover:bg-slate-200 transition-colors text-sm cursor-pointer">Batal</button>
+                    <button onClick={() => alert('Profil berhasil diperbarui')} className="px-6 py-2.5 bg-lime-600 text-white font-bold rounded-lg hover:bg-lime-700 transition-colors shadow-sm text-sm cursor-pointer">Simpan Perubahan</button>
                   </div>
                 </div>
               </div>
@@ -492,7 +492,7 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama }
                         <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
                           <p className="text-sm font-bold text-slate-700 mb-2">Update Terakhir (28 Juli 2026):</p>
                           <p className="text-xs text-slate-600 leading-relaxed">Alhamdulillah, pengecoran tiang utama lantai 1 selesai. Saat ini pekerja sedang merakit kerangka atap baja ringan.</p>
-                          <button className="mt-3 text-xs font-bold text-lime-600 flex items-center gap-1 hover:text-lime-700 transition-colors"><ImageIcon className="w-3 h-3" /> Lihat 4 Foto Terbaru</button>
+                          <button onClick={() => alert('Membuka Galeri Foto (Fitur dalam pengembangan)')} className="mt-3 text-xs font-bold text-lime-600 flex items-center gap-1 hover:text-lime-700 transition-colors cursor-pointer"><ImageIcon className="w-3 h-3" /> Lihat 4 Foto Terbaru</button>
                         </div>
                       </div>
                     </div>
@@ -518,7 +518,7 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama }
                     <tr className="bg-white border-b border-slate-100">
                       <td className="px-6 py-4 whitespace-nowrap">28 Jul 2026</td><td className="px-6 py-4 font-semibold text-slate-800">Santunan Yatim</td><td className="px-6 py-4 text-lime-600 font-bold">Rp 150.000</td>
                       <td className="px-6 py-4"><span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Berhasil</span></td>
-                      <td className="px-6 py-4"><button className="text-lime-600 hover:text-lime-800 flex items-center gap-1"><Download className="w-4 h-4" /> PDF</button></td>
+                      <td className="px-6 py-4"><button onClick={() => alert('Mengunduh Kuitansi PDF (Simulasi)')} className="text-lime-600 hover:text-lime-800 flex items-center gap-1 cursor-pointer"><Download className="w-4 h-4" /> PDF</button></td>
                     </tr>
                   </tbody>
                 </table>
