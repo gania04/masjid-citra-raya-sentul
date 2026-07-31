@@ -171,6 +171,10 @@ export default function App() {
         onLoginClick={() => setIsLoginModalOpen(true)} 
         onAiClick={() => setIsAiModalOpen(true)} 
         onQuranClick={() => setIsQuranModalOpen(true)}
+        onHomeClick={() => {
+          setIsAdmin(false);
+          setIsJamaahLoggedIn(false);
+        }}
         isDarkMode={isDarkMode}
         onToggleDarkMode={toggleDarkMode}
         isAutoNight={isAutoNight}

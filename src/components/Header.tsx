@@ -6,6 +6,7 @@ interface HeaderProps {
   onLoginClick: () => void;
   onAiClick: () => void;
   onQuranClick?: () => void;
+  onHomeClick?: () => void;
   isDarkMode: boolean;
   onToggleDarkMode: () => void;
   isAutoNight?: boolean;
@@ -15,6 +16,7 @@ export const Header: React.FC<HeaderProps> = ({
   onLoginClick, 
   onAiClick, 
   onQuranClick,
+  onHomeClick,
   isDarkMode,
   onToggleDarkMode,
   isAutoNight = false
@@ -43,6 +45,9 @@ export const Header: React.FC<HeaderProps> = ({
 
   const handleScroll = (id: string) => {
     if (id === 'home') {
+      if (onHomeClick) {
+        onHomeClick();
+      }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (id === 'quran' && onQuranClick) {
       onQuranClick();
@@ -89,7 +94,7 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="flex flex-col md:flex-row justify-between items-center py-3.5 gap-4">
           
           {/* Logo */}
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => handleScroll('home')}>
             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-md transition-all ${
               isDarkMode ? 'bg-emerald-600 text-white border border-emerald-500/30' : 'bg-green-500 text-white'
             }`}>
