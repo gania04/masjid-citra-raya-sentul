@@ -121,7 +121,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
         tanggal: dateInput || new Date().toISOString().split('T')[0],
         noBukti: `BKM-RT-${Date.now().toString().slice(-5)}`,
         keterangan: `Riwayat Transaksi Pemasukan: ${descInput}`,
-        sumber: 'Penerimaan Kas Operasional',
+        sumber: 'Kas Masjid',
         baris: [
           { kodeAkun: '1-1100', namaAkun: 'Kas Operasional Masjid (Debit)', debit: amountInput, kredit: 0 },
           { kodeAkun: '4-1100', namaAkun: 'Pendapatan Donasi Operasional (Kredit)', debit: 0, kredit: amountInput },
@@ -155,7 +155,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
         tanggal: dateInput || new Date().toISOString().split('T')[0],
         noBukti: `BKK-RT-${Date.now().toString().slice(-5)}`,
         keterangan: `Riwayat Transaksi Pengeluaran: ${descInput}`,
-        sumber: 'Pengeluaran Kas Operasional',
+        sumber: 'Kas Masjid',
         baris: [
           { kodeAkun: '5-1100', namaAkun: 'Beban Daya & Jasa Listrik/Air (Debit)', debit: amountInput, kredit: 0 },
           { kodeAkun: '1-1100', namaAkun: 'Kas Operasional Masjid (Kredit)', debit: 0, kredit: amountInput },

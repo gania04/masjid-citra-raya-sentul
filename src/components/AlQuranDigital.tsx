@@ -41,6 +41,12 @@ type TafsirSource = 'ibnukatsir' | 'kemenag' | 'jalalain' | 'muyassar';
 type HadistSubTab = 'buku' | 'tema' | 'kedudukan';
 type DzikirSubTab = 'pagi' | 'petang' | 'shalat' | 'doa_harian' | 'tasbih';
 
+export interface BookmarkData {
+  surah: number;
+  ayat: number;
+  label: string;
+}
+
 const TAFSIR_SOURCES: { id: TafsirSource; name: string; desc: string }[] = [
   { id: 'ibnukatsir', name: 'Tafsir Ibnu Katsir', desc: 'Tafsir Al-Qur\'an Al-Azhim karya Al-Hafiz Ibnu Katsir, berbasis riwayat Shahih dan Asbabun Nuzul.' },
   { id: 'kemenag', name: 'Tafsir Ringkas Indonesia', desc: 'Tafsir Tahlili & Ringkas komprehensif.' },
