@@ -15,6 +15,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onAdmin
   const [adminPassword, setAdminPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [namaJamaah, setNamaJamaah] = useState('');
+  const [jamaahContact, setJamaahContact] = useState('');
+  const [jamaahPassword, setJamaahPassword] = useState('');
+  const [jamaahError, setJamaahError] = useState('');
 
   if (!isOpen) return null;
 
@@ -51,7 +54,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onAdmin
 
         {/* Content */}
         <div className="p-6 md:p-8 overflow-y-auto flex-1">
-          <p className="text-sm font-semibold text-lime-800 mb-3">Pilih Akses Peran (Role):</p>
+          <p className="text-sm font-semibold text-slate-800 mb-3">Pilih Akses Peran (Role):</p>
           
           {/* Tabs */}
           <div className="flex gap-4 mb-8">
@@ -83,38 +86,44 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onAdmin
             {role === 'jamaah' ? (
               <div className="space-y-5">
                 <div className="bg-amber-50/50 border border-amber-200 p-4 rounded-xl">
-                  <h3 className="text-sm font-bold text-amber-800 mb-2">Panduan Login Khusus Jamaah:</h3>
-                  <ul className="text-xs text-amber-700/80 space-y-1.5 list-disc pl-4">
-                    <li><span className="font-bold text-amber-800">Pendaftaran Otomatis:</span> Anda tidak perlu mendaftar terpisah. Cukup isi formulir di bawah, akun akan terdaftar dan langsung masuk secara otomatis!</li>
-                    <li>Gunakan <span className="font-bold text-amber-800">Email atau No. Handphone (WhatsApp)</span> yang aktif.</li>
-                    <li>Sistem akan menyinkronkan riwayat donasi dan layanan Anda secara otomatis.</li>
+                  <h3 className="text-sm font-bold text-slate-800 mb-2">Panduan Pendaftaran & Login Jamaah:</h3>
+                  <ul className="text-xs text-slate-700 space-y-1.5 list-disc pl-4">
+                    <li><span className="font-bold text-slate-900">Wajib Daftar:</span> Isi semua kolom di bawah (<span className="text-red-500">*</span>) untuk mendaftar atau masuk ke portal jamaah.</li>
+                    <li>Gunakan <span className="font-bold text-slate-900">Email atau No. Handphone (WhatsApp)</span> yang aktif.</li>
+                    <li>Password minimal <span className="font-bold text-slate-900">6 karakter</span>. Simpan baik-baik untuk login berikutnya.</li>
                   </ul>
                 </div>
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-bold text-lime-900 mb-1">Nama Lengkap:</label>
-                    <input type="text" value={namaJamaah} onChange={(e) => setNamaJamaah(e.target.value)} placeholder="Masukkan nama lengkap Anda" className="w-full px-4 py-2.5 rounded-xl border border-lime-200 focus:ring-2 focus:ring-lime-500 focus:outline-none" required />
+                    <label className="block text-sm font-bold text-slate-900 mb-1">Nama Lengkap <span className="text-red-500">*</span></label>
+                    <input type="text" value={namaJamaah} onChange={(e) => { setNamaJamaah(e.target.value); setJamaahError(''); }} placeholder="Masukkan nama lengkap Anda" className="w-full px-4 py-2.5 rounded-xl border border-lime-200 focus:ring-2 focus:ring-lime-500 focus:outline-none text-slate-900" required />
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-bold text-lime-900 mb-1">Email atau No. Handphone (Jamaah):</label>
+                    <label className="block text-sm font-bold text-slate-900 mb-1">Email atau No. Handphone <span className="text-red-500">*</span></label>
                     <div className="relative">
-                      <Mail className="w-5 h-5 text-lime-300 absolute left-3 top-3" />
-                      <input type="text" placeholder="Contoh: 08123456789 atau user@email.com" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-lime-200 focus:ring-2 focus:ring-lime-500 focus:outline-none text-sm" />
+                      <Mail className="w-5 h-5 text-lime-400 absolute left-3 top-3" />
+                      <input type="text" value={jamaahContact} onChange={(e) => { setJamaahContact(e.target.value); setJamaahError(''); }} placeholder="Contoh: 08123456789 atau user@email.com" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-lime-200 focus:ring-2 focus:ring-lime-500 focus:outline-none text-sm text-slate-900" required />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-bold text-lime-900 mb-1">Kata Sandi (Password):</label>
+                    <label className="block text-sm font-bold text-slate-900 mb-1">Kata Sandi (Password) <span className="text-red-500">*</span></label>
                     <div className="relative">
-                      <Lock className="w-5 h-5 text-lime-300 absolute left-3 top-3" />
-                      <input type={showPassword ? "text" : "password"} className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-lime-200 focus:ring-2 focus:ring-lime-500 focus:outline-none text-sm" />
+                      <Lock className="w-5 h-5 text-lime-400 absolute left-3 top-3" />
+                      <input type={showPassword ? "text" : "password"} value={jamaahPassword} onChange={(e) => { setJamaahPassword(e.target.value); setJamaahError(''); }} placeholder="Minimal 6 karakter" className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-lime-200 focus:ring-2 focus:ring-lime-500 focus:outline-none text-sm text-slate-900" required />
                       <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3 text-lime-400 hover:text-lime-600">
                         {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                       </button>
                     </div>
                   </div>
+
+                  {jamaahError && (
+                    <div className="bg-red-50 text-red-600 p-3 rounded-lg text-xs font-bold border border-red-200">
+                      {jamaahError}
+                    </div>
+                  )}
 
                   <div className="text-right">
                     <a href="#" className="text-xs text-lime-600 font-semibold hover:underline">Lupa Password? Hubungi Admin</a>
@@ -122,13 +131,19 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onAdmin
 
                   <button 
                     onClick={() => {
-                      const nama = namaJamaah.trim() || 'Hamba Allah';
+                      const nama = namaJamaah.trim();
+                      const contact = jamaahContact.trim();
+                      const pass = jamaahPassword.trim();
+                      if (!nama) { setJamaahError('Nama lengkap wajib diisi!'); return; }
+                      if (!contact) { setJamaahError('Email atau No. Handphone wajib diisi!'); return; }
+                      if (!pass || pass.length < 6) { setJamaahError('Password wajib diisi (minimal 6 karakter)!'); return; }
+                      setJamaahError('');
                       onJamaahLogin(nama);
                       onClose();
                     }}
-                    className="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-xl transition-colors shadow-md"
+                    className="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-xl transition-colors shadow-md cursor-pointer"
                   >
-                    Masuk / Daftar Otomatis <ArrowRight className="w-5 h-5" />
+                    Masuk / Daftar <ArrowRight className="w-5 h-5" />
                   </button>
                 </div>
               </div>

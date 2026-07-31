@@ -319,7 +319,7 @@ const getCompleteHadithsForFilter = (
   }));
 
   const allResults = [...existing, ...generated];
-  return allResults.slice(0, 8);
+  return allResults;
 };
 
 // Helper to generate full 30 Juz details
@@ -2236,200 +2236,97 @@ export const AlQuranDigital: React.FC<AlQuranDigitalProps> = ({
                   </div>
                 )}
 
-                {/* ── MODE 3: INDEX AYAT (14 TOPIK KATEGORI UTAMA & TABEL DATA) ── */}
+                {/* ── MODE 3: INDEX AYAT (TABEL DATA PERSIS quran.tazkia.ac.id/index-ayat) ── */}
                 {activeFilter === 'index_ayat' && (
                   <div className="space-y-6 animate-in fade-in">
-
-                    {/* View Switcher: Grid Topik vs Tabel Data */}
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm mb-4 flex flex-col md:flex-row justify-between items-center">
                       <div>
                         <h3 className="text-base font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
                           <BookOpen className="w-5 h-5 text-lime-600" />
                           Index Klasifikasi Ayat Al-Qur'an
                         </h3>
                         <p className="text-xs text-slate-500 dark:text-slate-400">
-                          Jelajahi 14 kategori topik utama dan pemetaan ayat lengkap.
+                          Jelajahi pemetaan ayat berdasarkan topik klasifikasi.
                         </p>
-                      </div>
-
-                      <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl shrink-0">
-                        <button
-                          onClick={() => { setIndexViewMode('grid'); setSelectedIndexTopicId(null); }}
-                          className={`px-4 py-2 rounded-lg text-xs font-black transition-all cursor-pointer ${
-                            indexViewMode === 'grid' 
-                              ? 'bg-lime-600 text-white shadow-xs' 
-                              : 'text-slate-700 dark:text-slate-300 hover:text-lime-600'
-                          }`}
-                        >
-                          Grid 14 Topik
-                        </button>
-                        <button
-                          onClick={() => setIndexViewMode('table')}
-                          className={`px-4 py-2 rounded-lg text-xs font-black transition-all cursor-pointer ${
-                            indexViewMode === 'table' 
-                              ? 'bg-lime-600 text-white shadow-xs' 
-                              : 'text-slate-700 dark:text-slate-300 hover:text-lime-600'
-                          }`}
-                        >
-                          Tabel Data
-                        </button>
                       </div>
                     </div>
 
-                    {/* ── GRID MODE: 14 KATEGORI TOPIK ── */}
-                    {indexViewMode === 'grid' && (
-                      selectedIndexTopicId === null ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                          {INDEX_AYAT_TOPICS_LIST.map((topic) => (
-                            <div
-                              key={topic.id}
-                              onClick={() => setSelectedIndexTopicId(topic.id)}
-                              className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-lime-500 hover:shadow-lg transition-all cursor-pointer flex flex-col justify-between space-y-4 group"
-                            >
-                              <div className="space-y-2">
-                                <span className="w-8 h-8 rounded-full bg-lime-100 text-lime-900 dark:bg-lime-950 dark:text-lime-300 font-black text-xs flex items-center justify-center group-hover:bg-lime-600 group-hover:text-white transition-colors">
-                                  {topic.id}
-                                </span>
-                                <h4 className="font-black text-base text-slate-900 dark:text-slate-100 group-hover:text-lime-600 transition-colors">
-                                  {topic.title}
-                                </h4>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                                  {topic.desc}
-                                </p>
-                              </div>
-
-                              <div className="flex items-center justify-between text-xs font-extrabold text-lime-600 group-hover:translate-x-1 transition-transform">
-                                <span>{topic.ayatLinks.length} Ayat Terkait</span>
-                                <ChevronRight className="w-4 h-4" />
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        /* Selected Topic Detail View */
-                        {...(() => {
-                          const activeTopic = INDEX_AYAT_TOPICS_LIST.find(t => t.id === selectedIndexTopicId);
-                          if (!activeTopic) return null;
-                          return (
-                            <div className="space-y-6 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm animate-in fade-in">
-                              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
-                                <button
-                                  onClick={() => setSelectedIndexTopicId(null)}
-                                  className="px-4 py-2 rounded-xl bg-lime-100 text-lime-900 dark:bg-lime-950 dark:text-lime-300 font-extrabold text-xs flex items-center gap-2 hover:bg-lime-200 transition-colors cursor-pointer"
-                                >
-                                  <ArrowLeft className="w-4 h-4" /> Kembali ke Daftar Topik
-                                </button>
-                                
-                                <div className="text-left sm:text-right">
-                                  <span className="text-[10px] uppercase font-black tracking-widest text-lime-600">Topik #{activeTopic.id}</span>
-                                  <h3 className="text-xl font-black text-slate-900 dark:text-slate-100">{activeTopic.title}</h3>
-                                </div>
-                              </div>
-
-                              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                                Berikut daftar ayat Al-Qur'an yang menjelaskan tentang <span className="font-bold text-lime-700 dark:text-lime-400">{activeTopic.title}</span>:
-                              </p>
-
-                              <div className="flex flex-wrap gap-2.5 pt-2">
-                                {activeTopic.ayatLinks.map((link, idx) => (
-                                  <button
-                                    key={idx}
-                                    onClick={() => {
-                                      const s = surahs.find(item => item.nomor === link.surah);
-                                      if (s) openSurah(s, link.ayat);
-                                    }}
-                                    className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-lime-500 hover:text-white dark:bg-slate-800 dark:hover:bg-lime-600 text-slate-900 dark:text-slate-100 font-mono font-bold text-xs shadow-xs hover:shadow-md transition-all cursor-pointer flex items-center gap-1.5"
-                                  >
-                                    <BookOpen className="w-3.5 h-3.5" /> {link.label}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          );
-                        })()}
-                      )
-                    )}
-
-                    {/* ── TABLE MODE: DATA TABLE MATCHING REFERENSI SCREENSHOT ── */}
-                    {indexViewMode === 'table' && (
-                      <div className="space-y-4">
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-semibold text-slate-700 dark:text-slate-300">
-                          <div className="flex items-center gap-2">
-                            <span>Tampilkan</span>
-                            <select
-                              value={indexPageEntries}
-                              onChange={(e) => setIndexPageEntries(Number(e.target.value))}
-                              className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer shadow-xs"
-                            >
-                              <option value={10}>10</option>
-                              <option value={25}>25</option>
-                              <option value={50}>50</option>
-                              <option value={100}>100</option>
-                            </select>
-                            <span>entri</span>
-                          </div>
-
-                          <div className="flex items-center gap-2 w-full sm:w-auto">
-                            <span>Cari:</span>
-                            <input
-                              type="text"
-                              value={indexSearchQuery}
-                              onChange={(e) => setIndexSearchQuery(e.target.value)}
-                              placeholder="Cari topik atau ayat..."
-                              className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-1 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-60 shadow-xs"
-                            />
-                          </div>
+                    <div className="space-y-4">
+                      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        <div className="flex items-center gap-2">
+                          <span>Tampilkan</span>
+                          <select
+                            value={indexPageEntries}
+                            onChange={(e) => setIndexPageEntries(Number(e.target.value))}
+                            className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer shadow-xs"
+                          >
+                            <option value={10}>10</option>
+                            <option value={25}>25</option>
+                            <option value={50}>50</option>
+                            <option value={100}>100</option>
+                          </select>
+                          <span>entri</span>
                         </div>
 
-                        <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 shadow-md">
-                          <table className="w-full text-left border-collapse font-sans">
-                            <thead>
-                              <tr className="bg-blue-600 text-white text-sm font-extrabold">
-                                <th className="py-3.5 px-6 w-1/3 border-b border-blue-700">Index Ayat</th>
-                                <th className="py-3.5 px-6 w-2/3 border-b border-blue-700">Ayat</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs sm:text-sm">
-                              {filteredIndexRows.slice(0, indexPageEntries).map((row, idx) => (
-                                <tr 
-                                  key={row.id}
-                                  className={`${
-                                    row.isSectionHeader 
-                                      ? 'bg-slate-50/90 dark:bg-slate-900/90 font-bold' 
-                                      : (idx % 2 === 0 ? 'bg-white dark:bg-slate-950' : 'bg-slate-50/60 dark:bg-slate-900/40')
-                                  } hover:bg-blue-50/40 dark:hover:bg-blue-950/30 transition-colors`}
-                                >
-                                  <td className="py-3.5 px-6 font-semibold text-slate-900 dark:text-slate-100 align-top">
-                                    {row.title}
-                                  </td>
-                                  <td className="py-3.5 px-6 align-top">
-                                    {row.ayatLinks.length > 0 ? (
-                                      <div className="flex flex-wrap gap-2 leading-relaxed">
-                                        {row.ayatLinks.map((link, lIdx) => (
-                                          <span
-                                            key={lIdx}
-                                            onClick={() => {
-                                              const targetS = surahs.find(s => s.nomor === link.surah);
-                                              if (targetS) openSurah(targetS, link.ayat);
-                                            }}
-                                            className="text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer font-mono font-medium hover:underline transition-colors"
-                                          >
-                                            {link.label}
-                                          </span>
-                                        ))}
-                                      </div>
-                                    ) : (
-                                      <span className="text-slate-400 italic text-xs">-</span>
-                                    )}
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                          <span>Cari:</span>
+                          <input
+                            type="text"
+                            value={indexSearchQuery}
+                            onChange={(e) => setIndexSearchQuery(e.target.value)}
+                            placeholder="Cari topik atau ayat..."
+                            className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-1 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-60 shadow-xs"
+                          />
                         </div>
                       </div>
-                    )}
 
+                      <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 shadow-md">
+                        <table className="w-full text-left border-collapse font-sans">
+                          <thead>
+                            <tr className="bg-blue-600 text-white text-sm font-extrabold">
+                              <th className="py-3.5 px-6 w-1/3 border-b border-blue-700">Index Ayat</th>
+                              <th className="py-3.5 px-6 w-2/3 border-b border-blue-700">Ayat</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs sm:text-sm">
+                            {filteredIndexRows.slice(0, indexPageEntries).map((row, idx) => (
+                              <tr 
+                                key={row.id}
+                                className={`${
+                                  row.isSectionHeader 
+                                    ? 'bg-slate-50/90 dark:bg-slate-900/90 font-bold' 
+                                    : (idx % 2 === 0 ? 'bg-white dark:bg-slate-950' : 'bg-slate-50/60 dark:bg-slate-900/40')
+                                } hover:bg-blue-50/40 dark:hover:bg-blue-950/30 transition-colors`}
+                              >
+                                <td className="py-3.5 px-6 font-semibold text-slate-900 dark:text-slate-100 align-top">
+                                  {row.title}
+                                </td>
+                                <td className="py-3.5 px-6 align-top">
+                                  {row.ayatLinks.length > 0 ? (
+                                    <div className="flex flex-wrap gap-2 leading-relaxed">
+                                      {row.ayatLinks.map((link, lIdx) => (
+                                        <span
+                                          key={lIdx}
+                                          onClick={() => {
+                                            const targetS = surahs.find(s => s.nomor === link.surah);
+                                            if (targetS) openSurah(targetS, link.ayat);
+                                          }}
+                                          className="text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer font-mono font-medium hover:underline transition-colors"
+                                        >
+                                          {link.label}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <span className="text-slate-400 italic text-xs">-</span>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
                   </div>
                 )}
 
