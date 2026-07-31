@@ -30,7 +30,7 @@ export const ProfilMasjid: React.FC = () => {
     },
     {
       title: 'Ruang Konseling Syariah & Ekonomi',
-      desc: 'Layanan konsultasi syariah, muamalah, dan pendampingan UMKM halal berbasis benchmark Institut Tazkia.',
+      desc: 'Layanan konsultasi syariah, muamalah, dan pendampingan UMKM halal berbasis prinsip Keuangan Syariah Modern.',
       icon: Heart,
     },
     {

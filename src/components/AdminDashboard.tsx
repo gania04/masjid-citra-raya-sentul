@@ -36,6 +36,7 @@ interface AdminDashboardProps {
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs, onAddDonation, homeVisibility, setHomeVisibility }) => {
   const [activeMenu, setActiveMenu] = useState('kas');
   const [kasTab, setKasTab] = useState('ringkasan');
+  const [lapkeuTab, setLapkeuTab] = useState<'neraca' | 'jurnal' | 'bukubesar' | 'coa' | 'anggaran'>('neraca');
   const [filterPemasukan, setFilterPemasukan] = useState('semua');
   const [filterPengeluaran, setFilterPengeluaran] = useState('semua');
   const [settingTab, setSettingTab] = useState('hero');
@@ -53,8 +54,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
   const [nominalStr, setNominalStr] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
 
-  // Kas State (Mock)
-  const [kasEntries] = useState([
+  // Kas State (Riwayat Transaksi)
+  const [kasEntries, setKasEntries] = useState([
     { id: 1, date: '29/07/2026', desc: 'Infaq Kotak Amal Jumat', type: 'in', amount: 2500000 },
     { id: 2, date: '28/07/2026', desc: 'Pembayaran Listrik Masjid', type: 'out', amount: 1200000 },
     { id: 3, date: '27/07/2026', desc: 'Donasi Hamba Allah (Transfer)', type: 'in', amount: 500000 },
@@ -100,6 +101,74 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
       setNominalStr('');
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
+    }
+  };
+
+  const handleKasPemasukanSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const dateInput = (form.elements.namedItem('tgl') as HTMLInputElement).value;
+    const descInput = (form.elements.namedItem('ket') as HTMLInputElement).value;
+    const amountInput = parseFloat((form.elements.namedItem('nom') as HTMLInputElement).value);
+
+    if (descInput && amountInput > 0) {
+      const dateFormatted = dateInput ? dateInput.split('-').reverse().join('/') : new Date().toLocaleDateString('id-ID');
+      const newKas = { id: Date.now(), date: dateFormatted, desc: descInput, type: 'in' as const, amount: amountInput };
+      setKasEntries(prev => [newKas, ...prev]);
+
+      const newJournal: JurnalEntry = {
+        id: `JU-RT-${Date.now()}`,
+        tanggal: dateInput || new Date().toISOString().split('T')[0],
+        noBukti: `BKM-RT-${Date.now().toString().slice(-5)}`,
+        keterangan: `Riwayat Transaksi Pemasukan: ${descInput}`,
+        sumber: 'Penerimaan Kas Operasional',
+        baris: [
+          { kodeAkun: '1-1100', namaAkun: 'Kas Operasional Masjid (Debit)', debit: amountInput, kredit: 0 },
+          { kodeAkun: '4-1100', namaAkun: 'Pendapatan Donasi Operasional (Kredit)', debit: 0, kredit: amountInput },
+        ],
+        status: 'Posted',
+        dibuatOleh: 'Admin Masjid (Riwayat Transaksi)',
+        tanggalBuat: new Date().toISOString().split('T')[0],
+      };
+
+      setJournals(prev => [newJournal, ...prev]);
+      alert('Data Pemasukan berhasil disimpan & terposting otomatis ke Jurnal Umum, Buku Besar, CoA, & Laporan Keuangan!');
+      setKasTab('ringkasan');
+      form.reset();
+    }
+  };
+
+  const handleKasPengeluaranSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const dateInput = (form.elements.namedItem('tgl') as HTMLInputElement).value;
+    const descInput = (form.elements.namedItem('ket') as HTMLInputElement).value;
+    const amountInput = parseFloat((form.elements.namedItem('nom') as HTMLInputElement).value);
+
+    if (descInput && amountInput > 0) {
+      const dateFormatted = dateInput ? dateInput.split('-').reverse().join('/') : new Date().toLocaleDateString('id-ID');
+      const newKas = { id: Date.now(), date: dateFormatted, desc: descInput, type: 'out' as const, amount: amountInput };
+      setKasEntries(prev => [newKas, ...prev]);
+
+      const newJournal: JurnalEntry = {
+        id: `JU-RT-${Date.now()}`,
+        tanggal: dateInput || new Date().toISOString().split('T')[0],
+        noBukti: `BKK-RT-${Date.now().toString().slice(-5)}`,
+        keterangan: `Riwayat Transaksi Pengeluaran: ${descInput}`,
+        sumber: 'Pengeluaran Kas Operasional',
+        baris: [
+          { kodeAkun: '5-1100', namaAkun: 'Beban Daya & Jasa Listrik/Air (Debit)', debit: amountInput, kredit: 0 },
+          { kodeAkun: '1-1100', namaAkun: 'Kas Operasional Masjid (Kredit)', debit: 0, kredit: amountInput },
+        ],
+        status: 'Posted',
+        dibuatOleh: 'Admin Masjid (Riwayat Transaksi)',
+        tanggalBuat: new Date().toISOString().split('T')[0],
+      };
+
+      setJournals(prev => [newJournal, ...prev]);
+      alert('Data Pengeluaran berhasil disimpan & terposting otomatis ke Jurnal Umum, Buku Besar, CoA, & Laporan Keuangan!');
+      setKasTab('ringkasan');
+      form.reset();
     }
   };
 
@@ -247,7 +316,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
         {/* Scrollable Tabs */}
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden mb-6 shadow-lg">
           <div className="flex overflow-x-auto no-scrollbar">
-            <button onClick={() => setActiveMenu('kas')} className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap border-b-4 transition-colors ${activeMenu === 'kas' ? 'border-lime-500 text-slate-800 bg-white shadow-sm border border-slate-200' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50'}`}><Book className="w-4 h-4 shrink-0" /><span className="text-sm font-semibold">Buku Kas Sederhana</span></button>
+            <button onClick={() => setActiveMenu('kas')} className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap border-b-4 transition-colors ${activeMenu === 'kas' ? 'border-lime-500 text-slate-800 bg-white shadow-sm border border-slate-200 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50'}`}><Book className="w-4 h-4 shrink-0 text-lime-600" /><span className="text-sm font-semibold">Riwayat Transaksi</span></button>
+            <button onClick={() => { setActiveMenu('lapkeu'); setLapkeuTab('neraca'); }} className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap border-b-4 transition-colors ${['lapkeu', 'jurnal', 'bukubesar', 'coa', 'anggaran'].includes(activeMenu) ? 'border-indigo-600 text-indigo-700 bg-indigo-50/50 font-bold shadow-sm border border-indigo-200' : 'border-transparent text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50/30'}`}><Scale className="w-4 h-4 shrink-0" /><span className="text-sm font-semibold">Laporan Keuangan & Akuntansi</span></button>
             <button onClick={() => setActiveMenu('ziswaf')} className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap border-b-4 transition-colors ${activeMenu === 'ziswaf' ? 'border-lime-500 text-slate-800 bg-white shadow-sm border border-slate-200' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50'}`}><PlusCircle className="w-4 h-4 shrink-0" /><span className="text-sm font-semibold">Input Donasi ZISWAF</span></button>
             <button onClick={() => setActiveMenu('campaign')} className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap border-b-4 transition-colors ${activeMenu === 'campaign' ? 'border-lime-500 text-slate-800 bg-white shadow-sm border border-slate-200' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50'}`}><Database className="w-4 h-4 shrink-0" /><span className="text-sm font-semibold">Program & Campaign</span></button>
             <button onClick={() => setActiveMenu('berita')} className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap border-b-4 transition-colors ${activeMenu === 'berita' ? 'border-lime-500 text-slate-800 bg-white shadow-sm border border-slate-200' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50'}`}><Megaphone className="w-4 h-4 shrink-0" /><span className="text-sm font-semibold">Pengumuman & Berita</span></button>
@@ -263,22 +333,49 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
             <button onClick={() => setActiveMenu('ttd')} className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap border-b-4 transition-colors ${activeMenu === 'ttd' ? 'border-lime-500 text-slate-800 bg-white shadow-sm border border-slate-200' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50'}`}><FileText className="w-4 h-4 shrink-0" /><span className="text-sm font-semibold">Tanda Tangan Laporan</span></button>
             <button onClick={() => setActiveMenu('role')} className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap border-b-4 transition-colors ${activeMenu === 'role' ? 'border-lime-500 text-slate-800 bg-white shadow-sm border border-slate-200' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50'}`}><Key className="w-4 h-4 shrink-0" /><span className="text-sm font-semibold">Manajemen Akun & Role</span></button>
             <button onClick={() => setActiveMenu('audit')} className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap border-b-4 transition-colors ${activeMenu === 'audit' ? 'border-lime-500 text-slate-800 bg-white shadow-sm border border-slate-200' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50'}`}><Search className="w-4 h-4 shrink-0" /><span className="text-sm font-semibold">Audit Log System</span></button>
-            <div className="w-px bg-slate-200 mx-1 self-stretch" />
-            <button onClick={() => setActiveMenu('coa')} className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap border-b-4 transition-colors ${activeMenu === 'coa' ? 'border-indigo-500 text-indigo-700 bg-white shadow-sm' : 'border-transparent text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50'}`}><BookOpen className="w-4 h-4 shrink-0" /><span className="text-sm font-semibold">Akun CoA</span></button>
-            <button onClick={() => setActiveMenu('jurnal')} className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap border-b-4 transition-colors ${activeMenu === 'jurnal' ? 'border-indigo-500 text-indigo-700 bg-white shadow-sm' : 'border-transparent text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50'}`}><FileText className="w-4 h-4 shrink-0" /><span className="text-sm font-semibold">Jurnal Umum</span></button>
-            <button onClick={() => setActiveMenu('bukubesar')} className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap border-b-4 transition-colors ${activeMenu === 'bukubesar' ? 'border-indigo-500 text-indigo-700 bg-white shadow-sm' : 'border-transparent text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50'}`}><Book className="w-4 h-4 shrink-0" /><span className="text-sm font-semibold">Buku Besar</span></button>
-            <button onClick={() => setActiveMenu('lapkeu')} className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap border-b-4 transition-colors ${activeMenu === 'lapkeu' ? 'border-indigo-500 text-indigo-700 bg-white shadow-sm' : 'border-transparent text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50'}`}><Scale className="w-4 h-4 shrink-0" /><span className="text-sm font-semibold">Neraca & Laba Rugi</span></button>
-            <button onClick={() => setActiveMenu('anggaran')} className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap border-b-4 transition-colors ${activeMenu === 'anggaran' ? 'border-violet-500 text-violet-700 bg-white shadow-sm' : 'border-transparent text-violet-500 hover:text-violet-700 hover:bg-violet-50'}`}><ClipboardList className="w-4 h-4 shrink-0" /><span className="text-sm font-semibold">Anggaran & Approval</span></button>
           </div>
         </div>
 
         {/* CONTEN AREA */}
         
-        {/* MODUL: BUKU KAS SEDERHANA */}
+        {/* MODUL: RIWAYAT TRANSAKSI */}
         {activeMenu === 'kas' && (
-          <div className="animate-in fade-in">
+          <div className="animate-in fade-in space-y-6">
+            {/* Connection Banner */}
+            <div className="bg-gradient-to-r from-emerald-800 via-lime-700 to-green-800 rounded-2xl p-6 text-white shadow-xl flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 border border-lime-500/30">
+              <div className="space-y-1">
+                <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 text-lime-100 text-xs font-extrabold uppercase tracking-wider backdrop-blur-md">
+                  🔗 Terhubung Otomatis Sistem Akuntansi Double-Entry
+                </span>
+                <h2 className="text-2xl font-extrabold text-white">Riwayat Transaksi Kas Masjid</h2>
+                <p className="text-lime-100 text-xs md:text-sm max-w-3xl leading-relaxed">
+                  Setiap mutasi kas (pemasukan & pengeluaran) di halaman ini langsung tersinkronisasi otomatis dengan **Chart of Accounts (CoA)**, **Jurnal Umum**, **Buku Besar**, **Neraca & Laba Rugi**, dan **Laporan Keuangan ISAK 35**.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                <button 
+                  onClick={() => { setActiveMenu('lapkeu'); setLapkeuTab('jurnal'); }}
+                  className="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl text-xs backdrop-blur-md transition-all border border-white/20 flex items-center gap-1.5 cursor-pointer"
+                >
+                  <FileText className="w-4 h-4 text-lime-300" /> Lihat Jurnal Umum
+                </button>
+                <button 
+                  onClick={() => { setActiveMenu('lapkeu'); setLapkeuTab('bukubesar'); }}
+                  className="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl text-xs backdrop-blur-md transition-all border border-white/20 flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Book className="w-4 h-4 text-lime-300" /> Buku Besar
+                </button>
+                <button 
+                  onClick={() => { setActiveMenu('lapkeu'); setLapkeuTab('neraca'); }}
+                  className="px-3.5 py-2 bg-amber-400 hover:bg-amber-300 text-amber-950 font-extrabold rounded-xl text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Scale className="w-4 h-4 text-amber-950" /> Neraca & Laba Rugi ➔
+                </button>
+              </div>
+            </div>
+
             {/* Sub-menu Kas */}
-            <div className="flex gap-4 mb-6 border-b border-slate-200 pb-2 overflow-x-auto no-scrollbar">
+            <div className="flex gap-4 border-b border-slate-200 pb-2 overflow-x-auto no-scrollbar">
               <button onClick={() => setKasTab('ringkasan')} className={`px-4 py-2 text-sm font-bold whitespace-nowrap ${kasTab === 'ringkasan' ? 'text-lime-600 border-b-2 border-lime-400' : 'text-slate-500 hover:text-slate-700'}`}>Ringkasan Kas</button>
               <button onClick={() => setKasTab('pemasukan')} className={`px-4 py-2 text-sm font-bold whitespace-nowrap ${kasTab === 'pemasukan' ? 'text-lime-600 border-b-2 border-lime-400' : 'text-slate-500 hover:text-slate-700'}`}>Input Pemasukan</button>
               <button onClick={() => setKasTab('pengeluaran')} className={`px-4 py-2 text-sm font-bold whitespace-nowrap ${kasTab === 'pengeluaran' ? 'text-lime-600 border-b-2 border-lime-400' : 'text-slate-500 hover:text-slate-700'}`}>Input Pengeluaran</button>
@@ -307,7 +404,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                 <div className="lg:col-span-3 bg-white border border-slate-200 rounded-xl overflow-hidden shadow-lg">
                   <div className="p-5 border-b border-slate-200 flex items-center justify-between">
                     <h3 className="font-bold text-slate-800">Catatan Transaksi Terakhir</h3>
-                    <button onClick={() => setKasTab('pemasukan')} className="bg-lime-600 hover:bg-lime-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition-colors whitespace-nowrap">
+                    <button onClick={() => setKasTab('pemasukan')} className="bg-lime-600 hover:bg-lime-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition-colors whitespace-nowrap cursor-pointer">
                       + Tambah Transaksi
                     </button>
                   </div>
@@ -345,21 +442,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
               <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 animate-in fade-in">
                 <div className="lg:col-span-2 bg-white border border-slate-200 p-8 rounded-xl shadow-xl">
                   <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2"><ArrowDownCircle className="w-6 h-6 text-emerald-600" /> Form Input Pemasukan Kas</h3>
-                  <form className="space-y-5" onSubmit={e => { e.preventDefault(); alert('Data pemasukan berhasil disimpan!'); setKasTab('ringkasan'); }}>
+                  <form className="space-y-5" onSubmit={handleKasPemasukanSubmit}>
                     <div>
                       <label className="block text-sm font-bold text-slate-500 mb-2">Tanggal Transaksi</label>
-                      <input type="date" className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-lime-600" required defaultValue={new Date().toISOString().split('T')[0]} />
+                      <input name="tgl" type="date" className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-lime-600" required defaultValue={new Date().toISOString().split('T')[0]} />
                     </div>
                     <div>
                       <label className="block text-sm font-bold text-slate-500 mb-2">Keterangan / Sumber Dana</label>
-                      <input type="text" placeholder="Contoh: Infaq Kotak Amal Jumat" className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-lime-600" required />
+                      <input name="ket" type="text" placeholder="Contoh: Infaq Kotak Amal Jumat" className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-lime-600" required />
                     </div>
                     <div>
                       <label className="block text-sm font-bold text-slate-500 mb-2">Nominal Pemasukan (Rp)</label>
-                      <input type="number" placeholder="Contoh: 1500000" className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 font-mono text-lg focus:outline-none focus:border-lime-600" required />
+                      <input name="nom" type="number" placeholder="Contoh: 1500000" className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 font-mono text-lg focus:outline-none focus:border-lime-600" required />
                     </div>
-                    <button type="submit" className="w-full bg-lime-600 hover:bg-lime-700 text-white font-bold py-3.5 px-4 rounded-xl transition-colors shadow-lg shadow-lime-900/20 flex justify-center items-center gap-2">
-                      <Save className="w-5 h-5" /> Simpan Pemasukan
+                    <button type="submit" className="w-full bg-lime-600 hover:bg-lime-700 text-white font-bold py-3.5 px-4 rounded-xl transition-colors shadow-lg shadow-lime-900/20 flex justify-center items-center gap-2 cursor-pointer">
+                      <Save className="w-5 h-5" /> Simpan & Auto-Post ke Jurnal
                     </button>
                   </form>
                 </div>
@@ -372,8 +469,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                         <option value="07/2026">Juli 2026</option>
                         <option value="06/2026">Juni 2026</option>
                       </select>
-                      <button onClick={() => handleExportPDF('in', kasEntries.filter(e => e.type === 'in' && (filterPemasukan === 'semua' || e.date.endsWith(filterPemasukan))))} className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors border border-slate-300 shadow-sm">PDF</button>
-                      <button onClick={() => handleExportExcel('in', kasEntries.filter(e => e.type === 'in' && (filterPemasukan === 'semua' || e.date.endsWith(filterPemasukan))))} className="bg-lime-600 hover:bg-lime-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-sm">Excel</button>
+                      <button onClick={() => handleExportPDF('in', kasEntries.filter(e => e.type === 'in' && (filterPemasukan === 'semua' || e.date.endsWith(filterPemasukan))))} className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors border border-slate-300 shadow-sm cursor-pointer">PDF</button>
+                      <button onClick={() => handleExportExcel('in', kasEntries.filter(e => e.type === 'in' && (filterPemasukan === 'semua' || e.date.endsWith(filterPemasukan))))} className="bg-lime-600 hover:bg-lime-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-sm cursor-pointer">Excel</button>
                     </div>
                   </div>
                   <div className="overflow-x-auto flex-1">
@@ -406,21 +503,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
               <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 animate-in fade-in">
                 <div className="lg:col-span-2 bg-white border border-slate-200 p-8 rounded-xl shadow-xl">
                   <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2"><ArrowUpCircle className="w-6 h-6 text-red-600" /> Form Input Pengeluaran Kas</h3>
-                  <form className="space-y-5" onSubmit={e => { e.preventDefault(); alert('Data pengeluaran berhasil disimpan!'); setKasTab('ringkasan'); }}>
+                  <form className="space-y-5" onSubmit={handleKasPengeluaranSubmit}>
                     <div>
                       <label className="block text-sm font-bold text-slate-500 mb-2">Tanggal Transaksi</label>
-                      <input type="date" className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-lime-600" required defaultValue={new Date().toISOString().split('T')[0]} />
+                      <input name="tgl" type="date" className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-lime-600" required defaultValue={new Date().toISOString().split('T')[0]} />
                     </div>
                     <div>
                       <label className="block text-sm font-bold text-slate-500 mb-2">Keterangan / Tujuan Pengeluaran</label>
-                      <input type="text" placeholder="Contoh: Pembayaran Listrik & PDAM" className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-lime-600" required />
+                      <input name="ket" type="text" placeholder="Contoh: Pembayaran Listrik & PDAM" className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-lime-600" required />
                     </div>
                     <div>
                       <label className="block text-sm font-bold text-slate-500 mb-2">Nominal Pengeluaran (Rp)</label>
-                      <input type="number" placeholder="Contoh: 500000" className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 font-mono text-lg focus:outline-none focus:border-lime-600" required />
+                      <input name="nom" type="number" placeholder="Contoh: 500000" className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 font-mono text-lg focus:outline-none focus:border-lime-600" required />
                     </div>
-                    <button type="submit" className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 px-4 rounded-xl transition-colors shadow-lg shadow-red-900/20 flex justify-center items-center gap-2">
-                      <Save className="w-5 h-5" /> Simpan Pengeluaran
+                    <button type="submit" className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 px-4 rounded-xl transition-colors shadow-lg shadow-red-900/20 flex justify-center items-center gap-2 cursor-pointer">
+                      <Save className="w-5 h-5" /> Simpan & Auto-Post ke Jurnal
                     </button>
                   </form>
                 </div>
@@ -629,7 +726,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
 
                 <div>
                   <label className="block text-sm font-bold text-slate-600 mb-2">Lokasi</label>
-                  <input type="text" placeholder="Ruang Utama Masjid Tazkia" className="w-full p-3 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-lime-600" defaultValue="Ruang Utama Masjid Citra Sentul" />
+                  <input type="text" placeholder="Ruang Utama Masjid Citra Sentul" className="w-full p-3 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-lime-600" defaultValue="Ruang Utama Masjid Citra Sentul" />
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-slate-600 mb-2">Pengisi Acara / Pemateri</label>
@@ -768,7 +865,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {[
-                    { title: 'Logo Resmi Masjid', desc: 'Logo ini akan tampil di bagian atas navigasi dan bagian paling bawah (footer) website.', url: 'https://firebasestorage.googleapis.com/v0/b/tazkia...' },
+                    { title: 'Logo Resmi Masjid', desc: 'Logo ini akan tampil di bagian atas navigasi dan bagian paling bawah (footer) website.', url: 'https://firebasestorage.googleapis.com/v0/b/masjidcitrasentul...' },
                     { title: 'Foto Banner Hero Masjid', desc: 'Foto ini akan menjadi latar belakang besar (background) saat pertama kali halaman beranda (Home) dibuka.', url: 'https://images.unsplash.com/photo-1589803138861-5...' },
                     { title: 'Gambar Barcode QRIS Masjid', desc: 'Gambar ini akan muncul saat jamaah menekan tombol bayar donasi/ziswaf di halaman beranda.', url: 'https://images.unsplash.com/qris-dummy...' },
                   ].map((item, i) => (
@@ -1063,7 +1160,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[
                 { tag: 'Kajian', title: 'Kajian Rutin Subuh Berkah: Fiqh Muamalah & ZISWAF', desc: 'Diberitahukan kepada seluruh jamaah bahwa Kajian Subuh Berkah bersama KH. Ridwan Kamil, Lc akan dilaksanakan setiap Sabtu subuh dilanjutkan dengan sarapan ramah tamah.', img: 'https://images.unsplash.com/photo-1542816417-0983c9c9ad53?auto=format&fit=crop&w=400&q=80' },
-                { tag: 'Keuangan', title: 'Laporan Akuntabilitas & Transparansi Kas Masjid Bulan Juni 2026', desc: 'Laporan rincian pemasukan dan pengeluaran kas Masjid Tazkia periode Juni 2026 telah terverifikasi oleh Tim Audit Internal. Informasi selengkapnya dapat diakses pada menu Transparansi.', img: 'https://images.unsplash.com/photo-1519817650390-64a93db51149?auto=format&fit=crop&w=400&q=80' },
+                { tag: 'Keuangan', title: 'Laporan Akuntabilitas & Transparansi Kas Masjid Bulan Juni 2026', desc: 'Laporan rincian pemasukan dan pengeluaran kas Masjid Citra Sentul Raya periode Juni 2026 telah terverifikasi oleh Tim Audit Internal. Informasi selengkapnya dapat diakses pada menu Transparansi.', img: 'https://images.unsplash.com/photo-1519817650390-64a93db51149?auto=format&fit=crop&w=400&q=80' },
                 { tag: 'Kegiatan', title: 'Pendaftaran Santri Baru TPA Anak & Pembina Muallaf Center', desc: 'Gelombang pendaftaran santri TPA Anak & Muallaf Center angkatan 2026/2027 telah dibuka. Silakan daftar via Sekretariat DKM.', img: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=400&q=80' },
               ].map((news, i) => (
                 <div key={i} className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xl flex flex-col">
@@ -1225,7 +1322,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                     {[
                       { n: 'Haji Ahmad Subagja', t: 'KETUA DKM', e: 'ahmad.subagja@gmail.com', c: '081298765432', d: '10/1/2026' },
                       { n: 'Haji Bambang Pamungkas, M.M.', t: 'BENDAHARA DKM', e: 'bambang.pamungkas@outlook.com', c: '081311223344', d: '15/1/2026' },
-                      { n: 'Ustadz H. M. Zainuddin, Sq', t: 'SEKRETARIS DKM', e: 'zainuddin.sq@masjidtazkia.id', c: '081555667788', d: '1/2/2026' },
+                      { n: 'Ustadz H. M. Zainuddin, Sq', t: 'SEKRETARIS DKM', e: 'zainuddin.sq@citrasentul.id', c: '081555667788', d: '1/2/2026' },
                       { n: 'Yudi Haryono', t: 'JEMAAH', e: 'yudiharyono@gmail.com', c: '087812341234', d: '1/2/2026' },
                     ].map((u, i) => (
                       <tr key={i} className="hover:bg-slate-50">
@@ -1275,7 +1372,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                   </thead>
                   <tbody className="divide-y divide-slate-200">
                     {[
-                      { w: '29/7/2026, 19.06.26', n: 'Petugas Masjid Tazkia', a: 'admin', r: 'ADMIN MASJID', ac: 'LOGIN', c: 'bg-emerald-900/50 text-emerald-600', d: 'User logged in successfully' },
+                      { w: '29/7/2026, 19.06.26', n: 'Petugas Masjid Citra Sentul Raya', a: 'admin', r: 'ADMIN MASJID', ac: 'LOGIN', c: 'bg-emerald-900/50 text-emerald-600', d: 'User logged in successfully' },
                       { w: '29/7/2026, 19.06.14', n: 'Gania', a: '081517045406', r: 'JAMAAH', ac: 'LOGOUT', c: 'bg-red-900/50 text-red-600', d: 'User logged out successfully' },
                       { w: '29/7/2026, 18.33.03', n: 'Gania', a: '081517045406', r: 'JAMAAH', ac: 'LOGIN', c: 'bg-emerald-900/50 text-emerald-600', d: 'User logged in successfully' },
                       { w: '28/7/2026, 16.00.00', n: 'Haji Ahmad Subagja', a: 'ahmad.subagja@gmail.com', r: 'DKM', ac: 'LOGIN', c: 'bg-emerald-900/50 text-emerald-600', d: 'Berhasil melakukan login ke dashboard Pengurus DKM dari perangkat seluler.' },
@@ -1301,12 +1398,82 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
           </div>
         )}
 
-        {/* ── MODUL AKUNTANSI TERINTEGRASI ── */}
-        {activeMenu === 'coa' && <ModulCoA journals={journals} />}
-        {activeMenu === 'jurnal' && <ModulJurnal entries={journals} onAddJournal={handleAutoPostJournal} />}
-        {activeMenu === 'bukubesar' && <ModulBukuBesar journals={journals} />}
-        {activeMenu === 'lapkeu' && <ModulLaporanKeuangan journals={journals} />}
-        {activeMenu === 'anggaran' && <ModulAnggaranApproval onAutoPostJournal={handleAutoPostJournal} />}
+        {/* ── MODUL LAPORAN KEUANGAN & AKUNTANSI TERINTEGRASI ── */}
+        {['lapkeu', 'jurnal', 'bukubesar', 'coa', 'anggaran'].includes(activeMenu) && (
+          <div className="animate-in fade-in space-y-6">
+            {/* Header Banner */}
+            <div className="bg-gradient-to-r from-indigo-950 via-indigo-900 to-slate-900 rounded-2xl p-6 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-indigo-700/40">
+              <div>
+                <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/30 text-indigo-200 text-xs font-bold uppercase tracking-wider mb-2 border border-indigo-400/30">
+                  📊 Modul Akuntansi Standar ISAK 35
+                </span>
+                <h2 className="text-2xl font-extrabold text-white">Fitur Laporan Keuangan & Akuntansi Masjid</h2>
+                <p className="text-indigo-200 text-xs md:text-sm mt-1 max-w-3xl leading-relaxed">
+                  Terhubung langsung secara real-time dengan **Riwayat Transaksi** & **Input Donasi ZISWAF**. Mengintegrasikan Chart of Accounts (CoA), Jurnal Umum Double-Entry, Buku Besar, Neraca & Laba Rugi, serta Approval Anggaran.
+                </p>
+              </div>
+              <div className="flex gap-2 shrink-0">
+                <button 
+                  onClick={() => setActiveMenu('kas')} 
+                  className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl text-xs backdrop-blur-md transition-colors border border-white/20 flex items-center gap-2 cursor-pointer"
+                >
+                  <Book className="w-4 h-4 text-lime-400" /> Buka Riwayat Transaksi
+                </button>
+              </div>
+            </div>
+
+            {/* Sub-Navigation Tabs */}
+            <div className="flex gap-2 overflow-x-auto no-scrollbar bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm">
+              <button 
+                onClick={() => setLapkeuTab('neraca')} 
+                className={`px-4 py-2.5 text-xs font-extrabold rounded-lg transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+                  lapkeuTab === 'neraca' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                <Scale className="w-4 h-4" /> Neraca & Laba Rugi (ISAK 35)
+              </button>
+              <button 
+                onClick={() => setLapkeuTab('jurnal')} 
+                className={`px-4 py-2.5 text-xs font-extrabold rounded-lg transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+                  lapkeuTab === 'jurnal' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                <FileText className="w-4 h-4" /> Jurnal Umum Double-Entry ({journals.length})
+              </button>
+              <button 
+                onClick={() => setLapkeuTab('bukubesar')} 
+                className={`px-4 py-2.5 text-xs font-extrabold rounded-lg transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+                  lapkeuTab === 'bukubesar' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                <Book className="w-4 h-4" /> Buku Besar (General Ledger)
+              </button>
+              <button 
+                onClick={() => setLapkeuTab('coa')} 
+                className={`px-4 py-2.5 text-xs font-extrabold rounded-lg transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+                  lapkeuTab === 'coa' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                <BookOpen className="w-4 h-4" /> Chart of Accounts (CoA)
+              </button>
+              <button 
+                onClick={() => setLapkeuTab('anggaran')} 
+                className={`px-4 py-2.5 text-xs font-extrabold rounded-lg transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+                  lapkeuTab === 'anggaran' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                <ClipboardList className="w-4 h-4" /> Anggaran & Approval Flow
+              </button>
+            </div>
+
+            {/* Sub-Tab Module Display */}
+            {lapkeuTab === 'neraca' && <ModulLaporanKeuangan journals={journals} />}
+            {lapkeuTab === 'jurnal' && <ModulJurnal entries={journals} onAddJournal={handleAutoPostJournal} />}
+            {lapkeuTab === 'bukubesar' && <ModulBukuBesar journals={journals} />}
+            {lapkeuTab === 'coa' && <ModulCoA journals={journals} />}
+            {lapkeuTab === 'anggaran' && <ModulAnggaranApproval onAutoPostJournal={handleAutoPostJournal} />}
+          </div>
+        )}
 
       </div>
     </div>

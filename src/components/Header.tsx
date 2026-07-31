@@ -35,7 +35,6 @@ export const Header: React.FC<HeaderProps> = ({
 
   const navItems = [
     { name: 'Home', id: 'home' },
-    { name: "Al-Qur'an Digital", id: 'quran' },
     { name: 'Kalender Kegiatan', id: 'kalender' },
     { name: 'ZISWAF', id: 'ziswaf' },
     { name: 'Tentang Kami', id: 'tentang' },

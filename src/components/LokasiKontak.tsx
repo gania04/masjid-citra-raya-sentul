@@ -109,7 +109,7 @@ export const LokasiKontak: React.FC = () => {
               </span>
               <h3 className="text-xl font-bold text-slate-900">Kawasan Citra Sentul Raya</h3>
               <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                Sirkuit Sentul, Kab. Bogor - Jawa Barat (Kerjasama Syariah dengan Institut Tazkia)
+                Sirkuit Sentul, Babakan Madang, Kab. Bogor - Jawa Barat
               </p>
             </div>
             <a

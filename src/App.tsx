@@ -15,7 +15,7 @@ import { LoginModal } from './components/LoginModal';
 import { AiAsistenModal } from './components/AiAsistenModal';
 import { INITIAL_STATS } from './data/mockData';
 import { supabase } from './lib/supabase';
-import { Sun, Moon } from 'lucide-react';
+import { Sun, Moon, BookOpen } from 'lucide-react';
 
 export default function App() {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -195,13 +195,56 @@ export default function App() {
         <Hero />
         {homeVisibility.showJadwal && <JadwalShalatCard />}
         
+        {/* Banner Button Al-Qur'an Digital di Beranda */}
+        {homeVisibility.showQuran && (
+          <section id="quran-beranda" className="max-w-7xl mx-auto px-4 py-8">
+            <div className="bg-gradient-to-r from-emerald-800 via-lime-700 to-green-700 rounded-3xl p-8 text-white shadow-2xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8 border border-lime-500/30">
+              <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+              
+              <div className="z-10 max-w-2xl space-y-4 text-center md:text-left">
+                <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/20 text-lime-200 text-xs font-extrabold uppercase tracking-wider backdrop-blur-md">
+                  📖 Kitab Suci Al-Qur'an Digital 30 Juz
+                </span>
+                <h2 className="text-2xl md:text-4xl font-extrabold tracking-tight leading-tight text-white drop-shadow-sm">
+                  Membaca & Memahami Al-Qur'an Kapan Saja
+                </h2>
+                <p className="text-lime-100 text-sm md:text-base leading-relaxed">
+                  Akses 114 Surah Al-Qur'an lengkap dengan Audio Qari Murottal, terjemahan Indonesia, Tafsir Kemenag, petunjuk Tajwid berwarna, serta fitur penanda bacaan (*Bookmark*).
+                </p>
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 pt-2">
+                  <button
+                    onClick={() => setIsQuranModalOpen(true)}
+                    className="px-6 py-3.5 bg-amber-400 hover:bg-amber-300 text-amber-950 font-extrabold rounded-2xl shadow-xl transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2 text-sm cursor-pointer"
+                  >
+                    <BookOpen className="w-5 h-5 text-amber-950" /> Buka Al-Qur'an Digital (114 Surah)
+                  </button>
+                </div>
+              </div>
+
+              <div className="z-10 flex flex-col items-center justify-center bg-white/10 p-6 rounded-2xl backdrop-blur-md border border-white/20 shrink-0 text-center w-full md:w-auto">
+                <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mb-3 shadow-inner">
+                  <BookOpen className="w-8 h-8 text-amber-300" />
+                </div>
+                <p className="text-xs font-bold text-lime-100 uppercase tracking-widest">Akses Gratis 100%</p>
+                <p className="text-xl font-bold text-white mt-1">114 Surah & Audio MP3</p>
+                <button
+                  onClick={() => setIsQuranModalOpen(true)}
+                  className="mt-4 w-full py-2.5 px-5 bg-white text-emerald-800 hover:bg-lime-50 font-extrabold text-xs rounded-xl transition-colors shadow-md cursor-pointer"
+                >
+                  Baca Surah & Ayat ➔
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* Kalender Kegiatan */}
         {homeVisibility.showKalender && <KalenderKegiatan />}
 
         {/* ZISWAF Programs */}
         {homeVisibility.showZiswaf && <DaftarProgram programs={programs} />}
 
-        {/* Al-Quran Digital - Modal Only (accessible via header nav click) */}
+        {/* Al-Quran Digital - Modal Reader */}
         <AlQuranDigital 
           isOpenModal={isQuranModalOpen} 
           onCloseModal={() => setIsQuranModalOpen(false)} 
@@ -223,23 +266,6 @@ export default function App() {
 
       {/* Footer */}
       <Footer onNavigate={() => {}} onOpenWakafModal={() => {}} />
-
-      {/* Floating Crescent Moon Theme Toggle */}
-      <button
-        onClick={toggleDarkMode}
-        className={`fixed bottom-6 right-6 z-40 w-12 h-12 rounded-full shadow-2xl border-2 transition-all transform hover:scale-110 active:scale-95 flex items-center justify-center cursor-pointer ${
-          isDarkMode 
-            ? 'bg-slate-900 border-amber-400/50 text-amber-300 hover:bg-slate-800' 
-            : 'bg-white border-green-300 text-green-700 hover:bg-green-50'
-        }`}
-        title={isDarkMode ? 'Beralih ke Mode Siang ☀️' : 'Beralih ke Mode Malam 🌙'}
-      >
-        {isDarkMode ? (
-          <Sun className="w-5 h-5 text-amber-400" />
-        ) : (
-          <Moon className="w-5 h-5 text-green-700" />
-        )}
-      </button>
 
       {/* Modals */}
       <LoginModal 

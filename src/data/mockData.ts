@@ -45,7 +45,7 @@ export const INITIAL_MUWAKIF: Muwakif[] = [
   },
   {
     id: 'mw-4',
-    nama: 'Ahmad Fauzi & Rekan Alumni Tazkia',
+    nama: 'Ahmad Fauzi & Rekan Warga Citra Sentul',
     nominal: 3000000,
     paket: 'Paket 2m² Lantai Shalat',
     tanggal: '2026-07-26',
@@ -165,7 +165,7 @@ export const BERITA_LIST: BeritaInfo[] = [
     
 Para muwakif dan dermawan yang dirahmati Allah, kami sampaikan laporan perkembangan fisik pembangunan Masjid Citra Sentul Raya per minggu ini. 
 
-Proses pengecoran pilar utama ruang shalat utama telah mencapai 65%. Tim insinyur dari Tazkia Construction beserta kontraktor lokal bekerja dengan teliti memastikan ketahanan gempa dan presisi struktur. Pengecoran menggunakan beton mutu K-350 dengan sistem curing terlindungi.
+Proses pengecoran pilar utama ruang shalat utama telah mencapai 65%. Tim insinyur dari Tim Konstruksi Masjid beserta kontraktor lokal bekerja dengan teliti memastikan ketahanan gempa dan presisi struktur. Pengecoran menggunakan beton mutu K-350 dengan sistem curing terlindungi.
 
 Kami mengucapkan terima kasih yang sebesar-besarnya kepada seluruh dermawan yang terus menyalurkan wakafnya. Mari terus kita doakan agar pembangunan berjalan lancar tanpa kendala.`,
     kategori: 'Pembangunan',
@@ -191,9 +191,9 @@ Bagi Bapak/Ibu yang berniat mewakafkan sebagian rezekinya atas nama diri sendiri
   },
   {
     id: 'news-3',
-    judul: 'Silaturahmi & Doa Bersama Tokoh Masyakarat Sentul Sirkuit bersama Dosen Tazkia',
+    judul: 'Silaturahmi & Doa Bersama Tokoh Masyakarat Sentul Sirkuit bersama DKM Masjid',
     ringkasan: 'Acara keakraban warga kompleks Citra Sentul Raya untuk mematangkan agenda sosial dan pembentukan pengurus DKM pendamping.',
-    konten: `Berlokasi di sekretariat panitia pembangunan Sirkuit Sentul, telah dilaksanakan silaturahmi tokoh warga Citra Sentul Raya bersama Pak Grandis dan jajaran civitas akademika Tazkia.
+    konten: `Berlokasi di sekretariat panitia pembangunan Sirkuit Sentul, telah dilaksanakan silaturahmi tokoh warga Citra Sentul Raya bersama Pak Grandis dan jajaran pengurus DKM Masjid.
 
 Dalam pertemuan ini disepakati skema transparansi keuangan berbasis digital, jadwal audit berkala, serta program kerja awal DKM seperti Pelatihan Tahsin Al-Qur'an dan Bazar UMKM Halal.`,
     kategori: 'Kegiatan',
@@ -227,7 +227,7 @@ export const VIDEOS_DAKWAH: VideoDakwah[] = [
     id: 'v3',
     youtubeId: '6FdsRZRNEhw', // Video asli dari Ashabul Yamin TV
     judul: 'Doa Bersama Peletakan Batu Pertama & Pengecoran Fondasi Masjid',
-    penceramah: 'Dosen Institut Tazkia & Tokoh Warga',
+    penceramah: 'Ustadz & Tokoh Warga Sentul',
     durasi: '28:15',
     kategori: 'Kajian',
     tanggal: '2026-07-10',

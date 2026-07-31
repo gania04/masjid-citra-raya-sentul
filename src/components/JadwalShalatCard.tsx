@@ -16,9 +16,7 @@ export const JadwalShalatCard: React.FC = () => {
   const hijriDate = getHijriDateIndo();
 
   const prayerList = [
-    { name: 'Imsak', time: jadwal.imsak, icon: '🌅' },
     { name: 'Subuh', time: jadwal.subuh, icon: '🌌' },
-    { name: 'Syuruq', time: jadwal.syuruq, icon: '☀️' },
     { name: 'Dzuhur', time: jadwal.dzuhur, icon: '🌤️' },
     { name: 'Ashar', time: jadwal.ashar, icon: '🌇' },
     { name: 'Maghrib', time: jadwal.maghrib, icon: '🌆' },
@@ -39,7 +37,7 @@ export const JadwalShalatCard: React.FC = () => {
               <span>{hijriDate}</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-black text-white">
-              Jadwal Shalat & Adzan
+              Jadwal Shalat 5 Waktu & Adzan
             </h2>
             <p className="text-xs sm:text-sm text-lime-100 flex items-center gap-1.5 mt-1">
               <MapPin className="w-4 h-4 text-lime-300" />
@@ -81,7 +79,7 @@ export const JadwalShalatCard: React.FC = () => {
           <div className="flex items-center gap-4">
             <button
               onClick={() => setIsAudioMuted(!isAudioMuted)}
-              className="p-3 rounded-full bg-lime-600 hover:bg-lime-700 text-white transition-colors shadow-md border border-lime-300"
+              className="p-3 rounded-full bg-lime-600 hover:bg-lime-700 text-white transition-colors shadow-md border border-lime-300 cursor-pointer"
               title={isAudioMuted ? 'Matikan Notifikasi Adzan' : 'Aktifkan Notifikasi Adzan'}
             >
               {isAudioMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
@@ -95,24 +93,24 @@ export const JadwalShalatCard: React.FC = () => {
           </div>
         </div>
 
-        {/* Prayer Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+        {/* Prayer Grid - 5 Columns for 5 Prayers */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
           {prayerList.map((p) => {
             const isCurrentNext = nextPrayer.name.includes(p.name);
             return (
               <div
                 key={p.name}
-                className={`p-4 rounded-2xl text-center border transition-all ${
+                className={`p-5 rounded-2xl text-center border transition-all ${
                   isCurrentNext
-                    ? 'bg-white text-lime-700 border-white shadow-lg scale-105 font-black'
+                    ? 'bg-white text-lime-800 border-white shadow-xl scale-105 font-black'
                     : 'bg-lime-700/60 text-white border-lime-500 hover:bg-lime-700'
                 }`}
               >
-                <span className="text-2xl block mb-1">{p.icon}</span>
-                <span className={`text-xs block font-semibold ${isCurrentNext ? 'text-lime-600 font-bold' : 'text-lime-200'}`}>
+                <span className="text-3xl block mb-2">{p.icon}</span>
+                <span className={`text-xs block font-bold uppercase tracking-wider mb-1 ${isCurrentNext ? 'text-lime-700 font-black' : 'text-lime-200'}`}>
                   {p.name}
                 </span>
-                <span className={`text-lg font-mono font-black ${isCurrentNext ? 'text-lime-800' : 'text-white'}`}>
+                <span className={`text-xl font-mono font-black ${isCurrentNext ? 'text-slate-950' : 'text-white'}`}>
                   {p.time}
                 </span>
               </div>
