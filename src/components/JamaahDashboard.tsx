@@ -169,10 +169,13 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama }
               <div className="bg-[#064e3b] rounded-3xl p-6 shadow-md">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                   <h3 className="text-emerald-50 font-bold flex items-center gap-2"><Clock className="w-5 h-5 text-emerald-300" /> Jadwal Shalat Hari Ini</h3>
-                  <div className="bg-white/10 border border-white/20 text-emerald-100 rounded-lg px-3 py-1.5 flex items-center gap-2 text-xs">
+                  <button 
+                    onClick={() => alert('Fitur ubah lokasi jadwal shalat akan segera hadir.')}
+                    className="bg-white/10 hover:bg-white/20 border border-white/20 text-emerald-100 rounded-lg px-3 py-1.5 flex items-center gap-2 text-xs transition-colors cursor-pointer"
+                  >
                     <span>📍 Bogor, ID</span>
                     <ChevronRight className="w-3 h-3 rotate-90" />
-                  </div>
+                  </button>
                 </div>
                 
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3">

@@ -6,7 +6,7 @@ interface HeaderProps {
   onLoginClick: () => void;
   onAiClick: () => void;
   onQuranClick?: () => void;
-  onHomeClick?: () => void;
+  onNavClick?: () => void;
   isDarkMode: boolean;
   onToggleDarkMode: () => void;
   isAutoNight?: boolean;
@@ -16,7 +16,7 @@ export const Header: React.FC<HeaderProps> = ({
   onLoginClick, 
   onAiClick, 
   onQuranClick,
-  onHomeClick,
+  onNavClick,
   isDarkMode,
   onToggleDarkMode,
   isAutoNight = false
@@ -44,17 +44,20 @@ export const Header: React.FC<HeaderProps> = ({
   ];
 
   const handleScroll = (id: string) => {
-    if (id === 'home') {
-      if (onHomeClick) {
-        onHomeClick();
-      }
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (id === 'quran' && onQuranClick) {
-      onQuranClick();
-    } else {
-      const el = document.getElementById(id);
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    if (onNavClick) {
+      onNavClick();
     }
+    
+    setTimeout(() => {
+      if (id === 'home') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (id === 'quran' && onQuranClick) {
+        onQuranClick();
+      } else {
+        const el = document.getElementById(id);
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 150); // slight delay to allow Home page components to mount if exiting portal
   };
 
   return (

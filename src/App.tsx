@@ -171,7 +171,7 @@ export default function App() {
         onLoginClick={() => setIsLoginModalOpen(true)} 
         onAiClick={() => setIsAiModalOpen(true)} 
         onQuranClick={() => setIsQuranModalOpen(true)}
-        onHomeClick={() => {
+        onNavClick={() => {
           setIsAdmin(false);
           setIsJamaahLoggedIn(false);
         }}
