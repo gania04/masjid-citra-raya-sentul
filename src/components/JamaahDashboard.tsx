@@ -67,7 +67,7 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama }
       onClick={() => setActiveTab(id)}
       className={`flex items-center gap-2 px-5 py-3 rounded-full font-bold text-sm whitespace-nowrap transition-all cursor-pointer ${
         activeTab === id 
-          ? 'bg-blue-600 text-white shadow-md' 
+          ? 'bg-emerald-600 text-white shadow-md' 
           : 'text-slate-600 hover:bg-slate-50'
       }`}
     >
@@ -76,7 +76,7 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama }
   );
 
   const MobileNavButton = ({ id, icon: Icon, label }: { id: any, icon: any, label: string }) => (
-    <button onClick={() => setActiveTab(id)} className={`flex flex-col items-center p-2 min-w-[4rem] ${activeTab === id ? 'text-blue-600' : 'text-slate-400'}`}>
+    <button onClick={() => setActiveTab(id)} className={`flex flex-col items-center p-2 min-w-[4rem] ${activeTab === id ? 'text-emerald-600' : 'text-slate-400'}`}>
       <Icon className="w-5 h-5 mb-1" />
       <span className="text-[9px] font-bold">{label}</span>
     </button>
@@ -86,7 +86,7 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama }
     <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-800 pb-20 md:pb-12">
       {/* Banner Profile (Dark Blue) */}
       <div className="max-w-7xl mx-auto px-4 mt-6">
-        <div className="bg-[#1e3a8a] rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center gap-6 shadow-lg relative overflow-hidden">
+        <div className="bg-[#064e3b] rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center gap-6 shadow-lg relative overflow-hidden">
           {/* Avatar */}
           <div className="w-24 h-24 rounded-full border-2 border-amber-400 bg-amber-500/10 flex items-center justify-center text-4xl font-bold text-amber-400 shrink-0 shadow-inner z-10">
             {profilName.charAt(0).toUpperCase()}
@@ -98,18 +98,18 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama }
               <span className="bg-amber-900/50 border border-amber-500/30 text-amber-200 text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 uppercase tracking-wider"><Award className="w-3 h-3" /> Bronze Muhsinin</span>
             </div>
             <h2 className="text-3xl font-bold text-white mb-1">{profilName}</h2>
-            <p className="text-blue-200 text-sm mb-4">081517045406 •</p>
+            <p className="text-emerald-100 text-sm mb-4">081517045406 •</p>
             
             <div className="flex flex-wrap justify-center md:justify-start gap-3">
               <div className="bg-white/10 rounded-xl px-4 py-2 border border-white/10 text-center">
-                <p className="text-[9px] text-blue-200 font-bold uppercase tracking-wider mb-0.5">Total Kebaikan</p>
+                <p className="text-[9px] text-emerald-100 font-bold uppercase tracking-wider mb-0.5">Total Kebaikan</p>
                 <p className="text-lg font-bold text-amber-400">Rp 1.450.000</p>
               </div>
               <div className="bg-white/10 rounded-xl px-4 py-2 border border-white/10 text-center">
-                <p className="text-[9px] text-blue-200 font-bold uppercase tracking-wider mb-0.5">Bergabung Sejak</p>
+                <p className="text-[9px] text-emerald-100 font-bold uppercase tracking-wider mb-0.5">Bergabung Sejak</p>
                 <p className="text-lg font-bold text-white">Jul 2026</p>
               </div>
-              <button onClick={() => window.location.reload()} className="bg-white/5 hover:bg-white/10 rounded-xl px-4 py-2 border border-white/10 flex flex-col items-center justify-center text-blue-200 transition-colors cursor-pointer">
+              <button onClick={() => window.location.reload()} className="bg-white/5 hover:bg-white/10 rounded-xl px-4 py-2 border border-white/10 flex flex-col items-center justify-center text-emerald-100 transition-colors cursor-pointer">
                 <RefreshCw className="w-4 h-4 mb-0.5" />
                 <span className="text-[9px] font-bold uppercase">Refresh</span>
               </button>
@@ -121,7 +121,7 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama }
           </div>
           
           {/* Decorative background circle */}
-          <div className="absolute right-0 top-0 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl transform translate-x-1/3 -translate-y-1/3 pointer-events-none"></div>
+          <div className="absolute right-0 top-0 w-96 h-96 bg-emerald-400/10 rounded-full blur-3xl transform translate-x-1/3 -translate-y-1/3 pointer-events-none"></div>
         </div>
       </div>
 
@@ -154,6 +154,40 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama }
           {/* TAB 1: RINGKASAN ZISWAF */}
           {activeTab === 'ringkasan' && (
             <div className="space-y-6 animate-in fade-in">
+              {/* Jadwal Shalat Widget - Matching Screenshot */}
+              <div className="bg-[#064e3b] rounded-3xl p-6 shadow-md">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                  <h3 className="text-emerald-50 font-bold flex items-center gap-2"><Clock className="w-5 h-5 text-emerald-300" /> Jadwal Shalat Hari Ini</h3>
+                  <div className="bg-white/10 border border-white/20 text-emerald-100 rounded-lg px-3 py-1.5 flex items-center gap-2 text-xs">
+                    <span>📍 Bogor, ID</span>
+                    <ChevronRight className="w-3 h-3 rotate-90" />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                  <div className="bg-[#10b981] rounded-2xl p-4 text-center text-white shadow-inner flex flex-col justify-center">
+                    <p className="text-[10px] font-bold uppercase tracking-wider mb-1">Subuh</p>
+                    <p className="text-xl md:text-2xl font-bold">04:35</p>
+                  </div>
+                  <div className="bg-white/10 border border-white/10 rounded-2xl p-4 text-center text-emerald-50 flex flex-col justify-center hover:bg-white/20 transition-colors">
+                    <p className="text-[10px] font-bold uppercase tracking-wider mb-1">Dzuhur</p>
+                    <p className="text-xl md:text-2xl font-bold">11:58</p>
+                  </div>
+                  <div className="bg-white/10 border border-white/10 rounded-2xl p-4 text-center text-emerald-50 flex flex-col justify-center hover:bg-white/20 transition-colors">
+                    <p className="text-[10px] font-bold uppercase tracking-wider mb-1">Ashar</p>
+                    <p className="text-xl md:text-2xl font-bold">15:15</p>
+                  </div>
+                  <div className="bg-white/10 border border-white/10 rounded-2xl p-4 text-center text-emerald-50 flex flex-col justify-center hover:bg-white/20 transition-colors">
+                    <p className="text-[10px] font-bold uppercase tracking-wider mb-1">Maghrib</p>
+                    <p className="text-xl md:text-2xl font-bold">17:55</p>
+                  </div>
+                  <div className="bg-white/10 border border-white/10 rounded-2xl p-4 text-center text-emerald-50 flex flex-col justify-center hover:bg-white/20 transition-colors">
+                    <p className="text-[10px] font-bold uppercase tracking-wider mb-1">Isya</p>
+                    <p className="text-xl md:text-2xl font-bold">19:08</p>
+                  </div>
+                </div>
+              </div>
+
               <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col sm:flex-row items-center gap-4 justify-between">
                 <div>
                   <h2 className="text-xl font-bold text-slate-800">Kalkulator Zakat</h2>
@@ -188,16 +222,16 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama }
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-gradient-to-br from-[#1e3a8a] to-blue-800 p-6 rounded-3xl text-white shadow-md relative overflow-hidden">
+                <div className="bg-gradient-to-br from-[#064e3b] to-emerald-900 p-6 rounded-3xl text-white shadow-md relative overflow-hidden">
                   <Wallet className="w-8 h-8 mb-3 opacity-80" />
-                  <p className="text-xs font-semibold text-blue-200 uppercase tracking-wider">Total Donasi Anda</p>
+                  <p className="text-xs font-semibold text-emerald-200 uppercase tracking-wider">Total Donasi Anda</p>
                   <p className="text-2xl font-bold mt-1">Rp 1.450.000</p>
                 </div>
                 <div 
                   onClick={() => setActiveTab('laporan')}
-                  className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm cursor-pointer hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
+                  className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm cursor-pointer hover:border-emerald-300 hover:bg-emerald-50/50 transition-colors"
                 >
-                  <Activity className="w-8 h-8 mb-3 text-blue-600" />
+                  <Activity className="w-8 h-8 mb-3 text-emerald-600" />
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Program Didukung</p>
                   <p className="text-2xl font-bold text-slate-800 mt-1 flex items-center gap-2">3 Program <ChevronRight className="w-4 h-4 text-slate-400" /></p>
                 </div>
