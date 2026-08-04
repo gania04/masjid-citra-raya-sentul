@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, MonitorPlay, RefreshCw, Book, Calendar, Video, ShieldCheck, Settings, Users, Database, PlusCircle, Save, ArrowDownCircle, ArrowUpCircle, X, FileText, Camera, Megaphone, Clock, Smartphone, UserCheck, Key, Search, Link2, Trash2, Moon, BookOpen, Scale, ClipboardList, Edit } from 'lucide-react';
+import { LogOut, MonitorPlay, RefreshCw, Book, Calendar, Video, ShieldCheck, Settings, Users, Database, PlusCircle, Save, ArrowDownCircle, ArrowUpCircle, X, FileText, Camera, Megaphone, Clock, Smartphone, UserCheck, Key, Search, Link2, Trash2, Moon, BookOpen, Scale, ClipboardList, Edit, Wallet, TrendingUp, TrendingDown, Activity, Heart, Building, LayoutDashboard } from 'lucide-react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -37,7 +37,7 @@ interface AdminDashboardProps {
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs, onAddDonation, homeVisibility, setHomeVisibility, registeredJamaahList, donasiHistory = [], onVerifyDonasi }) => {
-  const [activeMenu, setActiveMenu] = useState('kas');
+  const [activeMenu, setActiveMenu] = useState('utama');
   const [kasTab, setKasTab] = useState('ringkasan');
   const [lapkeuTab, setLapkeuTab] = useState<'neraca' | 'jurnal' | 'bukubesar' | 'coa' | 'anggaran'>('neraca');
   const [filterRingkasan, setFilterRingkasan] = useState({ start: '', end: '' });
@@ -547,6 +547,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
         {/* Scrollable Tabs */}
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden mb-6 shadow-lg">
           <div className="flex overflow-x-auto no-scrollbar">
+            <button onClick={() => setActiveMenu('utama')} className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap border-b-4 transition-colors ${activeMenu === 'utama' ? 'border-lime-500 text-slate-800 bg-white shadow-sm border border-slate-200 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50'}`}><LayoutDashboard className="w-4 h-4 shrink-0 text-lime-600" /><span className="text-sm font-semibold">Dashboard Utama</span></button>
             <button onClick={() => setActiveMenu('kas')} className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap border-b-4 transition-colors ${activeMenu === 'kas' ? 'border-lime-500 text-slate-800 bg-white shadow-sm border border-slate-200 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50'}`}><Book className="w-4 h-4 shrink-0 text-lime-600" /><span className="text-sm font-semibold">Riwayat Transaksi</span></button>
             <button onClick={() => { setActiveMenu('lapkeu'); setLapkeuTab('neraca'); }} className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap border-b-4 transition-colors ${['lapkeu', 'jurnal', 'bukubesar', 'coa', 'anggaran'].includes(activeMenu) ? 'border-lime-600 text-lime-700 bg-lime-50/50 font-bold shadow-sm border border-lime-200' : 'border-transparent text-lime-600 hover:text-lime-800 hover:bg-lime-50/30'}`}><Scale className="w-4 h-4 shrink-0" /><span className="text-sm font-semibold">Laporan Keuangan & Akuntansi</span></button>
             <button onClick={() => setActiveMenu('ziswaf')} className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap border-b-4 transition-colors ${activeMenu === 'ziswaf' ? 'border-lime-500 text-slate-800 bg-white shadow-sm border border-slate-200' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50'}`}><PlusCircle className="w-4 h-4 shrink-0" /><span className="text-sm font-semibold">Input Donasi ZISWAF</span></button>
@@ -566,9 +567,153 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
 
         {/* CONTEN AREA */}
         
+        {/* MODUL: DASHBOARD UTAMA */}
+        {activeMenu === 'utama' && (
+          <div className="animate-in fade-in space-y-6">
+            {/* Top Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xl flex flex-col items-center justify-center gap-3 transition-transform hover:-translate-y-1">
+                <div className="w-14 h-14 bg-blue-50 rounded-full flex items-center justify-center">
+                  <Users className="w-7 h-7 text-blue-500" />
+                </div>
+                <div className="text-center">
+                  <p className="text-slate-500 text-sm font-bold uppercase tracking-wider mb-2">Total Jamaah Terdaftar</p>
+                  <h3 className="text-4xl font-extrabold text-slate-800">{registeredJamaahList.length}</h3>
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xl flex flex-col items-center justify-center gap-3 transition-transform hover:-translate-y-1">
+                <div className="w-14 h-14 bg-emerald-50 rounded-full flex items-center justify-center">
+                  <Heart className="w-7 h-7 text-emerald-500" />
+                </div>
+                <div className="text-center">
+                  <p className="text-slate-500 text-sm font-bold uppercase tracking-wider mb-2">Total Program Donasi</p>
+                  <h3 className="text-4xl font-extrabold text-slate-800">{programs.length}</h3>
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xl flex flex-col items-center justify-center gap-3 transition-transform hover:-translate-y-1">
+                <div className="w-14 h-14 bg-amber-50 rounded-full flex items-center justify-center">
+                  <Calendar className="w-7 h-7 text-amber-500" />
+                </div>
+                <div className="text-center">
+                  <p className="text-slate-500 text-sm font-bold uppercase tracking-wider mb-2">Jadwal Petugas Aktif</p>
+                  <h3 className="text-4xl font-extrabold text-slate-800">4</h3>
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xl flex flex-col items-center justify-center gap-3 transition-transform hover:-translate-y-1">
+                <div className="w-14 h-14 bg-purple-50 rounded-full flex items-center justify-center">
+                  <Building className="w-7 h-7 text-purple-500" />
+                </div>
+                <div className="text-center">
+                  <p className="text-slate-500 text-sm font-bold uppercase tracking-wider mb-2">Aset & Inventaris</p>
+                  <h3 className="text-4xl font-extrabold text-slate-800">{inventarisList.length}</h3>
+                </div>
+              </div>
+            </div>
+
+            {/* Main Content Area */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Saldo Kas Utama (COA) */}
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xl flex flex-col h-80">
+                <h3 className="text-lg font-bold text-slate-800 mb-6 font-serif">Saldo Kas Utama (COA)</h3>
+                {kasEntries.length > 0 ? (
+                  <div className="flex-1 flex flex-col items-center justify-center">
+                    <Wallet className="w-16 h-16 text-slate-200 mb-4" />
+                    <p className="text-slate-500 font-medium">Chart kas aktif (Terhubung dengan ISAK 35)</p>
+                    <p className="text-3xl font-extrabold text-emerald-600 mt-2">Rp {
+                      (kasEntries.filter(e => e.type === 'in').reduce((sum, e) => sum + e.amount, 0) -
+                       kasEntries.filter(e => e.type === 'out').reduce((sum, e) => sum + e.amount, 0)).toLocaleString('id-ID')
+                    }</p>
+                  </div>
+                ) : (
+                  <div className="flex-1 flex flex-col items-center justify-center">
+                    <p className="text-slate-400 font-medium">Belum ada data kas.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Progres Program Donasi */}
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xl flex flex-col h-80">
+                <h3 className="text-lg font-bold text-slate-800 mb-6 font-serif">Progres Program Donasi</h3>
+                <div className="flex items-center gap-4 mb-4 justify-center text-xs text-slate-500 font-bold">
+                  <div className="flex items-center gap-1.5"><div className="w-6 h-3 bg-emerald-500 rounded-sm"></div> Terkumpul</div>
+                  <div className="flex items-center gap-1.5"><div className="w-6 h-3 bg-slate-200 rounded-sm"></div> Target</div>
+                </div>
+                
+                <div className="flex-1 overflow-y-auto pr-2 space-y-5">
+                  {programs.map(prog => (
+                    <div key={prog.id} className="w-full">
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className="font-bold text-slate-700 truncate max-w-[60%]">{prog.judul}</span>
+                        <span className="font-bold text-slate-500">{prog.terkumpulPersen}%</span>
+                      </div>
+                      <div className="w-full bg-slate-100 h-4 rounded-full overflow-hidden border border-slate-200">
+                        <div 
+                          className="h-full bg-emerald-500 rounded-full transition-all" 
+                          style={{ width: `${Math.min(100, prog.terkumpulPersen)}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* MODUL: RIWAYAT TRANSAKSI */}
         {activeMenu === 'kas' && (
           <div className="animate-in fade-in space-y-6">
+            {/* KPI Dashboard Kas */}
+            {(() => {
+              const totalIn = kasEntries.filter(e => e.type === 'in').reduce((sum, e) => sum + e.amount, 0);
+              const totalOut = kasEntries.filter(e => e.type === 'out').reduce((sum, e) => sum + e.amount, 0);
+              const saldo = totalIn - totalOut;
+              
+              return (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-2">
+                  <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-md flex items-center justify-between transition-transform hover:-translate-y-1">
+                    <div>
+                      <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Saldo Kas Saat Ini</p>
+                      <h3 className="text-2xl font-extrabold text-slate-800">Rp {saldo.toLocaleString('id-ID')}</h3>
+                    </div>
+                    <div className="w-12 h-12 bg-lime-100 rounded-full flex items-center justify-center shrink-0">
+                      <Wallet className="w-6 h-6 text-lime-600" />
+                    </div>
+                  </div>
+                  <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-md flex items-center justify-between transition-transform hover:-translate-y-1">
+                    <div>
+                      <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Total Pemasukan</p>
+                      <h3 className="text-xl font-extrabold text-emerald-600">Rp {totalIn.toLocaleString('id-ID')}</h3>
+                    </div>
+                    <div className="w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center shrink-0">
+                      <TrendingUp className="w-6 h-6 text-emerald-600" />
+                    </div>
+                  </div>
+                  <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-md flex items-center justify-between transition-transform hover:-translate-y-1">
+                    <div>
+                      <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Total Pengeluaran</p>
+                      <h3 className="text-xl font-extrabold text-red-600">Rp {totalOut.toLocaleString('id-ID')}</h3>
+                    </div>
+                    <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center shrink-0">
+                      <TrendingDown className="w-6 h-6 text-red-600" />
+                    </div>
+                  </div>
+                  <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-md flex items-center justify-between transition-transform hover:-translate-y-1">
+                    <div>
+                      <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Total Transaksi</p>
+                      <h3 className="text-2xl font-extrabold text-slate-800">{kasEntries.length}</h3>
+                    </div>
+                    <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center shrink-0">
+                      <Activity className="w-6 h-6 text-blue-600" />
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Connection Banner */}
             <div className="bg-gradient-to-r from-lime-800 via-lime-700 to-lime-800 rounded-2xl p-6 text-white shadow-xl flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 border border-lime-500/30">
               <div className="space-y-1">
