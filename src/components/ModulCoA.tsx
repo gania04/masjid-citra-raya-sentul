@@ -6,11 +6,11 @@ const formatRp = (n: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
 
 const JENIS_COLOR: Record<string, string> = {
-  Aktiva: 'bg-blue-100 text-blue-700 border-blue-200',
+  Aktiva: 'bg-lime-100 text-lime-700 border-lime-200',
   Kewajiban: 'bg-red-100 text-red-700 border-red-200',
-  Ekuitas: 'bg-purple-100 text-purple-700 border-purple-200',
-  Pendapatan: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-  Beban: 'bg-amber-100 text-amber-700 border-amber-200',
+  Ekuitas: 'bg-lime-100 text-lime-700 border-lime-200',
+  Pendapatan: 'bg-lime-100 text-lime-700 border-lime-200',
+  Beban: 'bg-lime-100 text-lime-700 border-lime-200',
 };
 
 interface ModulCoAProps {
@@ -85,20 +85,20 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
   return (
     <div className="space-y-6 animate-in fade-in">
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-indigo-700 via-purple-700 to-indigo-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl">
+      <div className="bg-gradient-to-r from-lime-700 via-lime-700 to-lime-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center">
-              <BookOpen className="w-6 h-6 text-indigo-200" />
+              <BookOpen className="w-6 h-6 text-lime-200" />
             </div>
             <div>
               <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight">Chart of Accounts (CoA)</h2>
-              <p className="text-indigo-200 text-xs sm:text-sm">Struktur Master Akun Keuangan Masjid Citra Sentul Raya</p>
+              <p className="text-lime-200 text-xs sm:text-sm">Struktur Master Akun Keuangan Masjid Citra Sentul Raya</p>
             </div>
           </div>
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-300 text-amber-950 font-bold px-5 py-3 rounded-2xl text-xs sm:text-sm transition-all shadow-md active:scale-95 cursor-pointer"
+            className="flex items-center justify-center gap-2 bg-lime-400 hover:bg-lime-300 text-lime-950 font-bold px-5 py-3 rounded-2xl text-xs sm:text-sm transition-all shadow-md active:scale-95 cursor-pointer"
           >
             <PlusCircle className="w-4 h-4" /> Tambah Akun Baru
           </button>
@@ -107,28 +107,28 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
         {/* Dynamic Metric Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
           <div className="bg-white/10 backdrop-blur rounded-2xl p-4 border border-white/10">
-            <div className="flex items-center gap-1.5 text-xs text-indigo-200 mb-1">
-              <Shield className="w-3.5 h-3.5 text-blue-300" /> Total Aset / Aktiva
+            <div className="flex items-center gap-1.5 text-xs text-lime-200 mb-1">
+              <Shield className="w-3.5 h-3.5 text-lime-300" /> Total Aset / Aktiva
             </div>
             <p className="font-black text-lg sm:text-xl text-white font-mono">{formatRp(totalAktiva)}</p>
           </div>
           <div className="bg-white/10 backdrop-blur rounded-2xl p-4 border border-white/10">
-            <div className="flex items-center gap-1.5 text-xs text-indigo-200 mb-1">
-              <TrendingUp className="w-3.5 h-3.5 text-emerald-300" /> Total Pendapatan
+            <div className="flex items-center gap-1.5 text-xs text-lime-200 mb-1">
+              <TrendingUp className="w-3.5 h-3.5 text-lime-300" /> Total Pendapatan
             </div>
-            <p className="font-black text-lg sm:text-xl text-emerald-300 font-mono">{formatRp(totalPendapatan)}</p>
+            <p className="font-black text-lg sm:text-xl text-lime-300 font-mono">{formatRp(totalPendapatan)}</p>
           </div>
           <div className="bg-white/10 backdrop-blur rounded-2xl p-4 border border-white/10">
-            <div className="flex items-center gap-1.5 text-xs text-indigo-200 mb-1">
+            <div className="flex items-center gap-1.5 text-xs text-lime-200 mb-1">
               <TrendingDown className="w-3.5 h-3.5 text-rose-300" /> Total Beban
             </div>
             <p className="font-black text-lg sm:text-xl text-rose-300 font-mono">{formatRp(totalBeban)}</p>
           </div>
           <div className="bg-white/10 backdrop-blur rounded-2xl p-4 border border-white/10">
-            <div className="flex items-center gap-1.5 text-xs text-indigo-200 mb-1">
-              <DollarSign className="w-3.5 h-3.5 text-amber-300" /> Saldo Dana Masjid
+            <div className="flex items-center gap-1.5 text-xs text-lime-200 mb-1">
+              <DollarSign className="w-3.5 h-3.5 text-lime-300" /> Saldo Dana Masjid
             </div>
-            <p className="font-black text-lg sm:text-xl text-amber-300 font-mono">{formatRp(totalEkuitas)}</p>
+            <p className="font-black text-lg sm:text-xl text-lime-300 font-mono">{formatRp(totalEkuitas)}</p>
           </div>
         </div>
       </div>
@@ -141,7 +141,7 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Cari kode (1-1100), nama akun, atau kelompok..."
-            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium focus:bg-white focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all text-slate-800"
+            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium focus:bg-white focus:outline-none focus:border-lime-500 focus:ring-2 focus:ring-lime-100 transition-all text-slate-800"
           />
         </div>
 
@@ -153,7 +153,7 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
               onClick={() => setFilterJenis(j)}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
                 filterJenis === j 
-                  ? 'bg-indigo-700 text-white shadow-sm' 
+                  ? 'bg-lime-700 text-white shadow-sm' 
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
@@ -182,7 +182,7 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
                 const liveSaldo = getLiveSaldo(akun);
                 return (
                   <tr key={akun.kode} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="px-5 py-3.5 font-mono font-bold text-indigo-700">{akun.kode}</td>
+                    <td className="px-5 py-3.5 font-mono font-bold text-lime-700">{akun.kode}</td>
                     <td className="px-5 py-3.5 font-semibold text-slate-800">{akun.nama}</td>
                     <td className="px-5 py-3.5">
                       <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${JENIS_COLOR[akun.jenis]}`}>
@@ -191,7 +191,7 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
                     </td>
                     <td className="px-5 py-3.5 text-xs text-slate-500 font-medium">{akun.kelompok}</td>
                     <td className="px-5 py-3.5">
-                      <span className={`text-xs font-bold ${akun.saldoNormal === 'Debit' ? 'text-blue-600' : 'text-purple-600'}`}>
+                      <span className={`text-xs font-bold ${akun.saldoNormal === 'Debit' ? 'text-lime-600' : 'text-lime-600'}`}>
                         {akun.saldoNormal}
                       </span>
                     </td>
@@ -199,7 +199,7 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
                       akun.jenis === 'Beban' 
                         ? 'text-rose-600' 
                         : akun.jenis === 'Pendapatan' 
-                        ? 'text-emerald-600' 
+                        ? 'text-lime-600' 
                         : 'text-slate-900'
                     }`}>
                       {formatRp(liveSaldo)}
@@ -226,7 +226,7 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
           <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-5 border border-slate-100">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                <PlusCircle className="w-5 h-5 text-indigo-600" /> Tambah Akun CoA Baru
+                <PlusCircle className="w-5 h-5 text-lime-600" /> Tambah Akun CoA Baru
               </h3>
               <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-slate-600">
                 <X className="w-5 h-5" />
@@ -242,7 +242,7 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
                   placeholder="Kode akun..."
                   value={newKode}
                   onChange={e => setNewKode(e.target.value)}
-                  className="w-full p-3 border border-slate-200 rounded-xl text-sm font-mono focus:outline-none focus:border-indigo-500"
+                  className="w-full p-3 border border-slate-200 rounded-xl text-sm font-mono focus:outline-none focus:border-lime-500"
                 />
               </div>
 
@@ -254,7 +254,7 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
                   placeholder="Contoh: Beban Pemeliharaan Sound System"
                   value={newNama}
                   onChange={e => setNewNama(e.target.value)}
-                  className="w-full p-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-500"
+                  className="w-full p-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-lime-500"
                 />
               </div>
 
@@ -269,7 +269,7 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
                       if (v === 'Aktiva' || v === 'Beban') setNewSaldoNormal('Debit');
                       else setNewSaldoNormal('Kredit');
                     }}
-                    className="w-full p-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-500"
+                    className="w-full p-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-lime-500"
                   >
                     <option value="Aktiva">Aktiva (Asset)</option>
                     <option value="Kewajiban">Kewajiban (Liability)</option>
@@ -284,7 +284,7 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
                   <select
                     value={newSaldoNormal}
                     onChange={e => setNewSaldoNormal(e.target.value as any)}
-                    className="w-full p-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-500"
+                    className="w-full p-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-lime-500"
                   >
                     <option value="Debit">Debit</option>
                     <option value="Kredit">Kredit</option>
@@ -300,7 +300,7 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
                   placeholder="Contoh: Beban Operasional, Aktiva Tetap"
                   value={newKelompok}
                   onChange={e => setNewKelompok(e.target.value)}
-                  className="w-full p-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-500"
+                  className="w-full p-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-lime-500"
                 />
               </div>
 
@@ -311,7 +311,7 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
                   placeholder="0"
                   value={newSaldoAwal}
                   onChange={e => setNewSaldoAwal(e.target.value)}
-                  className="w-full p-3 border border-slate-200 rounded-xl text-sm font-mono focus:outline-none focus:border-indigo-500"
+                  className="w-full p-3 border border-slate-200 rounded-xl text-sm font-mono focus:outline-none focus:border-lime-500"
                 />
               </div>
 
@@ -325,7 +325,7 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-3 bg-indigo-700 hover:bg-indigo-800 text-white rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-1.5 shadow-md"
+                  className="flex-1 py-3 bg-lime-700 hover:bg-lime-800 text-white rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-1.5 shadow-md"
                 >
                   <Check className="w-4 h-4" /> Simpan Akun
                 </button>

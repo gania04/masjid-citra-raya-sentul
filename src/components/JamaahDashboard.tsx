@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, User, Calculator, Clock, Calendar, ChevronRight, LogOut, Download, Activity, Image as ImageIcon, LayoutDashboard, Settings, Bell, Camera, Wallet, BookOpen, Volume2, VolumeX, BookMarked, Sparkles, Play, Award, Heart, RefreshCw } from 'lucide-react';
+import jsPDF from 'jspdf';
 import { AlQuranDigital, BookmarkData } from './AlQuranDigital';
 
 interface JamaahDashboardProps {
   onBack: () => void;
   nama: string;
+  kontak: string;
+  donasiHistory?: any[];
 }
 
-export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama }) => {
+export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, kontak, donasiHistory = [] }) => {
   const [activeTab, setActiveTab] = useState<'ringkasan' | 'donasi' | 'laporan' | 'histori' | 'profil' | 'jadwal' | 'quran'>('ringkasan');
   const [isQuranModalOpen, setIsQuranModalOpen] = useState(false);
   const [selectedSurahNomor, setSelectedSurahNomor] = useState<number | null>(null);
@@ -35,8 +38,9 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama }
   const wajibZakat = totalPendapatan >= nisab;
   const jumlahZakat = wajibZakat ? totalPendapatan * 0.025 : 0;
 
-  // Profil state - gunakan nama dari login
-  const [profilName, setProfilName] = useState(nama);
+  // Profil state - gunakan nama dari login atau dari localStorage
+  const [profilName, setProfilName] = useState(localStorage.getItem('masjid_user_name') || nama);
+  const [profilContact, setProfilContact] = useState(localStorage.getItem('masjid_user_phone') || kontak || '0812-1920-0400');
   const [profilePic, setProfilePic] = useState('https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80');
 
   // Pengingat & E-Wallet state
@@ -61,6 +65,23 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama }
 
   const formatRp = (angka: number) => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
+  };
+
+  const generatePDF = (d: any) => {
+    const doc = new jsPDF();
+    doc.setFontSize(20);
+    doc.text('KUITANSI DONASI ZISWAF', 105, 20, { align: 'center' });
+    doc.setFontSize(12);
+    doc.text(`ID Transaksi: ${d.id}`, 20, 40);
+    doc.text(`Tanggal: ${d.tanggal}`, 20, 50);
+    doc.text(`Nama Donatur: ${d.namaDonatur || profilName}`, 20, 60);
+    doc.text(`Program: ${d.programName}`, 20, 70);
+    doc.text(`Nominal: ${formatRp(d.nominal)}`, 20, 80);
+    doc.text(`Metode: ${d.metode}`, 20, 90);
+    doc.text(`Status: ${d.status}`, 20, 100);
+    doc.line(20, 110, 190, 110);
+    doc.text('Jazakumullah Khairan. Semoga Allah memberkahi harta Anda.', 105, 120, { align: 'center' });
+    doc.save(`Kuitansi_${d.id}.pdf`);
   };
 
   const TabButton = ({ id, icon: Icon, label }: { id: any, icon: any, label: string }) => (
@@ -99,12 +120,12 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama }
               <span className="bg-amber-900/50 border border-amber-500/30 text-amber-200 text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 uppercase tracking-wider"><Award className="w-3 h-3" /> Bronze Muhsinin</span>
             </div>
             <h2 className="text-3xl font-bold text-white mb-1">{profilName}</h2>
-            <p className="text-emerald-100 text-sm mb-4">081517045406 •</p>
+            <p className="text-emerald-100 text-sm mb-4">{profilContact} •</p>
             
             <div className="flex flex-wrap justify-center md:justify-start gap-3">
               <div className="bg-white/10 rounded-xl px-4 py-2 border border-white/10 text-center">
                 <p className="text-[9px] text-emerald-100 font-bold uppercase tracking-wider mb-0.5">Total Kebaikan</p>
-                <p className="text-lg font-bold text-amber-400">Rp 1.450.000</p>
+                <p className="text-lg font-bold text-amber-400">{formatRp(donasiHistory.filter(d => d.status === 'Berhasil').reduce((acc, curr) => acc + curr.nominal, 0) || 0)}</p>
               </div>
               <div className="bg-white/10 rounded-xl px-4 py-2 border border-white/10 text-center">
                 <p className="text-[9px] text-emerald-100 font-bold uppercase tracking-wider mb-0.5">Bergabung Sejak</p>
@@ -114,10 +135,9 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama }
                 onClick={() => {
                   if (isRefreshing) return;
                   setIsRefreshing(true);
-                  // Simulate data fetching/refreshing
                   setTimeout(() => {
                     setIsRefreshing(false);
-                  }, 1500);
+                  }, 500);
                 }} 
                 className={`bg-white/5 hover:bg-white/10 rounded-xl px-4 py-2 border border-white/10 flex flex-col items-center justify-center text-emerald-100 transition-colors cursor-pointer ${isRefreshing ? 'opacity-70' : ''}`}
               >
@@ -239,7 +259,9 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama }
                 <div className="bg-gradient-to-br from-[#064e3b] to-emerald-900 p-6 rounded-3xl text-white shadow-md relative overflow-hidden">
                   <Wallet className="w-8 h-8 mb-3 opacity-80" />
                   <p className="text-xs font-semibold text-emerald-200 uppercase tracking-wider">Total Donasi Anda</p>
-                  <p className="text-2xl font-bold mt-1">Rp 1.450.000</p>
+                  <p className="text-2xl font-bold mt-1">
+                    {formatRp(donasiHistory.filter(d => d.status === 'Berhasil').reduce((acc, curr) => acc + curr.nominal, 0))}
+                  </p>
                 </div>
                 <div 
                   onClick={() => setActiveTab('laporan')}
@@ -247,7 +269,9 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama }
                 >
                   <Activity className="w-8 h-8 mb-3 text-emerald-600" />
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Program Didukung</p>
-                  <p className="text-2xl font-bold text-slate-800 mt-1 flex items-center gap-2">3 Program <ChevronRight className="w-4 h-4 text-slate-400" /></p>
+                  <p className="text-2xl font-bold text-slate-800 mt-1 flex items-center gap-2">
+                    {new Set(donasiHistory.filter(d => d.status === 'Berhasil').map(d => d.programName)).size} Program <ChevronRight className="w-4 h-4 text-slate-400" />
+                  </p>
                 </div>
                 <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
                   <Calendar className="w-8 h-8 mb-3 text-emerald-600" />
@@ -284,8 +308,17 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama }
                       onClick={() => {
                         setAdzanAlarms(prev => ({ ...prev, [s.key]: !prev[s.key as keyof typeof adzanAlarms] }));
                         if (!adzanAlarms[s.key as keyof typeof adzanAlarms]) {
-                          const audio = new Audio('https://masjid-citra-sentul-raya.vercel.app/adzan.mp3'); // Mock audio url
-                          audio.play().catch(() => alert('Memutar simulasi Audio Adzan.'));
+                          try {
+                            const audio = new Audio('https://upload.wikimedia.org/wikipedia/commons/4/4b/Adhan_in_Egypt.ogg');
+                            audio.volume = 0.5;
+                            audio.play().then(() => {
+                              alert(`Notifikasi Adzan aktif untuk waktu ${s.name}. Audio akan berputar pada jadwalnya.`);
+                            }).catch(() => {
+                              alert(`Adzan diaktifkan untuk ${s.name} (Simulasi notifikasi karena browser autoplay diblokir).`);
+                            });
+                          } catch (e) {
+                            alert(`Notifikasi Adzan aktif untuk ${s.name}.`);
+                          }
                         }
                       }}
                       className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-sm border cursor-pointer ${adzanAlarms[s.key as keyof typeof adzanAlarms] ? 'bg-lime-600 border-lime-700 text-white' : 'bg-white border-slate-300 text-slate-500 hover:bg-slate-100'}`}
@@ -548,20 +581,61 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama }
                 <div className="flex flex-col items-center gap-4">
                   <div className="relative group">
                     <img src={profilePic} alt="Profil" className="w-32 h-32 rounded-full border-4 border-slate-100 object-cover" />
-                    <button className="absolute bottom-0 right-0 p-3 rounded-full bg-lime-600 hover:bg-lime-700 text-white shadow-lg transition-transform hover:scale-105 group-hover:bg-lime-500"><Camera className="w-5 h-5" /></button>
+                    <button onClick={() => {
+                      const input = document.createElement('input');
+                      input.type = 'file';
+                      input.accept = 'image/*';
+                      input.onchange = (e) => {
+                        const file = (e.target as HTMLInputElement).files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (event) => {
+                            const url = event.target?.result as string;
+                            setProfilePic(url);
+                            localStorage.setItem('masjid_user_pic', url);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      };
+                      input.click();
+                    }} className="absolute bottom-0 right-0 p-3 rounded-full bg-lime-600 hover:bg-lime-700 text-white shadow-lg transition-transform hover:scale-105 group-hover:bg-lime-500 cursor-pointer">
+                      <Camera className="w-5 h-5" />
+                    </button>
                   </div>
                   <p className="text-xs font-semibold text-slate-500">Format: JPG/PNG, Maks. 2MB</p>
                 </div>
                 <div className="flex-1 space-y-5">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div><label className="block text-xs font-bold text-slate-700 mb-1">Nama Lengkap</label><input type="text" value={profilName} onChange={e => setProfilName(e.target.value)} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-500 focus:bg-white transition-all text-sm font-semibold text-slate-800" /></div>
-                    <div><label className="block text-xs font-bold text-slate-700 mb-1">Nomor WhatsApp / HP</label><input type="text" defaultValue="0812-1920-0400" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-500 focus:bg-white transition-all text-sm text-slate-800" /></div>
+                    <div><label className="block text-xs font-bold text-slate-700 mb-1">Nomor WhatsApp / HP</label><input type="text" value={profilContact} onChange={e => setProfilContact(e.target.value)} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-500 focus:bg-white transition-all text-sm text-slate-800" /></div>
                   </div>
                   <div><label className="block text-xs font-bold text-slate-700 mb-1">Email Aktif</label><input type="email" defaultValue="hamba.allah@email.com" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-500 focus:bg-white transition-all text-sm text-slate-800" /></div>
                   <div><label className="block text-xs font-bold text-slate-700 mb-1">Alamat Domisili (Opsional)</label><textarea rows={3} defaultValue="Sirkuit Sentul, Bogor" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-500 focus:bg-white transition-all text-sm text-slate-800"></textarea></div>
                   <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
-                    <button onClick={() => alert('Perubahan dibatalkan')} className="px-6 py-2.5 bg-slate-100 text-slate-600 font-bold rounded-lg hover:bg-slate-200 transition-colors text-sm cursor-pointer">Batal</button>
-                    <button onClick={() => alert('Profil berhasil diperbarui')} className="px-6 py-2.5 bg-lime-600 text-white font-bold rounded-lg hover:bg-lime-700 transition-colors shadow-sm text-sm cursor-pointer">Simpan Perubahan</button>
+                    <button 
+                      type="button"
+                      onClick={(e) => { 
+                        e.preventDefault();
+                        setProfilName(nama); 
+                        setProfilContact(kontak || '0812-1920-0400'); 
+                        alert('Perubahan dibatalkan'); 
+                      }} 
+                      className="px-6 py-2.5 bg-slate-100 text-slate-600 font-bold rounded-lg hover:bg-slate-200 transition-colors text-sm cursor-pointer z-10 relative"
+                    >
+                      Batal
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={(e) => { 
+                        e.preventDefault();
+                        localStorage.setItem('masjid_user_name', profilName);
+                        localStorage.setItem('masjid_user_phone', profilContact);
+                        alert(`Profil berhasil diperbarui!\n\nNama: ${profilName}\nKontak: ${profilContact}`);
+                      }} 
+                      className="px-6 py-2.5 bg-lime-600 text-white font-bold rounded-lg hover:bg-lime-700 transition-colors shadow-sm text-sm cursor-pointer z-10 relative"
+                    >
+                      Simpan Perubahan
+                    </button>
                   </div>
                 </div>
               </div>
@@ -616,12 +690,35 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama }
                   <thead className="text-xs text-slate-700 uppercase bg-slate-50 border-b border-slate-200">
                     <tr><th className="px-6 py-4">Tanggal</th><th className="px-6 py-4">Program</th><th className="px-6 py-4">Nominal</th><th className="px-6 py-4">Status</th><th className="px-6 py-4">Kuitansi</th></tr>
                   </thead>
-                  <tbody>
-                    <tr className="bg-white border-b border-slate-100">
-                      <td className="px-6 py-4 whitespace-nowrap">28 Jul 2026</td><td className="px-6 py-4 font-semibold text-slate-800">Santunan Yatim</td><td className="px-6 py-4 text-lime-600 font-bold">Rp 150.000</td>
-                      <td className="px-6 py-4"><span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Berhasil</span></td>
-                      <td className="px-6 py-4"><button onClick={() => alert('Mengunduh Kuitansi PDF (Simulasi)')} className="text-lime-600 hover:text-lime-800 flex items-center gap-1 cursor-pointer"><Download className="w-4 h-4" /> PDF</button></td>
-                    </tr>
+                  <tbody className="divide-y divide-slate-100">
+                    {donasiHistory.map(d => (
+                      <tr key={d.id} className="bg-white border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                        <td className="px-6 py-4 whitespace-nowrap text-slate-600">{d.tanggal}</td>
+                        <td className="px-6 py-4 font-semibold text-slate-800">{d.programName}</td>
+                        <td className="px-6 py-4 text-lime-600 font-bold">{formatRp(d.nominal)}</td>
+                        <td className="px-6 py-4">
+                          <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
+                            d.status === 'Berhasil' ? 'bg-green-100 text-green-800' :
+                            d.status === 'Ditolak' ? 'bg-red-100 text-red-800' :
+                            'bg-amber-100 text-amber-800'
+                          }`}>
+                            {d.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          {d.status === 'Berhasil' ? (
+                            <button onClick={() => generatePDF(d)} className="text-lime-600 hover:text-lime-800 flex items-center gap-1 cursor-pointer font-bold text-xs"><Download className="w-4 h-4" /> PDF</button>
+                          ) : (
+                            <span className="text-xs text-slate-400">-</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                    {donasiHistory.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="px-6 py-8 text-center text-slate-500 font-medium">Belum ada histori donasi.</td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>

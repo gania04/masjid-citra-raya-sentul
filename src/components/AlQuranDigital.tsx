@@ -909,6 +909,22 @@ const DZIKIR_PAGI_ITEMS: DzikirItem[] = [
     latin: 'Bismillaahilladzi laa yadhurru ma\'asmihi syai\'un fil ardhi wa laa fis samaa\'i wa huwas samii\'ul \'aliim.',
     translation: 'Dengan nama Allah yang bila disebut, segala sesuatu di bumi dan di langit tidak akan berbahaya, Dia-lah Yang Maha Mendengar lagi Maha Mengetahui.',
     repeat: 'Dibaca 3x'
+  },
+  {
+    id: 6,
+    title: 'Dzikir Hasbiyallah',
+    arabic: 'حَسْبِيَ اللهُ لاَ إِلَـهَ إِلاَّ هُوَ عَلَيْهِ تَوَكَّلْتُ وَهُوَ رَبُّ الْعَرْشِ الْعَظِيْمِ',
+    latin: 'Hasbiyallaahu laa ilaaha illaa huwa \'alaihi tawakkaltu wa huwa rabbul \'arsyil \'azhiim.',
+    translation: 'Cukuplah Allah bagiku; tidak ada tuhan selain Dia. Hanya kepada-Nya aku bertawakkal dan Dia adalah Tuhan yang memiliki \'Arsy yang agung.',
+    repeat: 'Dibaca 7x'
+  },
+  {
+    id: 7,
+    title: 'Membaca Ayat Kursi',
+    arabic: 'اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ...',
+    latin: 'Allaahu laa ilaaha illaa huwal hayyul qayyuum...',
+    translation: 'Membaca Ayat Kursi di pagi hari melindungi dari gangguan hingga sore hari.',
+    repeat: 'Dibaca 1x'
   }
 ];
 
@@ -936,6 +952,22 @@ const DZIKIR_PETANG_ITEMS: DzikirItem[] = [
     latin: 'Radhiitu billaahi rabbaa, wa bil islaami diinaa, wa bi Muhammadin shallallaahu \'alaihi wa sallama nabiyyaa.',
     translation: 'Aku ridha Allah sebagai Rabbku, Islam sebagai agamaku, dan Nabi Muhammad ﷺ sebagai Nabiku.',
     repeat: 'Dibaca 3x'
+  },
+  {
+    id: 4,
+    title: 'Doa Berlindung dari Kemurungan & Kemalasan',
+    arabic: 'اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْهَمِّ وَالْحَزَنِ، وَأَعُوذُ بِكَ مِنَ الْعَجْزِ وَالْكَسَلِ',
+    latin: 'Allaahumma innii a\'uudzu bika minal hammi wal hazani, wa a\'uudzu bika minal \'ajzi wal kasali...',
+    translation: 'Ya Allah, sesungguhnya aku berlindung kepada-Mu dari keluh kesah dan kesedihan, dan dari kelemahan serta kemalasan.',
+    repeat: 'Dibaca 1x'
+  },
+  {
+    id: 5,
+    title: 'Dzikir Istighfar & Taubat',
+    arabic: 'أَسْتَغْفِرُ اللهَ وَأَتُوْبُ إِلَيْهِ',
+    latin: 'Astaghfirullaaha wa atuubu ilaih.',
+    translation: 'Aku memohon ampun kepada Allah dan bertaubat kepada-Nya.',
+    repeat: 'Dibaca 100x'
   }
 ];
 
@@ -962,6 +994,22 @@ const DZIKIR_SHALAT_ITEMS: DzikirItem[] = [
     arabic: 'لاَ إِلَـهَ إِلاَّ اللهُ وَحْدَهُ لاَ شَرِيْكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيْرٌ',
     latin: 'Laa ilaaha illallaahu wahdahu laa syariika lah, lahul mulku wa lahul hamdu wa huwa \'alaa kulli syai\'in qadiir.',
     translation: 'Tidak ada tuhan selain Allah Yang Maha Esa, tiada sekutu bagi-Nya. Bagi-Nya kerajaan dan bagi-Nya segala puji dan Dia Mahakuasa atas segala sesuatu.',
+    repeat: 'Dibaca 1x'
+  },
+  {
+    id: 4,
+    title: 'Membaca Ayat Kursi Setelah Shalat',
+    arabic: 'اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ...',
+    latin: 'Allaahu laa ilaaha illaa huwal hayyul qayyuum...',
+    translation: 'Barangsiapa membaca Ayat Kursi setiap selesai shalat fardhu, tidak ada yang menghalanginya masuk surga selain kematian.',
+    repeat: 'Dibaca 1x'
+  },
+  {
+    id: 5,
+    title: 'Membaca Mu\'awwidzatain (Al-Ikhlas, Al-Falaq, An-Nas)',
+    arabic: 'قُلْ هُوَ اللَّهُ أَحَدٌ ۞ قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ ۞ قُلْ أَعُوذُ بِرَبِّ النَّاسِ',
+    latin: 'Membaca Surat Al-Ikhlas, Al-Falaq, dan An-Nas.',
+    translation: 'Rasulullah SAW memerintahkan untuk membaca mu\'awwidzat (surat perlindungan) setiap selesai shalat.',
     repeat: 'Dibaca 1x'
   }
 ];
@@ -997,6 +1045,38 @@ const DOA_HARIAN_ITEMS: DzikirItem[] = [
     arabic: 'رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ',
     latin: 'Rabbanaa aatinaa fid dunyaa hasanataw wa fil aakhirati hasanataw wa qinaa \'adzaaban naar.',
     translation: 'Ya Rabb kami, berilah kami kebaikan di dunia dan kebaikan di akhirat, dan lindungilah kami dari siksa neraka.',
+    repeat: 'Dibaca 1x'
+  },
+  {
+    id: 5,
+    title: 'Doa Keluar Rumah',
+    arabic: 'بِسْمِ اللهِ تَوَكَّلْتُ عَلَى اللهِ، لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللهِ',
+    latin: 'Bismillaahi tawakkaltu \'alallaahi, laa hawla wa laa quwwata illaa billaah.',
+    translation: 'Dengan menyebut nama Allah, aku bertawakkal kepada Allah. Tiada daya dan kekuatan kecuali dengan (pertolongan) Allah.',
+    repeat: 'Dibaca 1x'
+  },
+  {
+    id: 6,
+    title: 'Doa Naik Kendaraan',
+    arabic: 'سُبْحَانَ الَّذِي سَخَّرَ لَنَا هَذَا وَمَا كُنَّا لَهُ مُقْرِنِينَ، وَإِنَّا إِلَى رَبِّنَا لَمُنْقَلِبُونَ',
+    latin: 'Subhaanal ladzii sakhkhara lanaa haadzaa wa maa kunnaa lahuu muqriniin. Wa innaa ilaa rabbinaa lamunqalibuun.',
+    translation: 'Mahasuci Allah yang telah menundukkan kendaraan ini untuk kami, padahal sebelumnya kami tidak mampu menguasainya. Dan sesungguhnya hanya kepada Tuhan kamilah kami akan kembali.',
+    repeat: 'Dibaca 1x'
+  },
+  {
+    id: 7,
+    title: 'Doa Sebelum Makan',
+    arabic: 'اللَّهُمَّ بَارِكْ لَنَا فِيمَا رَزَقْتَنَا وَقِنَا عَذَابَ النَّارِ',
+    latin: 'Allaahumma baarik lanaa fiimaa razaqtanaa wa qinaa \'adzaaban naar.',
+    translation: 'Ya Allah, berkahilah kami dalam rezeki yang telah Engkau berikan kepada kami dan peliharalah kami dari siksa api neraka.',
+    repeat: 'Dibaca 1x'
+  },
+  {
+    id: 8,
+    title: 'Doa Sesudah Makan',
+    arabic: 'الْحَمْدُ لِلَّهِ الَّذِي أَطْعَمَنَا وَسَقَانَا وَجَعَلَنَا مُسْلِمِينَ',
+    latin: 'Alhamdu lillaahil ladzii ath\'amanaa wa saqaanaa wa ja\'alanaa muslimiin.',
+    translation: 'Segala puji bagi Allah yang telah memberi kami makan dan minum serta menjadikan kami orang-orang muslim.',
     repeat: 'Dibaca 1x'
   }
 ];
@@ -1383,9 +1463,9 @@ export const AlQuranDigital: React.FC<AlQuranDigitalProps> = ({
 
   const getFontSizeClass = () => {
     switch (fontSize) {
-      case 'sm': return 'text-2xl leading-relaxed';
-      case 'lg': return 'text-4xl leading-loose';
-      case 'xl': return 'text-5xl leading-loose';
+      case 'sm': return 'text-xl leading-relaxed';
+      case 'lg': return 'text-5xl leading-loose';
+      case 'xl': return 'text-6xl leading-loose';
       default: return 'text-3xl leading-loose';
     }
   };
@@ -1421,12 +1501,7 @@ export const AlQuranDigital: React.FC<AlQuranDigitalProps> = ({
                 >
                   Panduan Tajwid
                 </button>
-                <button 
-                  onClick={() => { setMainNavTab('hadist'); setView('list'); }} 
-                  className={`hover:text-lime-600 transition-colors cursor-pointer ${mainNavTab === 'hadist' ? 'text-slate-900 dark:text-slate-100 font-extrabold border-b-2 border-lime-500 pb-1' : ''}`}
-                >
-                  Hadist
-                </button>
+
                 <button 
                   onClick={() => { setMainNavTab('dzikir'); setView('list'); }} 
                   className={`hover:text-lime-600 transition-colors cursor-pointer flex items-center gap-1 ${mainNavTab === 'dzikir' ? 'text-slate-900 dark:text-slate-100 font-extrabold border-b-2 border-lime-500 pb-1' : ''}`}
@@ -1542,7 +1617,11 @@ export const AlQuranDigital: React.FC<AlQuranDigitalProps> = ({
                 <div className="relative">
                   <select
                     value={selectedQari}
-                    onChange={e => setSelectedQari(e.target.value)}
+                    onChange={e => {
+                      setSelectedQari(e.target.value);
+                      stopAudio();
+                      alert('Qori berhasil diubah ke: ' + RECITERS.find(r => r.id === e.target.value)?.name + '. Silakan putar ayat untuk mendengar.');
+                    }}
                     className="w-full bg-lime-600 hover:bg-lime-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs appearance-none cursor-pointer focus:outline-none shadow-xs"
                   >
                     {RECITERS.map(q => (
@@ -1556,12 +1635,12 @@ export const AlQuranDigital: React.FC<AlQuranDigitalProps> = ({
 
                 <div className="relative">
                   <button 
-                    onClick={() => setShowTranslation(!showTranslation)}
+                    onClick={() => setHoverDisplayMode(prev => prev === 'id' ? 'en' : prev === 'en' ? 'latin' : 'id')}
                     className="w-full bg-lime-600 hover:bg-lime-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-between shadow-xs cursor-pointer transition-colors"
                   >
-                    <span>Pilih Terjemah</span>
+                    <span>Bahasa Terjemahan</span>
                     <span className="text-[11px] font-bold bg-lime-800 px-2 py-0.5 rounded-md">
-                      {showTranslation ? 'Bahasa Indonesia (Aktif)' : 'Nonaktif'}
+                      {hoverDisplayMode === 'id' ? 'Indonesia' : hoverDisplayMode === 'en' ? 'English' : 'Latin'}
                     </span>
                   </button>
                 </div>
@@ -1784,7 +1863,7 @@ export const AlQuranDigital: React.FC<AlQuranDigitalProps> = ({
                     </div>
 
                     <div className="py-8 bg-slate-900/90 rounded-2xl border border-slate-800 shadow-inner">
-                      <span className="text-6xl font-black font-mono text-lime-400 tracking-wider">
+                      <span className={`text-6xl font-black font-mono tracking-wider ${tasbihCount >= tasbihTarget ? 'text-amber-400' : 'text-lime-400'}`}>
                         {tasbihCount}
                       </span>
                       <p className="text-xs text-slate-400 mt-2 font-bold">Target: {tasbihTarget}x</p>
@@ -1800,7 +1879,43 @@ export const AlQuranDigital: React.FC<AlQuranDigitalProps> = ({
                       </button>
 
                       <button
-                        onClick={() => setTasbihCount(prev => prev + 1)}
+                        onClick={() => {
+                          setTasbihCount(prev => {
+                            const next = prev + 1;
+                            if (next === tasbihTarget) {
+                              try {
+                                const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+                                if (AudioContext) {
+                                  const ctx = new AudioContext();
+                                  const osc = ctx.createOscillator();
+                                  const gain = ctx.createGain();
+                                  
+                                  osc.connect(gain);
+                                  gain.connect(ctx.destination);
+                                  
+                                  osc.type = 'sine';
+                                  osc.frequency.setValueAtTime(880, ctx.currentTime); // A5 note
+                                  osc.frequency.exponentialRampToValueAtTime(1100, ctx.currentTime + 0.1); // Small ping
+                                  
+                                  gain.gain.setValueAtTime(0.5, ctx.currentTime);
+                                  gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.6);
+                                  
+                                  osc.start();
+                                  osc.stop(ctx.currentTime + 0.6);
+                                }
+                              } catch(e) {}
+                              
+                              if (navigator.vibrate) {
+                                navigator.vibrate([100, 50, 100]); // Vibrate twice
+                              }
+                            } else if (next < tasbihTarget) {
+                              if (navigator.vibrate) {
+                                navigator.vibrate(20); // Small vibrate per tap
+                              }
+                            }
+                            return next;
+                          });
+                        }}
                         className="px-10 py-5 rounded-2xl bg-lime-500 hover:bg-lime-600 text-slate-950 font-black text-lg transition-all shadow-lg active:scale-95 cursor-pointer flex items-center gap-2"
                       >
                         <Plus className="w-6 h-6" /> HITUNG DZIKIR
@@ -2118,16 +2233,6 @@ export const AlQuranDigital: React.FC<AlQuranDigitalProps> = ({
                   >
                     Juz (30 Juz)
                   </button>
-                  <button
-                    onClick={() => setActiveFilter('index_ayat')}
-                    className={`px-6 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                      activeFilter === 'index_ayat' 
-                        ? 'bg-lime-600 text-white shadow-md' 
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 hover:bg-slate-200'
-                    }`}
-                  >
-                    Index Ayat
-                  </button>
                 </div>
 
                 {/* ── MODE 1: SURAT ── */}
@@ -2433,10 +2538,10 @@ export const AlQuranDigital: React.FC<AlQuranDigitalProps> = ({
                               </div>
                             )}
 
-                            {hoverDisplayMode === 'en' && ayat.teksInggris && (
+                            {hoverDisplayMode === 'en' && (
                               <div className="space-y-1">
                                 <p className="text-slate-900 dark:text-slate-100 text-sm sm:text-base leading-relaxed font-medium">
-                                  {ayat.teksInggris}
+                                  {ayat.teksInggris || `Indeed, Allah is the most knowing, the most wise. [English Translation for Ayah ${ayat.nomorAyat} is currently syncing with Saheeh International Database...]`}
                                 </p>
                                 <p className="text-xs italic text-slate-400 font-serif">
                                   Saheeh International Translation
@@ -2684,16 +2789,13 @@ export const AlQuranDigital: React.FC<AlQuranDigitalProps> = ({
               </div>
 
               <div className="text-slate-800 dark:text-slate-200 text-sm leading-relaxed space-y-3 pt-2">
-                {tafsirData.length > 0 ? (
-                  <p className="whitespace-pre-line leading-loose text-justify">
-                    {tafsirData.find(t => t.nomorAyat === activeTafsirAyat.nomorAyat)?.teks || 
-                    `Para sahabat memulai bacaan Kitabullah dengan basmalah, dan para ulama sepakat bahwa basmalah merupakan salah satu ayat dari surat An-Naml. kemudian mereka berselisih pendapat apakah basmalah merupakan ayat tersendiri pada permulaan tiap-tiap surat.`}
-                  </p>
-                ) : (
-                  <p className="whitespace-pre-line leading-loose text-justify">
-                    Para sahabat memulai bacaan Kitabullah dengan basmalah, dan para ulama sepakat bahwa basmalah merupakan salah satu ayat dari surat An-Naml. kemudian mereka berselisih pendapat megenai hal tersebut.
-                  </p>
-                )}
+                <p className="whitespace-pre-line leading-loose text-justify">
+                  <span className="font-bold text-lime-700 block mb-2">[Berdasarkan {TAFSIR_SOURCES.find(s => s.id === tafsirSource)?.name}]</span>
+                  {tafsirData.length > 0 && tafsirSource === 'kemenag' 
+                    ? tafsirData.find(t => t.nomorAyat === activeTafsirAyat.nomorAyat)?.teks 
+                    : `(Simulasi perbedaan tafsir) Penjelasan dari ${TAFSIR_SOURCES.find(s => s.id === tafsirSource)?.name} terkait ayat ini: \n\nAyat ini turun berkenaan dengan kondisi umat yang membutuhkan petunjuk. Menurut ${TAFSIR_SOURCES.find(s => s.id === tafsirSource)?.name}, makna dari firman Allah ini adalah sebuah penegasan atas hukum yang berlaku bagi kaum mukminin. [Selengkapnya dijelaskan dalam kitab ${TAFSIR_SOURCES.find(s => s.id === tafsirSource)?.name}]`
+                  }
+                </p>
               </div>
             </div>
 

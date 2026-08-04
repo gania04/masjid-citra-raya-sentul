@@ -21,10 +21,40 @@ export default function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isJamaahLoggedIn, setIsJamaahLoggedIn] = useState(false);
   const [namaJamaah, setNamaJamaah] = useState('Hamba Allah');
+  const [kontakJamaah, setKontakJamaah] = useState('');
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [isQuranModalOpen, setIsQuranModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // Helper for Audit Logging
+  const logAudit = (name: string, role: string, kontak: string, action: string, desc: string, colorClass: string) => {
+    const w = new Date().toLocaleString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const newLog = { w, n: name, r: role, a: kontak, ac: action, d: desc, c: colorClass };
+    const existingLogs = JSON.parse(localStorage.getItem('audit_logs') || '[]');
+    localStorage.setItem('audit_logs', JSON.stringify([newLog, ...existingLogs]));
+  };
+
+  // Jamaah Registration State
+  const [registeredJamaahList, setRegisteredJamaahList] = useState<any[]>(() => {
+    const saved = localStorage.getItem('registered_jamaah');
+    if (saved) return JSON.parse(saved);
+    return [
+      { n: 'Yudi Haryono', c: '0878-1234-1234', s: 'Aktif', p: '123456' },
+      { n: 'Rizky Maulana', c: '0812-9988-7766', s: 'Aktif', p: '123456' },
+      { n: 'Budi Santoso', c: 'budisan@yahoo.com', s: 'Aktif', p: '123456' },
+      { n: 'Annisa Fitri', c: 'annisa.f@outlook.com', s: 'Aktif', p: '123456' },
+      { n: 'Keluarga Bpk. Herman', c: 'herman.fam@gmail.com', s: 'Aktif', p: '123456' },
+    ];
+  });
+
+  const handleRegisterJamaah = (jamaah: any) => {
+    setRegisteredJamaahList(prev => {
+      const newList = [...prev, jamaah];
+      localStorage.setItem('registered_jamaah', JSON.stringify(newList));
+      return newList;
+    });
+  };
 
   // Day & Night Dark Mode State Logic
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
@@ -99,6 +129,59 @@ export default function App() {
   // State for ZISWAF Programs
   const [programs, setPrograms] = useState(defaultPrograms);
   
+  // State for Donasi History (Pending and Verified)
+  const [donasiHistory, setDonasiHistory] = useState<any[]>([
+    {
+      id: 'INV-' + Math.floor(Math.random() * 10000),
+      tanggal: new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }),
+      programId: 2,
+      programName: 'Santunan Yatim Piatu',
+      nominal: 150000,
+      metode: 'Bank Transfer (BSI)',
+      status: 'Berhasil',
+      bukti: null,
+      namaDonatur: 'Hamba Allah',
+      kontakDonatur: '0812xxxx'
+    }
+  ]);
+
+  const handleDonateSubmit = (programId: number, nominal: number, metode: string, bukti: string | null, namaDonatur: string, kontakDonatur: string) => {
+    const program = programs.find(p => p.id === programId);
+    if (!program) return;
+    
+    const newDonasi = {
+      id: 'INV-' + Math.floor(Math.random() * 10000),
+      tanggal: new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }),
+      programId,
+      programName: program.judul,
+      nominal,
+      metode,
+      status: 'Menunggu Verifikasi',
+      bukti,
+      namaDonatur: namaDonatur || 'Hamba Allah',
+      kontakDonatur: kontakDonatur || '-'
+    };
+    
+    setDonasiHistory(prev => [newDonasi, ...prev]);
+    logAudit(namaDonatur || 'Hamba Allah', isJamaahLoggedIn ? 'JAMAAH' : 'GUEST', kontakDonatur || '-', 'DONASI', `Input donasi sejumlah Rp ${nominal} via ${metode}`, 'bg-blue-900/50 text-blue-600');
+  };
+
+  const handleVerifyDonasi = (id: string, status: 'Berhasil' | 'Ditolak') => {
+    setDonasiHistory(prev => prev.map(d => {
+      if (d.id === id) {
+        if (status === 'Berhasil' && d.status !== 'Berhasil') {
+          // If verifying as success, add to program
+          handleAddDonation(d.programId, d.nominal);
+          logAudit('Pengurus DKM', 'ADMIN', 'admin@masjid.id', 'VERIFY_DONASI', `Memverifikasi penerimaan donasi ID: ${id} senilai Rp ${d.nominal}`, 'bg-lime-900/50 text-lime-600');
+        } else if (status === 'Ditolak' && d.status !== 'Ditolak') {
+          logAudit('Pengurus DKM', 'ADMIN', 'admin@masjid.id', 'TOLAK_DONASI', `Menolak/membatalkan donasi ID: ${id}`, 'bg-red-900/50 text-red-600');
+        }
+        return { ...d, status };
+      }
+      return d;
+    }));
+  };
+  
   // Home Visibility State managed by Admin
   const [homeVisibility, setHomeVisibility] = useState({
     showJadwal: true,
@@ -172,6 +255,8 @@ export default function App() {
         onAiClick={() => setIsAiModalOpen(true)} 
         onQuranClick={() => setIsQuranModalOpen(true)}
         onNavClick={() => {
+          if (isAdmin) logAudit('Pengurus DKM', 'ADMIN', 'admin@masjid.id', 'LOGOUT', 'User berhasil keluar (logout) dari sistem Admin', 'bg-red-900/50 text-red-600');
+          if (isJamaahLoggedIn) logAudit(namaJamaah, 'JAMAAH', kontakJamaah, 'LOGOUT', 'User berhasil keluar (logout) dari Portal Jamaah', 'bg-red-900/50 text-red-600');
           setIsAdmin(false);
           setIsJamaahLoggedIn(false);
         }}
@@ -189,11 +274,19 @@ export default function App() {
               onAddDonation={handleAddDonation} 
               homeVisibility={homeVisibility}
               setHomeVisibility={setHomeVisibility}
+              registeredJamaahList={registeredJamaahList}
+              donasiHistory={donasiHistory}
+              onVerifyDonasi={handleVerifyDonasi}
             />
           </div>
         ) : isJamaahLoggedIn ? (
           <div className="flex-1">
-            <JamaahDashboard nama={namaJamaah} onBack={() => { setIsJamaahLoggedIn(false); setNamaJamaah('Hamba Allah'); }} />
+            <JamaahDashboard 
+              nama={namaJamaah} 
+              kontak={kontakJamaah} 
+              onBack={() => { setIsJamaahLoggedIn(false); setNamaJamaah('Hamba Allah'); setKontakJamaah(''); }} 
+              donasiHistory={donasiHistory.filter(d => true)} // Passing all for demo, usually filtered by user
+            />
           </div>
         ) : (
           <>
@@ -248,7 +341,7 @@ export default function App() {
         {homeVisibility.showKalender && <KalenderKegiatan />}
 
         {/* ZISWAF Programs */}
-        {homeVisibility.showZiswaf && <DaftarProgram programs={programs} />}
+        {homeVisibility.showZiswaf && <DaftarProgram programs={programs} onDonate={handleDonateSubmit} />}
 
         {/* Al-Quran Digital - Modal Reader */}
         <AlQuranDigital 
@@ -279,8 +372,21 @@ export default function App() {
       <LoginModal 
         isOpen={isLoginModalOpen} 
         onClose={() => setIsLoginModalOpen(false)} 
-        onAdminLogin={() => setIsAdmin(true)} 
-        onJamaahLogin={(nama) => { setNamaJamaah(nama); setIsJamaahLoggedIn(true); }}
+        onAdminLogin={() => {
+          setIsAdmin(true);
+          logAudit('Pengurus DKM', 'ADMIN', 'admin@masjid.id', 'LOGIN', 'Berhasil melakukan login ke Dashboard Admin', 'bg-lime-900/50 text-lime-600');
+        }} 
+        onJamaahLogin={(nama, kontak) => { 
+          setNamaJamaah(nama); 
+          setKontakJamaah(kontak); 
+          setIsJamaahLoggedIn(true);
+          logAudit(nama, 'JAMAAH', kontak, 'LOGIN', 'Berhasil melakukan login ke Portal Jamaah', 'bg-lime-900/50 text-lime-600');
+        }}
+        registeredJamaahList={registeredJamaahList}
+        onRegisterJamaah={(jamaah) => {
+          handleRegisterJamaah(jamaah);
+          logAudit(jamaah.n, 'JAMAAH_BARU', jamaah.c || jamaah.e, 'REGISTER', 'Registrasi jamaah baru berhasil dilakukan', 'bg-blue-900/50 text-blue-600');
+        }}
       />
       <AiAsistenModal 
         isOpen={isAiModalOpen} 

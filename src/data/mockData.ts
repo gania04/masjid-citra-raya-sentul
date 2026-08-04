@@ -1,8 +1,8 @@
 import { Muwakif, MilestonePembangunan, BeritaInfo, VideoDakwah } from '../types';
 
 export const INITIAL_STATS = {
-  targetDana: 15000000000, // Rp 15 Miliar
-  terkumpul: 4850000000,   // Rp 4.85 Miliar
+  targetDana: 0, // Rp 0
+  terkumpul: 0,   // Rp 0
   totalMuwakif: 1284,
   luasBangunan: '1.800 m²',
   kapasitasJamaah: '2.500 Jamaah',

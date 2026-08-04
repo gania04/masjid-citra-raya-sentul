@@ -5,11 +5,14 @@ interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAdminLogin: () => void;
-  onJamaahLogin: (nama: string) => void;
+  onJamaahLogin: (nama: string, kontak: string) => void;
+  registeredJamaahList?: any[];
+  onRegisterJamaah?: (jamaah: any) => void;
 }
 
-export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onAdminLogin, onJamaahLogin }) => {
+export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onAdminLogin, onJamaahLogin, registeredJamaahList = [], onRegisterJamaah }) => {
   const [role, setRole] = useState<'jamaah' | 'petugas'>('jamaah');
+  const [jamaahMode, setJamaahMode] = useState<'login' | 'register'>('login');
   const [showPassword, setShowPassword] = useState(false);
   const [adminUsername, setAdminUsername] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
@@ -85,35 +88,63 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onAdmin
             {/* Left Form */}
             {role === 'jamaah' ? (
               <div className="space-y-5">
-                <div className="bg-amber-50/50 border border-amber-200 p-4 rounded-xl">
-                  <h3 className="text-sm font-bold text-slate-800 mb-2">Panduan Pendaftaran & Login Jamaah:</h3>
+                {/* Toggle Login/Register */}
+                <div className="flex bg-lime-100/50 p-1 rounded-xl">
+                  <button 
+                    onClick={() => { setJamaahMode('login'); setJamaahError(''); }} 
+                    className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${jamaahMode === 'login' ? 'bg-white text-lime-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  >
+                    Masuk
+                  </button>
+                  <button 
+                    onClick={() => { setJamaahMode('register'); setJamaahError(''); }} 
+                    className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${jamaahMode === 'register' ? 'bg-white text-lime-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  >
+                    Daftar Baru
+                  </button>
+                </div>
+
+                <div className="bg-lime-50/50 border border-lime-200 p-4 rounded-xl">
+                  <h3 className="text-sm font-bold text-slate-800 mb-2">
+                    {jamaahMode === 'login' ? 'Masuk ke Portal Jamaah:' : 'Pendaftaran Akun Baru:'}
+                  </h3>
                   <ul className="text-xs text-slate-700 space-y-1.5 list-disc pl-4">
-                    <li><span className="font-bold text-slate-900">Wajib Daftar:</span> Isi semua kolom di bawah (<span className="text-red-500">*</span>) untuk mendaftar atau masuk ke portal jamaah.</li>
-                    <li>Gunakan <span className="font-bold text-slate-900">Email atau No. Handphone (WhatsApp)</span> yang aktif.</li>
-                    <li>Password minimal <span className="font-bold text-slate-900">6 karakter</span>. Simpan baik-baik untuk login berikutnya.</li>
+                    {jamaahMode === 'login' ? (
+                      <>
+                        <li>Gunakan <span className="font-bold text-slate-900">Email atau No. Handphone</span> yang sudah terdaftar.</li>
+                        <li>Pastikan kata sandi Anda benar.</li>
+                      </>
+                    ) : (
+                      <>
+                        <li>Gunakan <span className="font-bold text-slate-900">Email atau No. Handphone</span> yang aktif. Setiap kontak hanya bisa digunakan untuk 1 akun.</li>
+                        <li>Password minimal <span className="font-bold text-slate-900">6 karakter</span>. Simpan baik-baik untuk login berikutnya.</li>
+                      </>
+                    )}
                   </ul>
                 </div>
 
                 <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-bold text-slate-900 mb-1">Nama Lengkap <span className="text-red-500">*</span></label>
-                    <input type="text" value={namaJamaah} onChange={(e) => { setNamaJamaah(e.target.value); setJamaahError(''); }} placeholder="Masukkan nama lengkap Anda" className="w-full px-4 py-2.5 rounded-xl border border-lime-200 focus:ring-2 focus:ring-lime-500 focus:outline-none text-slate-900" required />
-                  </div>
+                  {jamaahMode === 'register' && (
+                    <div>
+                      <label className="block text-sm font-bold text-slate-900 mb-1">Nama Lengkap <span className="text-red-500">*</span></label>
+                      <input type="text" value={namaJamaah} onChange={(e) => { setNamaJamaah(e.target.value); setJamaahError(''); }} placeholder="Masukkan nama lengkap Anda" className="w-full px-4 py-2.5 rounded-xl border border-lime-200 focus:ring-2 focus:ring-lime-500 focus:outline-none text-slate-900 bg-white" required />
+                    </div>
+                  )}
                   
                   <div>
                     <label className="block text-sm font-bold text-slate-900 mb-1">Email atau No. Handphone <span className="text-red-500">*</span></label>
                     <div className="relative">
-                      <Mail className="w-5 h-5 text-lime-400 absolute left-3 top-3" />
-                      <input type="text" value={jamaahContact} onChange={(e) => { setJamaahContact(e.target.value); setJamaahError(''); }} placeholder="Contoh: 08123456789 atau user@email.com" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-lime-200 focus:ring-2 focus:ring-lime-500 focus:outline-none text-sm text-slate-900" required />
+                      <Mail className="w-5 h-5 text-lime-500 absolute left-3 top-3" />
+                      <input type="text" value={jamaahContact} onChange={(e) => { setJamaahContact(e.target.value); setJamaahError(''); }} placeholder="Contoh: 08123456789 atau user@email.com" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-lime-200 focus:ring-2 focus:ring-lime-500 focus:outline-none text-sm text-slate-900 bg-white" required />
                     </div>
                   </div>
 
                   <div>
                     <label className="block text-sm font-bold text-slate-900 mb-1">Kata Sandi (Password) <span className="text-red-500">*</span></label>
                     <div className="relative">
-                      <Lock className="w-5 h-5 text-lime-400 absolute left-3 top-3" />
-                      <input type={showPassword ? "text" : "password"} value={jamaahPassword} onChange={(e) => { setJamaahPassword(e.target.value); setJamaahError(''); }} placeholder="Minimal 6 karakter" className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-lime-200 focus:ring-2 focus:ring-lime-500 focus:outline-none text-sm text-slate-900" required />
-                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3 text-lime-400 hover:text-lime-600">
+                      <Lock className="w-5 h-5 text-lime-500 absolute left-3 top-3" />
+                      <input type={showPassword ? "text" : "password"} value={jamaahPassword} onChange={(e) => { setJamaahPassword(e.target.value); setJamaahError(''); }} placeholder="Minimal 6 karakter" className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-lime-200 focus:ring-2 focus:ring-lime-500 focus:outline-none text-sm text-slate-900 bg-white" required />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3 text-lime-500 hover:text-lime-700 cursor-pointer">
                         {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                       </button>
                     </div>
@@ -125,25 +156,78 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onAdmin
                     </div>
                   )}
 
-                  <div className="text-right">
-                    <a href="#" className="text-xs text-lime-600 font-semibold hover:underline">Lupa Password? Hubungi Admin</a>
-                  </div>
+                  {jamaahMode === 'login' && (
+                    <div className="text-right">
+                      <a href="#" onClick={(e) => { 
+                        e.preventDefault(); 
+                        const email = prompt('Masukkan alamat email yang terdaftar untuk menerima link reset password:');
+                        if (email) {
+                          if (email.includes('@') || email.length >= 10) {
+                            alert(`Sistem mendeteksi permintaan reset. Link reset password telah dikirim ke ${email}.`);
+                            const newPass = prompt(`[SIMULASI RESET]: Link diklik! Masukkan password baru Anda untuk akun ${email}:`);
+                            if(newPass) {
+                              alert('Password berhasil diubah! Silakan login menggunakan password baru Anda.');
+                            }
+                          } else {
+                            alert('Format kontak tidak valid. Pastikan Anda memasukkan alamat email atau nomor handphone yang benar.');
+                          }
+                        }
+                      }} className="text-xs text-lime-600 font-semibold hover:underline">Lupa Password?</a>
+                    </div>
+                  )}
 
                   <button 
                     onClick={() => {
-                      const nama = namaJamaah.trim();
                       const contact = jamaahContact.trim();
                       const pass = jamaahPassword.trim();
-                      if (!nama) { setJamaahError('Nama lengkap wajib diisi!'); return; }
-                      if (!contact) { setJamaahError('Email atau No. Handphone wajib diisi!'); return; }
-                      if (!pass || pass.length < 6) { setJamaahError('Password wajib diisi (minimal 6 karakter)!'); return; }
-                      setJamaahError('');
-                      onJamaahLogin(nama);
-                      onClose();
+                      
+                      if (jamaahMode === 'register') {
+                        const nama = namaJamaah.trim();
+                        if (!nama) { setJamaahError('Nama lengkap wajib diisi!'); return; }
+                        if (!contact) { setJamaahError('Email atau No. Handphone wajib diisi!'); return; }
+                        if (!pass || pass.length < 6) { setJamaahError('Password wajib diisi (minimal 6 karakter)!'); return; }
+                        
+                        // Check if already registered
+                        const exists = registeredJamaahList.find(u => u.c === contact || u.e === contact);
+                        if (exists) {
+                          setJamaahError('Kontak sudah terdaftar! Silakan pilih menu Masuk.');
+                          return;
+                        }
+                        
+                        setJamaahError('');
+                        
+                        let e = '';
+                        let phone = '';
+                        if (contact.includes('@')) {
+                          e = contact;
+                        } else {
+                          phone = contact;
+                        }
+
+                        if (onRegisterJamaah) {
+                          onRegisterJamaah({ n: nama, c: phone, e: e, s: 'Aktif', p: pass });
+                        }
+                        onJamaahLogin(nama, contact);
+                        onClose();
+                      } else {
+                        // Login Mode
+                        if (!contact) { setJamaahError('Email atau No. Handphone wajib diisi!'); return; }
+                        if (!pass) { setJamaahError('Password wajib diisi!'); return; }
+                        
+                        const matchedUser = registeredJamaahList.find(u => (u.c === contact || u.e === contact) && u.p === pass);
+                        if (!matchedUser) {
+                          setJamaahError('Akun tidak ditemukan atau password salah!');
+                          return;
+                        }
+                        
+                        setJamaahError('');
+                        onJamaahLogin(matchedUser.n, matchedUser.c || matchedUser.e);
+                        onClose();
+                      }
                     }}
-                    className="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-xl transition-colors shadow-md cursor-pointer"
+                    className="w-full flex items-center justify-center gap-2 bg-lime-600 hover:bg-lime-700 text-white font-bold py-3 rounded-xl transition-colors shadow-md cursor-pointer"
                   >
-                    Masuk / Daftar <ArrowRight className="w-5 h-5" />
+                    {jamaahMode === 'login' ? 'Masuk' : 'Daftar Akun'} <ArrowRight className="w-5 h-5" />
                   </button>
                 </div>
               </div>

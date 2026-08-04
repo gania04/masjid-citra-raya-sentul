@@ -127,7 +127,7 @@ export const ECertificateModal: React.FC<ECertificateModalProps> = ({ muwakif, o
               <div className="space-y-8">
                 <span className="text-slate-500 block text-[10px]">Ketua DKM Masjid Citra Sentul</span>
                 <div className="font-bold text-slate-900 underline">
-                  Pak Aria & Pengurus
+                  Pengurus DKM
                 </div>
               </div>
             </div>

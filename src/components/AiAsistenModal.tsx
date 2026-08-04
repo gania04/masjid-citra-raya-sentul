@@ -45,7 +45,7 @@ export const AiAsistenModal: React.FC<AiAsistenModalProps> = ({
     const q = query.toLowerCase();
 
     if (q.includes('rekening') || q.includes('bsi') || q.includes('donasi') || q.includes('wakaf') || q.includes('transfer')) {
-      return `Assalamu'alaikum Warahmatullahi Wabarakatuh.\n\nUntuk Donasi & Wakaf Pembangunan Masjid Citra Sentul Raya dapat disalurkan melalui:\n• Bank: **Bank Syariah Indonesia (BSI)**\n• No. Rekening: **7257159102**\n• Atas Nama: **Masjid Citra Sentul Raya**\n\nUntuk konfirmasi donasi atau informasi lebih lanjut, silakan hubungi pengurus:\n- Pak Leo: +62 812-1920-0400\n- Pak Aria: +62 818-1885-1377\n\nJazakumullah Khairan Katsiran atas kebaikan Bapak/Ibu!`;
+      return `Assalamu'alaikum Warahmatullahi Wabarakatuh.\n\nUntuk Donasi & Wakaf Pembangunan Masjid Citra Sentul Raya dapat disalurkan melalui:\n• Bank: **Bank Syariah Indonesia (BSI)**\n• No. Rekening: **7257159102**\n• Atas Nama: **Masjid Citra Sentul Raya**\n\nUntuk konfirmasi donasi atau informasi lebih lanjut, silakan hubungi pengurus:\n- Pak Leo: +62 812-1920-0400\n\nJazakumullah Khairan Katsiran atas kebaikan Bapak/Ibu!`;
     }
 
     if (q.includes('jadwal') || q.includes('shalat') || q.includes('solat') || q.includes('subuh') || q.includes('dzuhur') || q.includes('ashar') || q.includes('maghrib') || q.includes('isya') || q.includes('kiblat')) {
@@ -61,7 +61,7 @@ export const AiAsistenModal: React.FC<AiAsistenModalProps> = ({
     }
 
     if (q.includes('lokasi') || q.includes('alamat') || q.includes('dimana') || q.includes('sentul') || q.includes('pengurus')) {
-      return `Assalamu'alaikum Warahmatullahi Wabarakatuh.\n\n📍 **Alamat Masjid Citra Sentul Raya**:\nKawasan Citra Sentul Raya, Sirkuit Sentul, Kab. Bogor, Jawa Barat 16810.\n\n👤 **Pengurus Masjid**:\n• Ketua DKM: Bpk. H. Aria\n• Bendahara & Wakaf: Bpk. H. Leo (+62 812-1920-0400)\n\nFasilitas meliputi Ruang Shalat Utama Ber-AC, Area Parkir Luas, Taman Syariah, Sekretariat DKM, dan Pusat Pembelajaran Al-Qur'an.`;
+      return `Assalamu'alaikum Warahmatullahi Wabarakatuh.\n\n📍 **Alamat Masjid Citra Sentul Raya**:\nKawasan Citra Sentul Raya, Sirkuit Sentul, Kab. Bogor, Jawa Barat 16810.\n\n👤 **Pengurus Masjid**:\n• Bendahara & Wakaf: Bpk. H. Leo (+62 812-1920-0400)\n\nFasilitas meliputi Ruang Shalat Utama Ber-AC, Area Parkir Luas, Taman Syariah, Sekretariat DKM, dan Pusat Pembelajaran Al-Qur'an.`;
     }
 
     if (q.includes('keuangan') || q.includes('laporan') || q.includes('kas') || q.includes('coa') || q.includes('jurnal') || q.includes('neraca') || q.includes('laba rugi')) {

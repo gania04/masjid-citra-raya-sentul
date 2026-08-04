@@ -13,20 +13,20 @@ const formatRp = (n: number) =>
 
 const STATUS_COLOR: Record<string, string> = {
   'Draft': 'bg-slate-100 text-slate-600 border-slate-200',
-  'Menunggu Persetujuan Bendahara': 'bg-amber-100 text-amber-800 border-amber-200',
-  'Menunggu Bendahara': 'bg-amber-100 text-amber-800 border-amber-200',
+  'Menunggu Persetujuan Bendahara': 'bg-lime-100 text-lime-800 border-lime-200',
+  'Menunggu Bendahara': 'bg-lime-100 text-lime-800 border-lime-200',
   'Menunggu Persetujuan Ketua': 'bg-orange-100 text-orange-800 border-orange-200',
   'Menunggu Ketua': 'bg-orange-100 text-orange-800 border-orange-200',
-  'Menunggu Persetujuan Direktur': 'bg-purple-100 text-purple-800 border-purple-200',
-  'Menunggu Direktur': 'bg-purple-100 text-purple-800 border-purple-200',
-  'Disetujui': 'bg-emerald-100 text-emerald-800 border-emerald-200',
+  'Menunggu Persetujuan Direktur': 'bg-lime-100 text-lime-800 border-lime-200',
+  'Menunggu Direktur': 'bg-lime-100 text-lime-800 border-lime-200',
+  'Disetujui': 'bg-lime-100 text-lime-800 border-lime-200',
   'Ditolak': 'bg-rose-100 text-rose-800 border-rose-200',
 };
 
 const APPROVAL_LEVELS = [
-  { level: 1, role: 'Bendahara', name: 'H. Ahmad', color: 'bg-amber-500' },
+  { level: 1, role: 'Bendahara', name: 'H. Ahmad', color: 'bg-lime-500' },
   { level: 2, role: 'Ketua DKM', name: 'Ustadz H. M. Zainuddin', color: 'bg-orange-500' },
-  { level: 3, role: 'Direktur', name: 'Prof. Dr. M. Syafii Antonio', color: 'bg-purple-600' },
+  { level: 3, role: 'Direktur', name: 'Prof. Dr. M. Syafii Antonio', color: 'bg-lime-600' },
 ];
 
 interface ModulAnggaranApprovalProps {
@@ -177,15 +177,15 @@ export const ModulAnggaranApproval: React.FC<ModulAnggaranApprovalProps> = ({ on
     <div className="space-y-6 animate-in fade-in">
       
       {/* Banner Header */}
-      <div className="bg-gradient-to-r from-purple-900 via-indigo-900 to-violet-800 rounded-3xl p-6 sm:p-8 text-white shadow-xl">
+      <div className="bg-gradient-to-r from-lime-900 via-lime-900 to-lime-800 rounded-3xl p-6 sm:p-8 text-white shadow-xl">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center">
-              <ClipboardList className="w-6 h-6 text-purple-200" />
+              <ClipboardList className="w-6 h-6 text-lime-200" />
             </div>
             <div>
               <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight">Rencana Anggaran & Approval Direktur</h2>
-              <p className="text-purple-200 text-xs sm:text-sm">Workflow Persetujuan Bertingkat (Bendahara → Ketua DKM → Direktur)</p>
+              <p className="text-lime-200 text-xs sm:text-sm">Workflow Persetujuan Bertingkat (Bendahara → Ketua DKM → Direktur)</p>
             </div>
           </div>
         </div>
@@ -193,28 +193,28 @@ export const ModulAnggaranApproval: React.FC<ModulAnggaranApprovalProps> = ({ on
         {/* Dynamic Metric Cards */}
         <div className="grid grid-cols-3 gap-3">
           <div className="bg-white/10 backdrop-blur rounded-2xl p-4 border border-white/10">
-            <p className="text-xs text-purple-200 mb-1">Total Pagu Anggaran (RAPB)</p>
+            <p className="text-xs text-lime-200 mb-1">Total Pagu Anggaran (RAPB)</p>
             <p className="font-black text-lg sm:text-xl font-mono">{formatRp(totalAnggaran)}</p>
           </div>
           <div className="bg-white/10 backdrop-blur rounded-2xl p-4 border border-white/10">
-            <p className="text-xs text-purple-200 mb-1">Realisasi Pengeluaran</p>
-            <p className="font-black text-lg sm:text-xl font-mono text-emerald-300">{formatRp(totalRealisasi)}</p>
+            <p className="text-xs text-lime-200 mb-1">Realisasi Pengeluaran</p>
+            <p className="font-black text-lg sm:text-xl font-mono text-lime-300">{formatRp(totalRealisasi)}</p>
           </div>
           <div className="bg-white/10 backdrop-blur rounded-2xl p-4 border border-white/10">
-            <p className="text-xs text-purple-200 mb-1">Menunggu Persetujuan</p>
-            <p className="font-black text-lg sm:text-xl text-amber-300">{pendingCount} <span className="text-xs font-normal">Pengajuan</span></p>
+            <p className="text-xs text-lime-200 mb-1">Menunggu Persetujuan</p>
+            <p className="font-black text-lg sm:text-xl text-lime-300">{pendingCount} <span className="text-xs font-normal">Pengajuan</span></p>
           </div>
         </div>
       </div>
 
       {/* Role Selector Simulator Bar */}
-      <div className="bg-amber-50 border border-amber-200 rounded-3xl p-5 shadow-xs space-y-3">
+      <div className="bg-lime-50 border border-lime-200 rounded-3xl p-5 shadow-xs space-y-3">
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-2 text-amber-900">
-            <ShieldCheck className="w-5 h-5 text-amber-700 shrink-0" />
+          <div className="flex items-center gap-2 text-lime-900">
+            <ShieldCheck className="w-5 h-5 text-lime-700 shrink-0" />
             <span className="font-extrabold text-xs sm:text-sm">Simulasi Otorisasi Role Approval:</span>
           </div>
-          <span className="text-xs font-semibold text-amber-800">
+          <span className="text-xs font-semibold text-lime-800">
             Pilih Role Anda saat ini untuk menguji tombol Setujui / Tolak:
           </span>
         </div>
@@ -226,20 +226,20 @@ export const ModulAnggaranApproval: React.FC<ModulAnggaranApprovalProps> = ({ on
               onClick={() => setCurrentTestingRole(l.role as any)}
               className={`p-3.5 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
                 currentTestingRole === l.role
-                  ? 'bg-purple-900 text-white border-purple-950 shadow-md ring-2 ring-purple-400 font-bold'
-                  : 'bg-white hover:bg-amber-100/50 border-amber-200 text-slate-700'
+                  ? 'bg-lime-900 text-white border-lime-950 shadow-md ring-2 ring-lime-400 font-bold'
+                  : 'bg-white hover:bg-lime-100/50 border-lime-200 text-slate-700'
               }`}
             >
               <div className="flex items-center justify-between">
                 <span className={`w-6 h-6 rounded-full text-xs font-black flex items-center justify-center ${
-                  currentTestingRole === l.role ? 'bg-amber-400 text-amber-950' : 'bg-slate-200 text-slate-700'
+                  currentTestingRole === l.role ? 'bg-lime-400 text-lime-950' : 'bg-slate-200 text-slate-700'
                 }`}>
                   L{l.level}
                 </span>
-                {currentTestingRole === l.role && <UserCheck className="w-4 h-4 text-amber-300" />}
+                {currentTestingRole === l.role && <UserCheck className="w-4 h-4 text-lime-300" />}
               </div>
               <p className="text-xs sm:text-sm font-extrabold mt-2">{l.role}</p>
-              <p className={`text-[10px] ${currentTestingRole === l.role ? 'text-purple-200' : 'text-slate-400'}`}>
+              <p className={`text-[10px] ${currentTestingRole === l.role ? 'text-lime-200' : 'text-slate-400'}`}>
                 {l.name}
               </p>
             </button>
@@ -253,13 +253,13 @@ export const ModulAnggaranApproval: React.FC<ModulAnggaranApprovalProps> = ({ on
           onClick={() => setTab('pengajuan')}
           className={`flex-1 py-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${
             tab === 'pengajuan'
-              ? 'bg-purple-800 text-white shadow-md'
+              ? 'bg-lime-800 text-white shadow-md'
               : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
           Pengajuan Pengeluaran
           {pendingCount > 0 && (
-            <span className="bg-amber-400 text-amber-950 text-xs font-black px-2 py-0.5 rounded-full">
+            <span className="bg-lime-400 text-lime-950 text-xs font-black px-2 py-0.5 rounded-full">
               {pendingCount}
             </span>
           )}
@@ -268,7 +268,7 @@ export const ModulAnggaranApproval: React.FC<ModulAnggaranApprovalProps> = ({ on
           onClick={() => setTab('anggaran')}
           className={`flex-1 py-3 rounded-xl text-xs sm:text-sm font-bold transition-all ${
             tab === 'anggaran'
-              ? 'bg-purple-800 text-white shadow-md'
+              ? 'bg-lime-800 text-white shadow-md'
               : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
@@ -278,7 +278,7 @@ export const ModulAnggaranApproval: React.FC<ModulAnggaranApprovalProps> = ({ on
           onClick={() => setTab('tambah')}
           className={`flex-1 py-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${
             tab === 'tambah'
-              ? 'bg-purple-800 text-white shadow-md'
+              ? 'bg-lime-800 text-white shadow-md'
               : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
@@ -307,14 +307,14 @@ export const ModulAnggaranApproval: React.FC<ModulAnggaranApprovalProps> = ({ on
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-mono text-xs font-bold text-purple-700 bg-purple-50 border border-purple-200 px-2.5 py-0.5 rounded-lg">
+                        <span className="font-mono text-xs font-bold text-lime-700 bg-lime-50 border border-lime-200 px-2.5 py-0.5 rounded-lg">
                           {item.noPengajuan}
                         </span>
                         <span className={`text-xs font-bold px-3 py-0.5 rounded-full border ${STATUS_COLOR[item.status] || 'bg-slate-100 text-slate-600'}`}>
                           {item.status}
                         </span>
                         {needsActionFromCurrentRole && (
-                          <span className="bg-amber-400 text-amber-950 font-black text-[10px] px-2 py-0.5 rounded-md animate-pulse">
+                          <span className="bg-lime-400 text-lime-950 font-black text-[10px] px-2 py-0.5 rounded-md animate-pulse">
                             ⚠️ Butuh Persetujuan {currentTestingRole} Anda!
                           </span>
                         )}
@@ -329,7 +329,7 @@ export const ModulAnggaranApproval: React.FC<ModulAnggaranApprovalProps> = ({ on
                     <div className="flex items-center gap-4 self-end sm:self-center">
                       <div className="text-right">
                         <p className="text-xs text-slate-400 uppercase tracking-wider font-bold">Nominal Pengeluaran</p>
-                        <p className="text-lg sm:text-xl font-black font-mono text-purple-800">{formatRp(item.jumlah)}</p>
+                        <p className="text-lg sm:text-xl font-black font-mono text-lime-800">{formatRp(item.jumlah)}</p>
                       </div>
 
                       <div className="p-2 bg-slate-100 rounded-xl text-slate-500">
@@ -346,7 +346,7 @@ export const ModulAnggaranApproval: React.FC<ModulAnggaranApprovalProps> = ({ on
                           <div className="flex flex-col items-center">
                             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black text-white transition-all shadow-xs ${
                               step.aksi === 'Disetujui'
-                                ? 'bg-emerald-500 ring-4 ring-emerald-100'
+                                ? 'bg-lime-500 ring-4 ring-lime-100'
                                 : step.aksi === 'Ditolak'
                                 ? 'bg-rose-500 ring-4 ring-rose-100'
                                 : 'bg-slate-300'
@@ -355,7 +355,7 @@ export const ModulAnggaranApproval: React.FC<ModulAnggaranApprovalProps> = ({ on
                             </div>
                             <p className="text-[10px] font-bold text-slate-700 mt-1.5">{step.role}</p>
                             <p className={`text-[9px] font-semibold ${
-                              step.aksi === 'Disetujui' ? 'text-emerald-600' : step.aksi === 'Ditolak' ? 'text-rose-600' : 'text-slate-400'
+                              step.aksi === 'Disetujui' ? 'text-lime-600' : step.aksi === 'Ditolak' ? 'text-rose-600' : 'text-slate-400'
                             }`}>
                               {step.aksi}
                             </p>
@@ -363,7 +363,7 @@ export const ModulAnggaranApproval: React.FC<ModulAnggaranApprovalProps> = ({ on
 
                           {idx < item.riwayatApproval.length - 1 && (
                             <div className={`flex-1 h-1 mx-2 rounded-full ${
-                              item.riwayatApproval[idx + 1].aksi !== 'Menunggu' ? 'bg-emerald-400' : 'bg-slate-200'
+                              item.riwayatApproval[idx + 1].aksi !== 'Menunggu' ? 'bg-lime-400' : 'bg-slate-200'
                             }`} />
                           )}
                         </React.Fragment>
@@ -379,7 +379,7 @@ export const ModulAnggaranApproval: React.FC<ModulAnggaranApprovalProps> = ({ on
                     <div className="bg-white p-4 rounded-2xl border border-slate-200 space-y-2">
                       <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Uraian & Rincian Kebutuhan Pengeluaran</p>
                       <p className="text-sm font-medium text-slate-800">{item.keterangan}</p>
-                      <div className="flex items-center gap-2 text-xs font-semibold text-purple-700 pt-2 border-t border-slate-100">
+                      <div className="flex items-center gap-2 text-xs font-semibold text-lime-700 pt-2 border-t border-slate-100">
                         <FileText className="w-4 h-4" /> Beban CoA: <span className="font-mono">{item.kodeAkun} – {item.namaAkun}</span>
                       </div>
                     </div>
@@ -390,13 +390,13 @@ export const ModulAnggaranApproval: React.FC<ModulAnggaranApprovalProps> = ({ on
                       {item.riwayatApproval.map((r, i) => (
                         <div key={i} className={`p-4 rounded-2xl border flex items-start gap-3.5 ${
                           r.aksi === 'Disetujui' 
-                            ? 'bg-emerald-50/60 border-emerald-200' 
+                            ? 'bg-lime-50/60 border-lime-200' 
                             : r.aksi === 'Ditolak'
                             ? 'bg-rose-50/60 border-rose-200'
                             : 'bg-white border-slate-200'
                         }`}>
                           <div className={`w-8 h-8 rounded-2xl flex items-center justify-center font-bold text-white text-xs shrink-0 ${
-                            r.aksi === 'Disetujui' ? 'bg-emerald-600' : r.aksi === 'Ditolak' ? 'bg-rose-600' : 'bg-slate-300'
+                            r.aksi === 'Disetujui' ? 'bg-lime-600' : r.aksi === 'Ditolak' ? 'bg-rose-600' : 'bg-slate-300'
                           }`}>
                             L{r.level}
                           </div>
@@ -405,7 +405,7 @@ export const ModulAnggaranApproval: React.FC<ModulAnggaranApprovalProps> = ({ on
                             <div className="flex items-center justify-between">
                               <p className="text-xs font-extrabold text-slate-800">{r.role}: {r.nama}</p>
                               <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
-                                r.aksi === 'Disetujui' ? 'bg-emerald-100 text-emerald-800' : r.aksi === 'Ditolak' ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-600'
+                                r.aksi === 'Disetujui' ? 'bg-lime-100 text-lime-800' : r.aksi === 'Ditolak' ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-600'
                               }`}>
                                 {r.aksi} {r.tanggal ? `(${r.tanggal})` : ''}
                               </span>
@@ -418,9 +418,9 @@ export const ModulAnggaranApproval: React.FC<ModulAnggaranApprovalProps> = ({ on
 
                     {/* Action Form if current role can approve */}
                     {item.status !== 'Disetujui' && item.status !== 'Ditolak' && (
-                      <div className="bg-white p-5 rounded-2xl border-2 border-purple-200 space-y-3">
+                      <div className="bg-white p-5 rounded-2xl border-2 border-lime-200 space-y-3">
                         <div className="flex items-center gap-2">
-                          <ShieldCheck className="w-5 h-5 text-purple-700" />
+                          <ShieldCheck className="w-5 h-5 text-lime-700" />
                           <h4 className="text-sm font-extrabold text-slate-900">
                             Aksi Otorisasi ({currentTestingRole})
                           </h4>
@@ -435,14 +435,14 @@ export const ModulAnggaranApproval: React.FC<ModulAnggaranApprovalProps> = ({ on
                             placeholder="Contoh: Disetujui, dana operasional mencukupi..."
                             value={approvalNote}
                             onChange={e => setApprovalNote(e.target.value)}
-                            className="w-full p-3 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-purple-600"
+                            className="w-full p-3 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-lime-600"
                           />
                         </div>
 
                         <div className="flex gap-3 pt-2">
                           <button
                             onClick={() => handleApprovalAction(item.id, 'Disetujui')}
-                            className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95 cursor-pointer"
+                            className="flex-1 py-3 bg-lime-600 hover:bg-lime-700 text-white font-bold text-xs sm:text-sm rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95 cursor-pointer"
                           >
                             <Check className="w-4 h-4" /> Setujui Pengeluaran (Sebagai {currentTestingRole})
                           </button>
@@ -481,25 +481,25 @@ export const ModulAnggaranApproval: React.FC<ModulAnggaranApprovalProps> = ({ on
                       </span>
                     </div>
                     <h3 className="text-lg font-extrabold text-slate-900">{item.namaKegiatan}</h3>
-                    <p className="text-xs text-slate-400">Kode CoA: <span className="font-mono font-bold text-purple-700">{item.kodeAkun}</span> • Periode RAPB {item.tahun}/{String(item.bulan).padStart(2, '0')}</p>
+                    <p className="text-xs text-slate-400">Kode CoA: <span className="font-mono font-bold text-lime-700">{item.kodeAkun}</span> • Periode RAPB {item.tahun}/{String(item.bulan).padStart(2, '0')}</p>
                   </div>
 
                   <div className="text-right self-end sm:self-center">
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Pagu Dianggarkan</p>
-                    <p className="text-xl font-black font-mono text-purple-800">{formatRp(item.jumlahDianggarkan)}</p>
+                    <p className="text-xl font-black font-mono text-lime-800">{formatRp(item.jumlahDianggarkan)}</p>
                   </div>
                 </div>
 
                 {/* Progress bar */}
                 <div className="space-y-1.5 bg-slate-50 p-4 rounded-2xl border border-slate-100">
                   <div className="flex justify-between text-xs font-bold">
-                    <span className="text-slate-600">Realisasi: <span className="font-mono text-emerald-700">{formatRp(item.jumlahRealisasi)}</span></span>
-                    <span className={pct >= 100 ? 'text-rose-600' : 'text-purple-800'}>{pct}% Serapan</span>
+                    <span className="text-slate-600">Realisasi: <span className="font-mono text-lime-700">{formatRp(item.jumlahRealisasi)}</span></span>
+                    <span className={pct >= 100 ? 'text-rose-600' : 'text-lime-800'}>{pct}% Serapan</span>
                   </div>
                   <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all duration-500 ${
-                        pct >= 100 ? 'bg-rose-500' : pct >= 75 ? 'bg-amber-500' : 'bg-emerald-500'
+                        pct >= 100 ? 'bg-rose-500' : pct >= 75 ? 'bg-lime-500' : 'bg-lime-500'
                       }`}
                       style={{ width: `${Math.min(pct, 100)}%` }}
                     />
@@ -516,7 +516,7 @@ export const ModulAnggaranApproval: React.FC<ModulAnggaranApprovalProps> = ({ on
         <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
           <div className="border-b border-slate-100 pb-4">
             <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <PlusCircle className="w-5 h-5 text-purple-700" /> Form Permohonan Pengeluaran Anggaran Baru
+              <PlusCircle className="w-5 h-5 text-lime-700" /> Form Permohonan Pengeluaran Anggaran Baru
             </h3>
             <p className="text-xs text-slate-500 mt-1">
               Pengajuan ini akan diproses secara otomatis melalui alur 3 Tingkat Approval: <strong>Bendahara → Ketua DKM → Direktur</strong>.
@@ -533,7 +533,7 @@ export const ModulAnggaranApproval: React.FC<ModulAnggaranApprovalProps> = ({ on
                   placeholder="Contoh: Pembelian Karpet Shalat Musholla..."
                   value={formJudul}
                   onChange={e => setFormJudul(e.target.value)}
-                  className="w-full p-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-purple-700"
+                  className="w-full p-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-lime-700"
                 />
               </div>
 
@@ -542,7 +542,7 @@ export const ModulAnggaranApproval: React.FC<ModulAnggaranApprovalProps> = ({ on
                 <select
                   value={formKodeAkun}
                   onChange={e => setFormKodeAkun(e.target.value)}
-                  className="w-full p-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-purple-700 font-semibold text-slate-800"
+                  className="w-full p-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-lime-700 font-semibold text-slate-800"
                 >
                   {INITIAL_CHART_OF_ACCOUNTS.filter(a => a.jenis === 'Beban').map(a => (
                     <option key={a.kode} value={a.kode}>
@@ -560,7 +560,7 @@ export const ModulAnggaranApproval: React.FC<ModulAnggaranApprovalProps> = ({ on
                   placeholder="Contoh: 3500000"
                   value={formJumlah}
                   onChange={e => setFormJumlah(e.target.value)}
-                  className="w-full p-3 border border-slate-200 rounded-xl text-sm font-mono font-bold focus:outline-none focus:border-purple-700 text-purple-900"
+                  className="w-full p-3 border border-slate-200 rounded-xl text-sm font-mono font-bold focus:outline-none focus:border-lime-700 text-lime-900"
                 />
               </div>
 
@@ -572,7 +572,7 @@ export const ModulAnggaranApproval: React.FC<ModulAnggaranApprovalProps> = ({ on
                   placeholder="Contoh: Staf Operasional, Tim Dakwah, Panitia Pembangunan"
                   value={formPermohon}
                   onChange={e => setFormPermohon(e.target.value)}
-                  className="w-full p-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-purple-700"
+                  className="w-full p-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-lime-700"
                 />
               </div>
             </div>
@@ -585,7 +585,7 @@ export const ModulAnggaranApproval: React.FC<ModulAnggaranApprovalProps> = ({ on
                 placeholder="Jelaskan kebutuhan pengeluaran secara rinci untuk pertimbangan Bendahara, Ketua DKM, dan Direktur..."
                 value={formKeterangan}
                 onChange={e => setFormKeterangan(e.target.value)}
-                className="w-full p-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-purple-700"
+                className="w-full p-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-lime-700"
               />
             </div>
 
@@ -599,7 +599,7 @@ export const ModulAnggaranApproval: React.FC<ModulAnggaranApprovalProps> = ({ on
               </button>
               <button
                 type="submit"
-                className="px-6 py-3 bg-purple-800 hover:bg-purple-900 text-white rounded-xl font-bold text-xs sm:text-sm transition-all shadow-md active:scale-95"
+                className="px-6 py-3 bg-lime-800 hover:bg-lime-900 text-white rounded-xl font-bold text-xs sm:text-sm transition-all shadow-md active:scale-95"
               >
                 Kirim Pengajuan Ke Bendahara
               </button>

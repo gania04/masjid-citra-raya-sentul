@@ -15,6 +15,16 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
   accounts = INITIAL_CHART_OF_ACCOUNTS,
 }) => {
   const [tab, setTab] = useState<'neraca' | 'labarugi'>('neraca');
+  const [filterStartDate, setFilterStartDate] = useState('');
+  const [filterEndDate, setFilterEndDate] = useState('');
+
+  const filteredJournals = journals.filter(j => {
+    if (!filterStartDate && !filterEndDate) return true;
+    const jDate = new Date(j.tanggal).getTime();
+    if (filterStartDate && jDate < new Date(filterStartDate).getTime()) return false;
+    if (filterEndDate && jDate > new Date(filterEndDate).setHours(23,59,59,999)) return false;
+    return true;
+  });
 
   // Compute Live Balance for an account by adding posted journal entries
   const getLiveBalance = (kode: string) => {
@@ -22,7 +32,7 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
     if (!akun) return 0;
     let balance = akun.saldoAwal;
 
-    journals.forEach(j => {
+    filteredJournals.forEach(j => {
       if (j.status === 'Posted') {
         j.baris.forEach(b => {
           if (b.kodeAkun === kode) {
@@ -56,11 +66,11 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
   const isBalanced = Math.abs(totalAktiva - (totalKewajiban + totalEkuitas + surplusDefisit)) < 1;
 
   // Breakdown sources for transparent integration
-  const donasiUmumTotal = journals
+  const donasiUmumTotal = filteredJournals
     .filter(j => j.status === 'Posted' && j.sumber === 'Donasi Umum')
     .reduce((s, j) => s + j.baris.reduce((b, r) => b + r.debit, 0), 0);
 
-  const donasiPortalTotal = journals
+  const donasiPortalTotal = filteredJournals
     .filter(j => j.status === 'Posted' && j.sumber === 'Donasi Portal Jamaah')
     .reduce((s, j) => s + j.baris.reduce((b, r) => b + r.debit, 0), 0);
 
@@ -71,30 +81,38 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
   return (
     <div className="space-y-6 animate-in fade-in">
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-emerald-800 via-teal-800 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="bg-gradient-to-r from-lime-800 via-lime-800 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center">
-            <BarChart3 className="w-6 h-6 text-emerald-200" />
+            <BarChart3 className="w-6 h-6 text-lime-200" />
           </div>
           <div>
             <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight">Laporan Keuangan Profesional</h2>
-            <p className="text-emerald-200 text-xs sm:text-sm">Standar ISAK 35 / Akuntansi Masjid Terintegrasi</p>
+            <p className="text-lime-200 text-xs sm:text-sm">Standar ISAK 35 / Akuntansi Masjid Terintegrasi</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => alert('Mengekspor Laporan Keuangan ke PDF...')}
-            className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white font-bold px-4 py-2.5 rounded-2xl text-xs transition-all border border-white/20"
-          >
-            <Download className="w-4 h-4 text-emerald-300" /> Export PDF
-          </button>
-          <button
-            onClick={() => alert('Mengekspor Laporan Keuangan ke Excel...')}
-            className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2.5 rounded-2xl text-xs transition-all shadow-md"
-          >
-            <FileSpreadsheet className="w-4 h-4" /> Export Excel
-          </button>
+        <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3">
+          <div className="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-1.5 border border-white/20">
+            <span className="text-xs font-bold">Periode:</span>
+            <input type="date" value={filterStartDate} onChange={e => setFilterStartDate(e.target.value)} className="bg-transparent text-white text-xs focus:outline-none focus:ring-0 [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert" />
+            <span className="text-xs font-bold">-</span>
+            <input type="date" value={filterEndDate} onChange={e => setFilterEndDate(e.target.value)} className="bg-transparent text-white text-xs focus:outline-none focus:ring-0 [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert" />
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => alert('Mengekspor Laporan Keuangan ke PDF...')}
+              className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white font-bold px-4 py-2.5 rounded-2xl text-xs transition-all border border-white/20"
+            >
+              <Download className="w-4 h-4 text-lime-300" /> Export PDF
+            </button>
+            <button
+              onClick={() => alert('Mengekspor Laporan Keuangan ke Excel...')}
+              className="flex items-center gap-1.5 bg-lime-600 hover:bg-lime-500 text-white font-bold px-4 py-2.5 rounded-2xl text-xs transition-all shadow-md"
+            >
+              <FileSpreadsheet className="w-4 h-4" /> Export Excel
+            </button>
+          </div>
         </div>
       </div>
 
@@ -103,7 +121,7 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
         <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
           <div className="flex items-center justify-between mb-1">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Aset (Aktiva)</span>
-            <Scale className="w-4 h-4 text-blue-600" />
+            <Scale className="w-4 h-4 text-lime-600" />
           </div>
           <p className="text-lg font-black font-mono text-slate-900">{formatRp(totalAktiva)}</p>
           <p className="text-[10px] text-slate-400 mt-1">Kas, Bank BSI & Tanah Wakaf</p>
@@ -112,27 +130,27 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
         <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
           <div className="flex items-center justify-between mb-1">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Donasi Portal Jamaah</span>
-            <TrendingUp className="w-4 h-4 text-emerald-600" />
+            <TrendingUp className="w-4 h-4 text-lime-600" />
           </div>
-          <p className="text-lg font-black font-mono text-emerald-600">{formatRp(donasiPortalTotal)}</p>
-          <p className="text-[10px] text-emerald-600 font-semibold mt-1">✓ Terintegrasi Realtime</p>
+          <p className="text-lg font-black font-mono text-lime-600">{formatRp(donasiPortalTotal)}</p>
+          <p className="text-[10px] text-lime-600 font-semibold mt-1">✓ Terintegrasi Realtime</p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
           <div className="flex items-center justify-between mb-1">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Donasi Umum / Kotak</span>
-            <Shield className="w-4 h-4 text-amber-600" />
+            <Shield className="w-4 h-4 text-lime-600" />
           </div>
-          <p className="text-lg font-black font-mono text-amber-700">{formatRp(donasiUmumTotal)}</p>
-          <p className="text-[10px] text-amber-700 font-semibold mt-1">✓ Terintegrasi Realtime</p>
+          <p className="text-lg font-black font-mono text-lime-700">{formatRp(donasiUmumTotal)}</p>
+          <p className="text-[10px] text-lime-700 font-semibold mt-1">✓ Terintegrasi Realtime</p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
           <div className="flex items-center justify-between mb-1">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Surplus Periode Ini</span>
-            <Layers className="w-4 h-4 text-purple-600" />
+            <Layers className="w-4 h-4 text-lime-600" />
           </div>
-          <p className={`text-lg font-black font-mono ${surplusDefisit >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+          <p className={`text-lg font-black font-mono ${surplusDefisit >= 0 ? 'text-lime-700' : 'text-rose-700'}`}>
             {formatRp(surplusDefisit)}
           </p>
           <p className="text-[10px] text-slate-400 mt-1">Pendapatan dikurangi Beban</p>
@@ -145,7 +163,7 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
           onClick={() => setTab('neraca')}
           className={`flex-1 py-3 rounded-xl text-xs sm:text-sm font-bold transition-all ${
             tab === 'neraca'
-              ? 'bg-emerald-700 text-white shadow-md'
+              ? 'bg-lime-700 text-white shadow-md'
               : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
@@ -155,7 +173,7 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
           onClick={() => setTab('labarugi')}
           className={`flex-1 py-3 rounded-xl text-xs sm:text-sm font-bold transition-all ${
             tab === 'labarugi'
-              ? 'bg-emerald-700 text-white shadow-md'
+              ? 'bg-lime-700 text-white shadow-md'
               : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
@@ -169,7 +187,7 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
           
           {/* Header Document */}
           <div className="p-6 text-center border-b border-slate-200 bg-slate-50">
-            <span className="text-xs font-black text-emerald-700 uppercase tracking-widest">DKM MASJID CITRA SENTUL RAYA</span>
+            <span className="text-xs font-black text-lime-700 uppercase tracking-widest">DKM MASJID CITRA SENTUL RAYA</span>
             <h3 className="text-xl font-black text-slate-900 mt-1">LAPORAN NERACA (BALANCE SHEET)</h3>
             <p className="text-xs text-slate-500 font-medium">Periode per 31 Juli 2026 • Disajikan dalam Rupiah (IDR)</p>
           </div>
@@ -179,7 +197,7 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
             
             {/* LEFT COLUMN: AKTIVA */}
             <div className="p-6 space-y-5">
-              <h4 className="font-black text-blue-700 uppercase tracking-wider text-xs border-b-2 border-blue-600 pb-2">
+              <h4 className="font-black text-lime-700 uppercase tracking-wider text-xs border-b-2 border-lime-600 pb-2">
                 AKTIVA (ASSETS)
               </h4>
 
@@ -198,7 +216,7 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
                 </div>
               ))}
 
-              <div className="border-t-2 border-blue-700 pt-4 flex justify-between font-black text-base text-blue-800 bg-blue-50/50 p-3 rounded-xl">
+              <div className="border-t-2 border-lime-700 pt-4 flex justify-between font-black text-base text-lime-800 bg-lime-50/50 p-3 rounded-xl">
                 <span>TOTAL AKTIVA</span>
                 <span className="font-mono">{formatRp(totalAktiva)}</span>
               </div>
@@ -226,7 +244,7 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
 
               {/* Ekuitas / Saldo Dana */}
               <div className="space-y-3 pt-4">
-                <h4 className="font-black text-purple-700 uppercase tracking-wider text-xs border-b-2 border-purple-600 pb-2">
+                <h4 className="font-black text-lime-700 uppercase tracking-wider text-xs border-b-2 border-lime-600 pb-2">
                   SALDO DANA & EKUITAS
                 </h4>
                 {ekuitasList.map(a => (
@@ -235,17 +253,17 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
                     <span className="font-mono font-bold text-slate-900">{formatRp(getLiveBalance(a.kode))}</span>
                   </div>
                 ))}
-                <div className="flex justify-between py-1.5 border-b border-slate-100 font-semibold text-emerald-700">
+                <div className="flex justify-between py-1.5 border-b border-slate-100 font-semibold text-lime-700">
                   <span>Surplus / Defisit Periode Berjalan</span>
                   <span className="font-mono font-bold">{formatRp(surplusDefisit)}</span>
                 </div>
-                <div className="flex justify-between font-bold text-purple-700 pt-1">
+                <div className="flex justify-between font-bold text-lime-700 pt-1">
                   <span>Total Ekuitas & Surplus</span>
                   <span className="font-mono">{formatRp(totalEkuitas + surplusDefisit)}</span>
                 </div>
               </div>
 
-              <div className="border-t-2 border-purple-700 pt-4 flex justify-between font-black text-base text-purple-800 bg-purple-50/50 p-3 rounded-xl">
+              <div className="border-t-2 border-lime-700 pt-4 flex justify-between font-black text-base text-lime-800 bg-lime-50/50 p-3 rounded-xl">
                 <span>TOTAL KEWAJIBAN + SALDO DANA</span>
                 <span className="font-mono">{formatRp(totalKewajiban + totalEkuitas + surplusDefisit)}</span>
               </div>
@@ -254,7 +272,7 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
 
           {/* Balance Check Footer */}
           <div className={`p-4 text-center font-bold text-xs sm:text-sm border-t ${
-            isBalanced ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-rose-50 text-rose-800 border-rose-200'
+            isBalanced ? 'bg-lime-50 text-lime-800 border-lime-200' : 'bg-rose-50 text-rose-800 border-rose-200'
           }`}>
             {isBalanced 
               ? '✅ Keseimbangan Neraca Sempurna (Total Aktiva = Total Kewajiban + Saldo Dana & Surplus)' 
@@ -268,7 +286,7 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
         <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm space-y-0">
           
           <div className="p-6 text-center border-b border-slate-200 bg-slate-50">
-            <span className="text-xs font-black text-emerald-700 uppercase tracking-widest">DKM MASJID CITRA SENTUL RAYA</span>
+            <span className="text-xs font-black text-lime-700 uppercase tracking-widest">DKM MASJID CITRA SENTUL RAYA</span>
             <h3 className="text-xl font-black text-slate-900 mt-1">LAPORAN SURPLUS & DEFISIT (LABA RUGI)</h3>
             <p className="text-xs text-slate-500 font-medium">Periode 1 Juli 2026 s/d 31 Juli 2026</p>
           </div>
@@ -277,7 +295,7 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
             
             {/* Section 1: Pendapatan */}
             <div className="space-y-3">
-              <h4 className="font-black text-emerald-700 uppercase tracking-wider text-xs border-b-2 border-emerald-600 pb-2">
+              <h4 className="font-black text-lime-700 uppercase tracking-wider text-xs border-b-2 border-lime-600 pb-2">
                 1. PENDAPATAN & PENERIMAAN DONASI
               </h4>
               
@@ -289,14 +307,14 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
                     return (
                       <div key={a.kode} className="flex justify-between py-1.5 border-b border-slate-100 pl-4">
                         <span className="text-slate-700 font-medium">{a.nama}</span>
-                        <span className="font-mono font-bold text-emerald-700">{formatRp(bal)}</span>
+                        <span className="font-mono font-bold text-lime-700">{formatRp(bal)}</span>
                       </div>
                     );
                   })}
                 </div>
               ))}
 
-              <div className="flex justify-between font-black text-base text-emerald-800 bg-emerald-50 p-3.5 rounded-2xl border border-emerald-200 mt-2">
+              <div className="flex justify-between font-black text-base text-lime-800 bg-lime-50 p-3.5 rounded-2xl border border-lime-200 mt-2">
                 <span>TOTAL PENDAPATAN & PENERIMAAN</span>
                 <span className="font-mono">{formatRp(totalPendapatan)}</span>
               </div>
@@ -332,7 +350,7 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
             {/* Section 3: Net Surplus / Defisit */}
             <div className={`p-6 rounded-3xl border-2 flex flex-col sm:flex-row items-center justify-between gap-4 ${
               surplusDefisit >= 0 
-                ? 'bg-emerald-500 text-white border-emerald-600 shadow-md' 
+                ? 'bg-lime-500 text-white border-lime-600 shadow-md' 
                 : 'bg-rose-600 text-white border-rose-700 shadow-md'
             }`}>
               <div>

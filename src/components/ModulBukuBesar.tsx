@@ -73,14 +73,14 @@ export const ModulBukuBesar: React.FC<ModulBukuBesarProps> = ({
   return (
     <div className="space-y-6 animate-in fade-in">
       {/* Banner Header */}
-      <div className="bg-gradient-to-r from-amber-700 via-amber-800 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="bg-gradient-to-r from-lime-700 via-lime-800 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center">
-            <BookOpen className="w-6 h-6 text-amber-200" />
+            <BookOpen className="w-6 h-6 text-lime-200" />
           </div>
           <div>
             <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight">Buku Besar (General Ledger)</h2>
-            <p className="text-amber-200 text-xs sm:text-sm">Buku Mutasi Akun Keuangan Masjid Citra Sentul Raya</p>
+            <p className="text-lime-200 text-xs sm:text-sm">Buku Mutasi Akun Keuangan Masjid Citra Sentul Raya</p>
           </div>
         </div>
 
@@ -88,7 +88,7 @@ export const ModulBukuBesar: React.FC<ModulBukuBesarProps> = ({
           onClick={() => alert(`Mengekspor Buku Besar ${selectedAkun.kode} - ${selectedAkun.nama} ke Excel...`)}
           className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white font-bold px-4 py-2.5 rounded-2xl text-xs transition-all border border-white/20"
         >
-          <FileSpreadsheet className="w-4 h-4 text-emerald-300" /> Export Ledger Excel
+          <FileSpreadsheet className="w-4 h-4 text-lime-300" /> Export Ledger Excel
         </button>
       </div>
 
@@ -101,7 +101,7 @@ export const ModulBukuBesar: React.FC<ModulBukuBesarProps> = ({
             placeholder="Cari kode/nama akun..."
             value={searchAccount}
             onChange={e => setSearchAccount(e.target.value)}
-            className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-amber-500 w-full sm:w-64"
+            className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-lime-500 w-full sm:w-64"
           />
         </div>
 
@@ -112,14 +112,14 @@ export const ModulBukuBesar: React.FC<ModulBukuBesarProps> = ({
               onClick={() => setSelectedKode(a.kode)}
               className={`p-3 rounded-xl border text-left transition-all flex flex-col justify-between ${
                 selectedKode === a.kode
-                  ? 'bg-amber-500 text-white border-amber-600 shadow-md font-bold'
+                  ? 'bg-lime-500 text-white border-lime-600 shadow-md font-bold'
                   : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
               }`}
             >
               <div className="flex justify-between items-center w-full">
                 <span className="font-mono text-xs font-bold">{a.kode}</span>
                 <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold uppercase ${
-                  selectedKode === a.kode ? 'bg-amber-600 text-white' : 'bg-slate-200 text-slate-600'
+                  selectedKode === a.kode ? 'bg-lime-600 text-white' : 'bg-slate-200 text-slate-600'
                 }`}>
                   {a.jenis}
                 </span>
@@ -138,13 +138,13 @@ export const ModulBukuBesar: React.FC<ModulBukuBesarProps> = ({
           <div className="p-6 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-mono font-black text-lg text-amber-700 bg-amber-100 border border-amber-200 px-3 py-0.5 rounded-xl">
+                <span className="font-mono font-black text-lg text-lime-700 bg-lime-100 border border-lime-200 px-3 py-0.5 rounded-xl">
                   {selectedAkun.kode}
                 </span>
                 <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-200 text-slate-700">
                   {selectedAkun.kelompok}
                 </span>
-                <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-amber-100 text-amber-800">
+                <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-lime-100 text-lime-800">
                   Saldo Normal: {selectedAkun.saldoNormal}
                 </span>
               </div>
@@ -153,7 +153,7 @@ export const ModulBukuBesar: React.FC<ModulBukuBesarProps> = ({
 
             <div className="bg-white border border-slate-200 rounded-2xl p-4 text-right shadow-xs min-w-[200px]">
               <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Saldo Akhir Akun</p>
-              <p className="text-xl font-black font-mono text-amber-700">{formatRp(closingBalance)}</p>
+              <p className="text-xl font-black font-mono text-lime-700">{formatRp(closingBalance)}</p>
             </div>
           </div>
 
@@ -188,17 +188,17 @@ export const ModulBukuBesar: React.FC<ModulBukuBesarProps> = ({
                 {ledgerRows.map((row, idx) => (
                   <tr key={idx} className="hover:bg-slate-50 transition-colors">
                     <td className="px-5 py-3.5 text-slate-500">{row.tanggal}</td>
-                    <td className="px-5 py-3.5 font-mono font-bold text-indigo-700">{row.noBukti}</td>
+                    <td className="px-5 py-3.5 font-mono font-bold text-lime-700">{row.noBukti}</td>
                     <td className="px-5 py-3.5">
                       <span className="px-2.5 py-1 bg-slate-100 rounded-md font-semibold text-slate-600">
                         {row.sumber}
                       </span>
                     </td>
                     <td className="px-5 py-3.5 font-medium text-slate-800 max-w-xs truncate">{row.keterangan}</td>
-                    <td className="px-5 py-3.5 text-right font-mono font-bold text-emerald-600">
+                    <td className="px-5 py-3.5 text-right font-mono font-bold text-lime-600">
                       {row.debit > 0 ? formatRp(row.debit) : '-'}
                     </td>
-                    <td className="px-5 py-3.5 text-right font-mono font-bold text-purple-600">
+                    <td className="px-5 py-3.5 text-right font-mono font-bold text-lime-600">
                       {row.kredit > 0 ? formatRp(row.kredit) : '-'}
                     </td>
                     <td className="px-5 py-3.5 text-right font-mono font-bold text-slate-900 text-sm">
@@ -212,9 +212,9 @@ export const ModulBukuBesar: React.FC<ModulBukuBesarProps> = ({
                   <td colSpan={4} className="px-5 py-4 text-slate-700 uppercase tracking-wider">
                     TOTAL MUTASI & SALDO AKHIR
                   </td>
-                  <td className="px-5 py-4 text-right font-mono text-emerald-700">{formatRp(totalDebitAcc)}</td>
-                  <td className="px-5 py-4 text-right font-mono text-purple-700">{formatRp(totalKreditAcc)}</td>
-                  <td className="px-5 py-4 text-right font-mono text-amber-800 text-base">{formatRp(closingBalance)}</td>
+                  <td className="px-5 py-4 text-right font-mono text-lime-700">{formatRp(totalDebitAcc)}</td>
+                  <td className="px-5 py-4 text-right font-mono text-lime-700">{formatRp(totalKreditAcc)}</td>
+                  <td className="px-5 py-4 text-right font-mono text-lime-800 text-base">{formatRp(closingBalance)}</td>
                 </tr>
               </tfoot>
             </table>

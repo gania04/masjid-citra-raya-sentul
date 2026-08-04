@@ -79,127 +79,42 @@ export interface PengajuanPengeluaran {
 // ─── INITIAL CHART OF ACCOUNTS (CoA) ──────────────────────────
 export const INITIAL_CHART_OF_ACCOUNTS: AkunCoA[] = [
   // AKTIVA (1-xxxx)
-  { kode: '1-1100', nama: 'Kas Tunai Masjid', jenis: 'Aktiva', kelompok: 'Aktiva Lancar', saldoNormal: 'Debit', saldoAwal: 15750000 },
-  { kode: '1-1200', nama: 'Bank BSI - Rekening Operasional', jenis: 'Aktiva', kelompok: 'Aktiva Lancar', saldoNormal: 'Debit', saldoAwal: 42500000 },
-  { kode: '1-1300', nama: 'Bank BSI - Rekening Donasi/Wakaf', jenis: 'Aktiva', kelompok: 'Aktiva Lancar', saldoNormal: 'Debit', saldoAwal: 4850000000 },
-  { kode: '1-1400', nama: 'Piutang Donasi Portal Jamaah', jenis: 'Aktiva', kelompok: 'Aktiva Lancar', saldoNormal: 'Debit', saldoAwal: 2500000 },
-  { kode: '1-2100', nama: 'Tanah Wakaf Masjid', jenis: 'Aktiva', kelompok: 'Aktiva Tetap', saldoNormal: 'Debit', saldoAwal: 5000000000 },
-  { kode: '1-2200', nama: 'Bangunan Masjid (Dalam Konstruksi)', jenis: 'Aktiva', kelompok: 'Aktiva Tetap', saldoNormal: 'Debit', saldoAwal: 3200000000 },
-  { kode: '1-2300', nama: 'Peralatan & Inventaris Masjid', jenis: 'Aktiva', kelompok: 'Aktiva Tetap', saldoNormal: 'Debit', saldoAwal: 185000000 },
+  { kode: '1-1100', nama: 'Kas Tunai Masjid', jenis: 'Aktiva', kelompok: 'Aktiva Lancar', saldoNormal: 'Debit', saldoAwal: 0 },
+  { kode: '1-1200', nama: 'Bank BSI - Rekening Operasional', jenis: 'Aktiva', kelompok: 'Aktiva Lancar', saldoNormal: 'Debit', saldoAwal: 0 },
+  { kode: '1-1300', nama: 'Bank BSI - Rekening Donasi/Wakaf', jenis: 'Aktiva', kelompok: 'Aktiva Lancar', saldoNormal: 'Debit', saldoAwal: 0 },
+  { kode: '1-1400', nama: 'Piutang Donasi Portal Jamaah', jenis: 'Aktiva', kelompok: 'Aktiva Lancar', saldoNormal: 'Debit', saldoAwal: 0 },
+  { kode: '1-2100', nama: 'Tanah Wakaf Masjid', jenis: 'Aktiva', kelompok: 'Aktiva Tetap', saldoNormal: 'Debit', saldoAwal: 0 },
+  { kode: '1-2200', nama: 'Bangunan Masjid (Dalam Konstruksi)', jenis: 'Aktiva', kelompok: 'Aktiva Tetap', saldoNormal: 'Debit', saldoAwal: 0 },
+  { kode: '1-2300', nama: 'Peralatan & Inventaris Masjid', jenis: 'Aktiva', kelompok: 'Aktiva Tetap', saldoNormal: 'Debit', saldoAwal: 0 },
 
   // KEWAJIBAN (2-xxxx)
-  { kode: '2-1100', nama: 'Hutang Usaha / Kontraktor', jenis: 'Kewajiban', kelompok: 'Kewajiban Lancar', saldoNormal: 'Kredit', saldoAwal: 250000000 },
-  { kode: '2-1200', nama: 'Titipan Zakat Belum Disalurkan', jenis: 'Kewajiban', kelompok: 'Kewajiban Lancar', saldoNormal: 'Kredit', saldoAwal: 15000000 },
+  { kode: '2-1100', nama: 'Hutang Usaha / Kontraktor', jenis: 'Kewajiban', kelompok: 'Kewajiban Lancar', saldoNormal: 'Kredit', saldoAwal: 0 },
+  { kode: '2-1200', nama: 'Titipan Zakat Belum Disalurkan', jenis: 'Kewajiban', kelompok: 'Kewajiban Lancar', saldoNormal: 'Kredit', saldoAwal: 0 },
 
   // EKUITAS / SALDO DANA (3-xxxx)
-  { kode: '3-1100', nama: 'Dana Wakaf Pembangunan', jenis: 'Ekuitas', kelompok: 'Dana Terikat', saldoNormal: 'Kredit', saldoAwal: 4850000000 },
-  { kode: '3-1200', nama: 'Dana Operasional Masjid', jenis: 'Ekuitas', kelompok: 'Dana Tidak Terikat', saldoNormal: 'Kredit', saldoAwal: 58250000 },
-  { kode: '3-1300', nama: 'Dana Sosial & Zakat', jenis: 'Ekuitas', kelompok: 'Dana Terikat', saldoNormal: 'Kredit', saldoAwal: 90000000 },
+  { kode: '3-1100', nama: 'Dana Wakaf Pembangunan', jenis: 'Ekuitas', kelompok: 'Dana Terikat', saldoNormal: 'Kredit', saldoAwal: 0 },
+  { kode: '3-1200', nama: 'Dana Operasional Masjid', jenis: 'Ekuitas', kelompok: 'Dana Tidak Terikat', saldoNormal: 'Kredit', saldoAwal: 0 },
+  { kode: '3-1300', nama: 'Dana Sosial & Zakat', jenis: 'Ekuitas', kelompok: 'Dana Terikat', saldoNormal: 'Kredit', saldoAwal: 0 },
 
   // PENDAPATAN (4-xxxx)
-  { kode: '4-1100', nama: 'Pendapatan Wakaf Pembangunan', jenis: 'Pendapatan', kelompok: 'Pendapatan Donasi', saldoNormal: 'Kredit', saldoAwal: 4850000000 },
-  { kode: '4-1200', nama: 'Pendapatan Infaq Kotak Amal', jenis: 'Pendapatan', kelompok: 'Pendapatan Donasi', saldoNormal: 'Kredit', saldoAwal: 12500000 },
-  { kode: '4-1300', nama: 'Pendapatan Donasi Portal Jamaah', jenis: 'Pendapatan', kelompok: 'Pendapatan Donasi', saldoNormal: 'Kredit', saldoAwal: 8750000 },
-  { kode: '4-1400', nama: 'Pendapatan Zakat Mal & Fitrah', jenis: 'Pendapatan', kelompok: 'Pendapatan Donasi', saldoNormal: 'Kredit', saldoAwal: 90000000 },
-  { kode: '4-1500', nama: 'Pendapatan Infaq Jamaah Umum', jenis: 'Pendapatan', kelompok: 'Pendapatan Donasi', saldoNormal: 'Kredit', saldoAwal: 5200000 },
+  { kode: '4-1100', nama: 'Pendapatan Wakaf Pembangunan', jenis: 'Pendapatan', kelompok: 'Pendapatan Donasi', saldoNormal: 'Kredit', saldoAwal: 0 },
+  { kode: '4-1200', nama: 'Pendapatan Infaq Kotak Amal', jenis: 'Pendapatan', kelompok: 'Pendapatan Donasi', saldoNormal: 'Kredit', saldoAwal: 0 },
+  { kode: '4-1300', nama: 'Pendapatan Donasi Portal Jamaah', jenis: 'Pendapatan', kelompok: 'Pendapatan Donasi', saldoNormal: 'Kredit', saldoAwal: 0 },
+  { kode: '4-1400', nama: 'Pendapatan Zakat Mal & Fitrah', jenis: 'Pendapatan', kelompok: 'Pendapatan Donasi', saldoNormal: 'Kredit', saldoAwal: 0 },
+  { kode: '4-1500', nama: 'Pendapatan Infaq Jamaah Umum', jenis: 'Pendapatan', kelompok: 'Pendapatan Donasi', saldoNormal: 'Kredit', saldoAwal: 0 },
 
   // BEBAN (5-xxxx)
-  { kode: '5-1100', nama: 'Beban Listrik & Air', jenis: 'Beban', kelompok: 'Beban Operasional', saldoNormal: 'Debit', saldoAwal: 3600000 },
-  { kode: '5-1200', nama: 'Beban Kebersihan & Perawatan', jenis: 'Beban', kelompok: 'Beban Operasional', saldoNormal: 'Debit', saldoAwal: 1800000 },
-  { kode: '5-1300', nama: 'Beban Honorarium Marbot/Staf', jenis: 'Beban', kelompok: 'Beban Operasional', saldoNormal: 'Debit', saldoAwal: 6000000 },
-  { kode: '5-1400', nama: 'Beban Pembangunan & Konstruksi', jenis: 'Beban', kelompok: 'Beban Pembangunan', saldoNormal: 'Debit', saldoAwal: 3200000000 },
-  { kode: '5-1500', nama: 'Beban Kegiatan & Dakwah', jenis: 'Beban', kelompok: 'Beban Program', saldoNormal: 'Debit', saldoAwal: 4500000 },
-  { kode: '5-1600', nama: 'Beban Penyaluran Zakat', jenis: 'Beban', kelompok: 'Beban Sosial', saldoNormal: 'Debit', saldoAwal: 75000000 },
-  { kode: '5-1700', nama: 'Beban ATK & Administrasi', jenis: 'Beban', kelompok: 'Beban Operasional', saldoNormal: 'Debit', saldoAwal: 750000 },
+  { kode: '5-1100', nama: 'Beban Listrik & Air', jenis: 'Beban', kelompok: 'Beban Operasional', saldoNormal: 'Debit', saldoAwal: 0 },
+  { kode: '5-1200', nama: 'Beban Kebersihan & Perawatan', jenis: 'Beban', kelompok: 'Beban Operasional', saldoNormal: 'Debit', saldoAwal: 0 },
+  { kode: '5-1300', nama: 'Beban Honorarium Marbot/Staf', jenis: 'Beban', kelompok: 'Beban Operasional', saldoNormal: 'Debit', saldoAwal: 0 },
+  { kode: '5-1400', nama: 'Beban Pembangunan & Konstruksi', jenis: 'Beban', kelompok: 'Beban Pembangunan', saldoNormal: 'Debit', saldoAwal: 0 },
+  { kode: '5-1500', nama: 'Beban Kegiatan & Dakwah', jenis: 'Beban', kelompok: 'Beban Program', saldoNormal: 'Debit', saldoAwal: 0 },
+  { kode: '5-1600', nama: 'Beban Penyaluran Zakat', jenis: 'Beban', kelompok: 'Beban Sosial', saldoNormal: 'Debit', saldoAwal: 0 },
+  { kode: '5-1700', nama: 'Beban ATK & Administrasi', jenis: 'Beban', kelompok: 'Beban Operasional', saldoNormal: 'Debit', saldoAwal: 0 },
 ];
 
 // ─── INITIAL JURNAL UMUM (Double Entry Jurnal & Jurnal Lawan) ──────
-export const INITIAL_JURNAL_ENTRIES: JurnalEntry[] = [
-  {
-    id: 'JU-001',
-    tanggal: '2026-07-29',
-    noBukti: 'BKM-2026-07-001',
-    keterangan: 'Penerimaan Infaq Kotak Amal Jumat (Donasi Umum)',
-    sumber: 'Kas Masjid',
-    baris: [
-      { kodeAkun: '1-1100', namaAkun: 'Kas Tunai Masjid (Debit)', debit: 2500000, kredit: 0 },
-      { kodeAkun: '4-1200', namaAkun: 'Pendapatan Infaq Kotak Amal (Kredit - Jurnal Lawan)', debit: 0, kredit: 2500000 },
-    ],
-    status: 'Posted',
-    dibuatOleh: 'Staf Keuangan',
-    tanggalBuat: '2026-07-29',
-  },
-  {
-    id: 'JU-002',
-    tanggal: '2026-07-28',
-    noBukti: 'BKK-2026-07-001',
-    keterangan: 'Pembayaran Rekening Listrik & Air Masjid Operasional',
-    sumber: 'Kas Masjid',
-    baris: [
-      { kodeAkun: '5-1100', namaAkun: 'Beban Listrik & Air (Debit)', debit: 1200000, kredit: 0 },
-      { kodeAkun: '1-1100', namaAkun: 'Kas Tunai Masjid (Kredit - Jurnal Lawan)', debit: 0, kredit: 1200000 },
-    ],
-    status: 'Posted',
-    dibuatOleh: 'H. Ahmad (Bendahara)',
-    tanggalBuat: '2026-07-28',
-  },
-  {
-    id: 'JU-003',
-    tanggal: '2026-07-28',
-    noBukti: 'BWF-2026-07-001',
-    keterangan: 'Penerimaan Wakaf Pembangunan via Portal Jamaah - H. Bambang Sugianto',
-    sumber: 'Donasi Portal Jamaah',
-    baris: [
-      { kodeAkun: '1-1300', namaAkun: 'Bank BSI - Rekening Donasi/Wakaf (Debit)', debit: 50000000, kredit: 0 },
-      { kodeAkun: '4-1100', namaAkun: 'Pendapatan Wakaf Pembangunan (Kredit - Jurnal Lawan)', debit: 0, kredit: 50000000 },
-    ],
-    status: 'Posted',
-    dibuatOleh: 'Sistem Portal Jamaah',
-    tanggalBuat: '2026-07-28',
-  },
-  {
-    id: 'JU-004',
-    tanggal: '2026-07-27',
-    noBukti: 'BWF-2026-07-002',
-    keterangan: 'Penerimaan Donasi Hamba Allah via Transfer BSI (Donasi Umum)',
-    sumber: 'Donasi Umum',
-    baris: [
-      { kodeAkun: '1-1300', namaAkun: 'Bank BSI - Rekening Donasi/Wakaf (Debit)', debit: 500000, kredit: 0 },
-      { kodeAkun: '4-1500', namaAkun: 'Pendapatan Infaq Jamaah Umum (Kredit - Jurnal Lawan)', debit: 0, kredit: 500000 },
-    ],
-    status: 'Posted',
-    dibuatOleh: 'Staf Keuangan',
-    tanggalBuat: '2026-07-27',
-  },
-  {
-    id: 'JU-005',
-    tanggal: '2026-07-25',
-    noBukti: 'BKK-2026-07-002',
-    keterangan: 'Biaya Kebersihan dan Perawatan Operasional Mingguan',
-    sumber: 'Kas Masjid',
-    baris: [
-      { kodeAkun: '5-1200', namaAkun: 'Beban Kebersihan & Perawatan (Debit)', debit: 300000, kredit: 0 },
-      { kodeAkun: '1-1100', namaAkun: 'Kas Tunai Masjid (Kredit - Jurnal Lawan)', debit: 0, kredit: 300000 },
-    ],
-    status: 'Posted',
-    dibuatOleh: 'H. Ahmad (Bendahara)',
-    tanggalBuat: '2026-07-25',
-  },
-  {
-    id: 'JU-006',
-    tanggal: '2026-07-24',
-    noBukti: 'BWF-2026-07-003',
-    keterangan: 'Penerimaan Donasi Zakat Mal via Portal Jamaah - Hj. Ratna Dewi',
-    sumber: 'Donasi Portal Jamaah',
-    baris: [
-      { kodeAkun: '1-1300', namaAkun: 'Bank BSI - Rekening Donasi/Wakaf (Debit)', debit: 5000000, kredit: 0 },
-      { kodeAkun: '4-1400', namaAkun: 'Pendapatan Zakat Mal & Fitrah (Kredit - Jurnal Lawan)', debit: 0, kredit: 5000000 },
-    ],
-    status: 'Posted',
-    dibuatOleh: 'Sistem Portal Jamaah',
-    tanggalBuat: '2026-07-24',
-  },
-];
+export const INITIAL_JURNAL_ENTRIES: JurnalEntry[] = [];
 
 // ─── INITIAL RENCANA ANGGARAN (RAPB) ──────────────────────────
 export const INITIAL_ANGGARAN_LIST: AnggaranItem[] = [
