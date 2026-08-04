@@ -808,25 +808,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
             </div>
 
             {kasTab === 'ringkasan' && (
-              <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 animate-in fade-in">
-                {/* Summary Cards */}
-                <div className="lg:col-span-1 space-y-4">
-                  <div className="bg-white border border-slate-200 p-5 rounded-xl shadow-lg">
-                    <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">Saldo Kas Tersedia</p>
-                    <p className="text-2xl font-bold text-slate-800">{formatRp(saldoAkhir)}</p>
-                  </div>
-                  <div className="bg-white border border-slate-200 p-5 rounded-xl shadow-lg">
-                    <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1 flex items-center gap-1"><ArrowDownCircle className="w-4 h-4 text-lime-600" /> Total Pemasukan</p>
-                    <p className="text-xl font-bold text-lime-600">{formatRp(totalIn)}</p>
-                  </div>
-                  <div className="bg-white border border-slate-200 p-5 rounded-xl shadow-lg">
-                    <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1 flex items-center gap-1"><ArrowUpCircle className="w-4 h-4 text-red-600" /> Total Pengeluaran</p>
-                    <p className="text-xl font-bold text-red-600">{formatRp(totalOut)}</p>
-                  </div>
-                </div>
-
+              <div className="grid grid-cols-1 gap-6 animate-in fade-in">
                 {/* Table */}
-                <div className="lg:col-span-3 bg-white border border-slate-200 rounded-xl overflow-hidden shadow-lg">
+                <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-lg">
                   <div className="p-5 border-b border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <h3 className="font-bold text-slate-800">Catatan Transaksi Terakhir</h3>
                     <div className="flex gap-2 w-full sm:w-auto">
