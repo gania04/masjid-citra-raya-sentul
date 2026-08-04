@@ -40,6 +40,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
   const [activeMenu, setActiveMenu] = useState('utama');
   const [kasTab, setKasTab] = useState('ringkasan');
   const [lapkeuTab, setLapkeuTab] = useState<'neraca' | 'jurnal' | 'bukubesar' | 'coa' | 'anggaran'>('neraca');
+  const [searchMenu, setSearchMenu] = useState('');
+
+  const MENU_TABS = [
+    { id: 'utama', label: 'Dashboard Utama', icon: LayoutDashboard },
+    { id: 'kas', label: 'Riwayat Transaksi', icon: Book },
+    { id: 'lapkeu', label: 'Laporan Keuangan & Akuntansi', icon: Scale, action: () => { setActiveMenu('lapkeu'); setLapkeuTab('neraca'); } },
+    { id: 'ziswaf', label: 'Input Donasi ZISWAF', icon: PlusCircle },
+    { id: 'verifikasi', label: 'Verifikasi ZISWAF', icon: ShieldCheck },
+    { id: 'konten', label: 'Manajemen Konten Publik', icon: Database },
+    { id: 'jumat', label: 'Jadwal Petugas & Jumat', icon: Clock },
+    { id: 'wa', label: 'Broadcast Informasi', icon: Smartphone },
+    { id: 'kalender', label: 'Kalender & Agenda', icon: Calendar },
+    { id: 'aset', label: 'Inventaris & Foto Aset', icon: Camera },
+    { id: 'profil', label: 'Profil & Pengurus', icon: Users },
+    { id: 'ttd', label: 'Tanda Tangan Laporan', icon: FileText },
+    { id: 'role', label: 'Manajemen Akun & Role', icon: Key },
+    { id: 'audit', label: 'Audit Log System', icon: Search },
+    { id: 'pengaturan', label: 'Pengaturan Sistem', icon: Settings, action: () => { setActiveMenu('pengaturan'); setSettingTab('admin_utama'); } },
+  ];
   const [filterRingkasan, setFilterRingkasan] = useState({ start: '', end: '' });
   const [filterPemasukan, setFilterPemasukan] = useState({ start: '', end: '' });
   const [filterPengeluaran, setFilterPengeluaran] = useState({ start: '', end: '' });
@@ -544,24 +563,57 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
           </div>
         </div>
 
+        {/* Search Menu */}
+        <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <h2 className="text-lg font-bold text-slate-800 hidden md:block">Pintasan Menu</h2>
+          <div className="relative w-full md:max-w-md">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-4 w-4 text-slate-400" />
+            </div>
+            <input
+              type="text"
+              className="block w-full pl-10 pr-10 py-3 border border-slate-200 rounded-xl leading-5 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-lime-500 focus:border-lime-500 text-sm shadow-lg transition-all"
+              placeholder="Cari fitur portal (contoh: Dashboard, Laporan, Kas)..."
+              value={searchMenu}
+              onChange={(e) => setSearchMenu(e.target.value)}
+            />
+            {searchMenu && (
+              <button 
+                onClick={() => setSearchMenu('')} 
+                className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-slate-400 hover:text-slate-600"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* Scrollable Tabs */}
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden mb-6 shadow-lg">
           <div className="flex overflow-x-auto no-scrollbar">
-            <button onClick={() => setActiveMenu('utama')} className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap border-b-4 transition-colors ${activeMenu === 'utama' ? 'border-lime-500 text-slate-800 bg-white shadow-sm border border-slate-200 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50'}`}><LayoutDashboard className="w-4 h-4 shrink-0 text-lime-600" /><span className="text-sm font-semibold">Dashboard Utama</span></button>
-            <button onClick={() => setActiveMenu('kas')} className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap border-b-4 transition-colors ${activeMenu === 'kas' ? 'border-lime-500 text-slate-800 bg-white shadow-sm border border-slate-200 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50'}`}><Book className="w-4 h-4 shrink-0 text-lime-600" /><span className="text-sm font-semibold">Riwayat Transaksi</span></button>
-            <button onClick={() => { setActiveMenu('lapkeu'); setLapkeuTab('neraca'); }} className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap border-b-4 transition-colors ${['lapkeu', 'jurnal', 'bukubesar', 'coa', 'anggaran'].includes(activeMenu) ? 'border-lime-600 text-lime-700 bg-lime-50/50 font-bold shadow-sm border border-lime-200' : 'border-transparent text-lime-600 hover:text-lime-800 hover:bg-lime-50/30'}`}><Scale className="w-4 h-4 shrink-0" /><span className="text-sm font-semibold">Laporan Keuangan & Akuntansi</span></button>
-            <button onClick={() => setActiveMenu('ziswaf')} className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap border-b-4 transition-colors ${activeMenu === 'ziswaf' ? 'border-lime-500 text-slate-800 bg-white shadow-sm border border-slate-200' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50'}`}><PlusCircle className="w-4 h-4 shrink-0" /><span className="text-sm font-semibold">Input Donasi ZISWAF</span></button>
-            <button onClick={() => setActiveMenu('verifikasi')} className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap border-b-4 transition-colors ${activeMenu === 'verifikasi' ? 'border-lime-500 text-slate-800 bg-white shadow-sm border border-slate-200' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50'}`}><ShieldCheck className="w-4 h-4 shrink-0" /><span className="text-sm font-semibold">Verifikasi ZISWAF</span></button>
-            <button onClick={() => setActiveMenu('konten')} className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap border-b-4 transition-colors ${activeMenu === 'konten' ? 'border-lime-500 text-slate-800 bg-white shadow-sm border border-slate-200 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50'}`}><Database className="w-4 h-4 shrink-0" /><span className="text-sm font-semibold">Manajemen Konten Publik</span></button>
-            <button onClick={() => setActiveMenu('jumat')} className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap border-b-4 transition-colors ${activeMenu === 'jumat' ? 'border-lime-500 text-slate-800 bg-white shadow-sm border border-slate-200' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50'}`}><Clock className="w-4 h-4 shrink-0" /><span className="text-sm font-semibold">Jadwal Petugas & Jumat</span></button>
-            <button onClick={() => setActiveMenu('wa')} className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap border-b-4 transition-colors ${activeMenu === 'wa' ? 'border-lime-500 text-slate-800 bg-white shadow-sm border border-slate-200' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50'}`}><Smartphone className="w-4 h-4 shrink-0" /><span className="text-sm font-semibold">Broadcast Informasi</span></button>
-            <button onClick={() => setActiveMenu('kalender')} className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap border-b-4 transition-colors ${activeMenu === 'kalender' ? 'border-lime-500 text-slate-800 bg-white shadow-sm border border-slate-200' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50'}`}><Calendar className="w-4 h-4 shrink-0" /><span className="text-sm font-semibold">Kalender & Agenda</span></button>
-            <button onClick={() => setActiveMenu('aset')} className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap border-b-4 transition-colors ${activeMenu === 'aset' ? 'border-lime-500 text-slate-800 bg-white shadow-sm border border-slate-200' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50'}`}><Camera className="w-4 h-4 shrink-0" /><span className="text-sm font-semibold">Inventaris & Foto Aset</span></button>
-            <button onClick={() => setActiveMenu('profil')} className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap border-b-4 transition-colors ${activeMenu === 'profil' ? 'border-lime-500 text-slate-800 bg-white shadow-sm border border-slate-200' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50'}`}><Users className="w-4 h-4 shrink-0" /><span className="text-sm font-semibold">Profil & Pengurus</span></button>
-            <button onClick={() => setActiveMenu('ttd')} className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap border-b-4 transition-colors ${activeMenu === 'ttd' ? 'border-lime-500 text-slate-800 bg-white shadow-sm border border-slate-200' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50'}`}><FileText className="w-4 h-4 shrink-0" /><span className="text-sm font-semibold">Tanda Tangan Laporan</span></button>
-            <button onClick={() => setActiveMenu('role')} className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap border-b-4 transition-colors ${activeMenu === 'role' ? 'border-lime-500 text-slate-800 bg-white shadow-sm border border-slate-200' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50'}`}><Key className="w-4 h-4 shrink-0" /><span className="text-sm font-semibold">Manajemen Akun & Role</span></button>
-            <button onClick={() => setActiveMenu('audit')} className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap border-b-4 transition-colors ${activeMenu === 'audit' ? 'border-lime-500 text-slate-800 bg-white shadow-sm border border-slate-200' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50'}`}><Search className="w-4 h-4 shrink-0" /><span className="text-sm font-semibold">Audit Log System</span></button>
-            <button onClick={() => { setActiveMenu('pengaturan'); setSettingTab('admin_utama'); }} className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap border-b-4 transition-colors ${activeMenu === 'pengaturan' ? 'border-lime-500 text-slate-800 bg-white shadow-sm border border-slate-200' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50'}`}><Settings className="w-4 h-4 shrink-0" /><span className="text-sm font-semibold">Pengaturan Sistem</span></button>
+            {MENU_TABS.filter(menu => menu.label.toLowerCase().includes(searchMenu.toLowerCase())).map((menu) => {
+              const Icon = menu.icon;
+              const isActive = menu.id === 'lapkeu' 
+                ? ['lapkeu', 'jurnal', 'bukubesar', 'coa', 'anggaran'].includes(activeMenu)
+                : activeMenu === menu.id;
+
+              return (
+                <button 
+                  key={menu.id}
+                  onClick={() => menu.action ? menu.action() : setActiveMenu(menu.id)} 
+                  className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap border-b-4 transition-colors ${isActive ? (menu.id === 'lapkeu' ? 'border-lime-600 text-lime-700 bg-lime-50/50 font-bold shadow-sm border border-lime-200' : 'border-lime-500 text-slate-800 bg-white shadow-sm border border-slate-200 font-bold') : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50'}`}
+                >
+                  <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-lime-600' : ''}`} />
+                  <span className="text-sm font-semibold">{menu.label}</span>
+                </button>
+              );
+            })}
+            
+            {MENU_TABS.filter(menu => menu.label.toLowerCase().includes(searchMenu.toLowerCase())).length === 0 && (
+              <div className="px-5 py-4 text-sm text-slate-500 flex items-center gap-2 font-medium">
+                <Search className="w-4 h-4" /> Tidak ada fitur yang cocok dengan "{searchMenu}".
+              </div>
+            )}
           </div>
         </div>
 
