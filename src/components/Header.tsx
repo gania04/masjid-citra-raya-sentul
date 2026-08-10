@@ -10,6 +10,8 @@ interface HeaderProps {
   isDarkMode: boolean;
   onToggleDarkMode: () => void;
   isAutoNight?: boolean;
+  isLoggedIn?: boolean;
+  loggedInText?: string;
 }
 
 export const Header: React.FC<HeaderProps> = ({ 
@@ -19,7 +21,9 @@ export const Header: React.FC<HeaderProps> = ({
   onNavClick,
   isDarkMode,
   onToggleDarkMode,
-  isAutoNight = false
+  isAutoNight = false,
+  isLoggedIn = false,
+  loggedInText = 'Portal'
 }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const prayerTimes = getPrayerTimesSentul();
@@ -44,15 +48,20 @@ export const Header: React.FC<HeaderProps> = ({
   ];
 
   const handleScroll = (id: string) => {
-    // onNavClick removed to prevent auto-closing portals on navigation
-    if (id === 'home') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (id === 'quran' && onQuranClick) {
-      onQuranClick();
-    } else {
-      const el = document.getElementById(id);
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    if (onNavClick) {
+      onNavClick();
     }
+    
+    setTimeout(() => {
+      if (id === 'home') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (id === 'quran' && onQuranClick) {
+        onQuranClick();
+      } else {
+        const el = document.getElementById(id);
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 150);
   };
 
   return (
@@ -157,10 +166,12 @@ export const Header: React.FC<HeaderProps> = ({
               className={`flex items-center justify-center gap-1.5 px-4 py-2 border-2 font-bold text-xs sm:text-sm rounded-2xl transition-all shadow-xs uppercase active:scale-95 cursor-pointer ${
                 isDarkMode 
                   ? 'border-emerald-500 bg-emerald-600 text-white hover:bg-emerald-500' 
-                  : 'border-green-600 text-green-700 bg-white hover:bg-green-600 hover:text-white'
+                  : isLoggedIn 
+                    ? 'border-lime-600 text-white bg-lime-600 hover:bg-lime-700'
+                    : 'border-green-600 text-green-700 bg-white hover:bg-green-600 hover:text-white'
               }`}
             >
-              <User className="w-4 h-4" /> Login
+              <User className="w-4 h-4" /> {isLoggedIn ? loggedInText : 'Login'}
             </button>
           </div>
         </div>

@@ -20,6 +20,7 @@ import { Sun, Moon, BookOpen } from 'lucide-react';
 export default function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isJamaahLoggedIn, setIsJamaahLoggedIn] = useState(false);
+  const [showPortal, setShowPortal] = useState(false);
   const [namaJamaah, setNamaJamaah] = useState('Hamba Allah');
   const [kontakJamaah, setKontakJamaah] = useState('');
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -251,25 +252,35 @@ export default function App() {
     }`}>
       {/* Navigation Header Always Visible */}
       <Header 
-        onLoginClick={() => setIsLoginModalOpen(true)} 
+        onLoginClick={() => {
+          if (isAdmin || isJamaahLoggedIn) {
+            setShowPortal(true);
+          } else {
+            setIsLoginModalOpen(true);
+          }
+        }} 
         onAiClick={() => setIsAiModalOpen(true)} 
         onQuranClick={() => setIsQuranModalOpen(true)}
         onNavClick={() => {
-          if (isAdmin) logAudit('Pengurus DKM', 'ADMIN', 'admin@masjid.id', 'LOGOUT', 'User berhasil keluar (logout) dari sistem Admin', 'bg-red-900/50 text-red-600');
-          if (isJamaahLoggedIn) logAudit(namaJamaah, 'JAMAAH', kontakJamaah, 'LOGOUT', 'User berhasil keluar (logout) dari Portal Jamaah', 'bg-red-900/50 text-red-600');
-          setIsAdmin(false);
-          setIsJamaahLoggedIn(false);
+          // Hide portal to show Beranda, without logging out
+          setShowPortal(false);
         }}
         isDarkMode={isDarkMode}
         onToggleDarkMode={toggleDarkMode}
         isAutoNight={isAutoNight}
+        isLoggedIn={isAdmin || isJamaahLoggedIn}
+        loggedInText={isAdmin ? 'Portal Admin' : 'Portal Jamaah'}
       />
       
       <main className="flex-1 flex flex-col">
-        {isAdmin ? (
+        {(isAdmin && showPortal) ? (
           <div className="flex-1">
             <AdminDashboard 
-              onBack={() => setIsAdmin(false)} 
+              onBack={() => {
+                logAudit('Pengurus DKM', 'ADMIN', 'admin@masjid.id', 'LOGOUT', 'User berhasil keluar (logout) dari sistem Admin', 'bg-red-900/50 text-red-600');
+                setIsAdmin(false);
+                setShowPortal(false);
+              }} 
               programs={programs} 
               onAddDonation={handleAddDonation} 
               homeVisibility={homeVisibility}
@@ -279,12 +290,18 @@ export default function App() {
               onVerifyDonasi={handleVerifyDonasi}
             />
           </div>
-        ) : isJamaahLoggedIn ? (
+        ) : (isJamaahLoggedIn && showPortal) ? (
           <div className="flex-1">
             <JamaahDashboard 
               nama={namaJamaah} 
               kontak={kontakJamaah} 
-              onBack={() => { setIsJamaahLoggedIn(false); setNamaJamaah('Hamba Allah'); setKontakJamaah(''); }} 
+              onBack={() => {
+                logAudit(namaJamaah, 'JAMAAH', kontakJamaah, 'LOGOUT', 'User berhasil keluar (logout) dari Portal Jamaah', 'bg-red-900/50 text-red-600');
+                setIsJamaahLoggedIn(false);
+                setShowPortal(false);
+                setNamaJamaah('Hamba Allah');
+                setKontakJamaah('');
+              }} 
               donasiHistory={donasiHistory.filter(d => true)} // Passing all for demo, usually filtered by user
             />
           </div>
@@ -374,13 +391,15 @@ export default function App() {
         onClose={() => setIsLoginModalOpen(false)} 
         onAdminLogin={() => {
           setIsAdmin(true);
-          logAudit('Pengurus DKM', 'ADMIN', 'admin@masjid.id', 'LOGIN', 'Berhasil melakukan login ke Dashboard Admin', 'bg-lime-900/50 text-lime-600');
-        }} 
-        onJamaahLogin={(nama, kontak) => { 
-          setNamaJamaah(nama); 
-          setKontakJamaah(kontak); 
+          setShowPortal(true);
+          logAudit('Pengurus DKM', 'ADMIN', 'admin@masjid.id', 'LOGIN', 'Admin berhasil login ke sistem', 'bg-lime-900/50 text-lime-600');
+        }}
+        onJamaahLogin={(nama, kontak) => {
           setIsJamaahLoggedIn(true);
-          logAudit(nama, 'JAMAAH', kontak, 'LOGIN', 'Berhasil melakukan login ke Portal Jamaah', 'bg-lime-900/50 text-lime-600');
+          setShowPortal(true);
+          setNamaJamaah(nama);
+          setKontakJamaah(kontak);
+          logAudit(nama, 'JAMAAH', kontak, 'LOGIN', 'Jamaah berhasil login ke portal', 'bg-blue-900/50 text-blue-600');
         }}
         registeredJamaahList={registeredJamaahList}
         onRegisterJamaah={(jamaah) => {
