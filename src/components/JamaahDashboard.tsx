@@ -662,8 +662,8 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
                       </div>
                       <div className="space-y-4 mt-2">
                         <div>
-                          <div className="flex justify-between text-xs font-semibold mb-1"><span className="text-lime-700">Terkumpul 42%</span><span className="text-slate-500">Rp 630 Jt / Rp 1.5 M</span></div>
-                          <div className="w-full bg-slate-100 rounded-full h-2"><div className="bg-lime-500 h-2 rounded-full" style={{ width: '42%' }}></div></div>
+                          <div className="flex justify-between text-xs font-semibold mb-1"><span className="text-lime-700">Terkumpul 0%</span><span className="text-slate-500">Rp 0 / Rp 1.5 M</span></div>
+                          <div className="w-full bg-slate-100 rounded-full h-2"><div className="bg-lime-500 h-2 rounded-full" style={{ width: '0%' }}></div></div>
                         </div>
                         <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
                           <p className="text-sm font-bold text-slate-700 mb-2">Update Terakhir (28 Juli 2026):</p>

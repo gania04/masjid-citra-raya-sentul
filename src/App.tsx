@@ -96,10 +96,10 @@ export default function App() {
       kategori: 'infaq',
       judul: 'Pembangunan Masjid Citra Sentul Raya',
       deskripsi: 'Wakaf pembangunan masjid. Amal Jariyah Tak Terputus.',
-      terkumpulPersen: INITIAL_STATS.progresKeseluruhan,
-      terkumpulRp: INITIAL_STATS.terkumpul,
-      targetRp: INITIAL_STATS.targetDana,
-      donatur: INITIAL_STATS.totalMuwakif,
+      terkumpulPersen: 0,
+      terkumpulRp: 0,
+      targetRp: 1500000000,
+      donatur: 0,
       gambar: 'https://images.unsplash.com/photo-1564769625905-50e93615e769?auto=format&fit=crop&w=800&q=80'
     },
     {
@@ -107,10 +107,10 @@ export default function App() {
       kategori: 'sedekah',
       judul: 'Santunan Yatim Piatu',
       deskripsi: 'Berbagi Kasih Bersama Anak Yatim.',
-      terkumpulPersen: 45,
-      terkumpulRp: 112500000,
+      terkumpulPersen: 0,
+      terkumpulRp: 0,
       targetRp: 250000000,
-      donatur: 42,
+      donatur: 0,
       gambar: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=800&q=80'
     },
     {
@@ -118,10 +118,10 @@ export default function App() {
       kategori: 'zakat',
       judul: 'Santunan Dhuafa (& Fakir Miskin)',
       deskripsi: 'Meringankan Beban Saudara Kita.',
-      terkumpulPersen: 12,
-      terkumpulRp: 90000000,
+      terkumpulPersen: 0,
+      terkumpulRp: 0,
       targetRp: 750000000,
-      donatur: 15,
+      donatur: 0,
       gambar: 'https://images.unsplash.com/photo-1593113589914-075990190da5?auto=format&fit=crop&w=800&q=80'
     }
   ];
@@ -216,7 +216,7 @@ export default function App() {
         return {
           ...p,
           terkumpulRp: newTerkumpul,
-          terkumpulPersen: Math.min(100, Math.round((newTerkumpul / p.targetRp) * 100)),
+          terkumpulPersen: p.targetRp > 0 ? Math.min(100, Math.round((newTerkumpul / p.targetRp) * 100)) : 0,
           donatur: p.donatur + 1
         };
       }

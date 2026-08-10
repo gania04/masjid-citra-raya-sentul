@@ -44,20 +44,15 @@ export const Header: React.FC<HeaderProps> = ({
   ];
 
   const handleScroll = (id: string) => {
-    if (onNavClick) {
-      onNavClick();
+    // onNavClick removed to prevent auto-closing portals on navigation
+    if (id === 'home') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (id === 'quran' && onQuranClick) {
+      onQuranClick();
+    } else {
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
     }
-    
-    setTimeout(() => {
-      if (id === 'home') {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else if (id === 'quran' && onQuranClick) {
-        onQuranClick();
-      } else {
-        const el = document.getElementById(id);
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-      }
-    }, 150); // slight delay to allow Home page components to mount if exiting portal
   };
 
   return (

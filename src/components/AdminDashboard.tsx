@@ -1100,7 +1100,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                       <h3 className="font-bold text-slate-800 mb-4 line-clamp-1">{p.judul}</h3>
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between"><span className="text-slate-500">Terkumpul:</span><span className="font-bold text-lime-600">{formatRp(p.terkumpulRp)}</span></div>
-                        <div className="flex justify-between"><span className="text-slate-500">Target:</span><span className="font-bold text-slate-600">{formatRp(p.targetRp)}</span></div>
+                        {p.targetRp > 0 && <div className="flex justify-between"><span className="text-slate-500">Target:</span><span className="font-bold text-slate-600">{formatRp(p.targetRp)}</span></div>}
                         <div className="flex justify-between pt-3 border-t border-slate-200 mt-3"><span className="text-slate-500">Total Donatur:</span><span className="font-bold text-lime-600">{p.donatur} Orang</span></div>
                         
                         <div className="pt-3 border-t border-slate-200 mt-3 text-center flex flex-col gap-2">
@@ -1157,8 +1157,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                   <div>
                     <span className="bg-lime-100 text-lime-700 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">{p.kategori}</span>
                     <h3 className="font-bold text-slate-800 mt-3 mb-2">{p.judul}</h3>
-                    <div className="w-full bg-slate-100 rounded-full h-2 mb-2"><div className="bg-lime-500 h-2 rounded-full" style={{ width: `${Math.min((p.terkumpulRp / p.targetRp) * 100, 100)}%` }}></div></div>
-                    <div className="flex justify-between text-xs font-semibold"><span className="text-lime-700">{Math.round((p.terkumpulRp / p.targetRp) * 100)}% Terkumpul</span><span className="text-slate-500">{formatRp(p.targetRp)}</span></div>
+                    {p.targetRp > 0 ? (
+                      <>
+                        <div className="w-full bg-slate-100 rounded-full h-2 mb-2"><div className="bg-lime-500 h-2 rounded-full" style={{ width: `${Math.min((p.terkumpulRp / p.targetRp) * 100, 100)}%` }}></div></div>
+                        <div className="flex justify-between text-xs font-semibold"><span className="text-lime-700">{Math.round((p.terkumpulRp / p.targetRp) * 100)}% Terkumpul</span><span className="text-slate-500">{formatRp(p.targetRp)}</span></div>
+                      </>
+                    ) : (
+                      <div className="flex justify-between text-xs font-semibold"><span className="text-lime-700">{formatRp(p.terkumpulRp)} Terkumpul</span><span className="text-slate-500">Tanpa Target</span></div>
+                    )}
                   </div>
                   <div className="mt-4 pt-4 border-t border-slate-100 flex flex-wrap gap-2">
                     <button onClick={() => {
