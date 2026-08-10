@@ -15,7 +15,7 @@ import { LoginModal } from './components/LoginModal';
 import { AiAsistenModal } from './components/AiAsistenModal';
 import { INITIAL_STATS } from './data/mockData';
 import { supabase } from './lib/supabase';
-import { Sun, Moon, BookOpen } from 'lucide-react';
+import { Sun, Moon, BookOpen, LayoutDashboard } from 'lucide-react';
 
 export default function App() {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -381,6 +381,19 @@ export default function App() {
           </>
         )}
       </main>
+
+      {/* Floating Button to Return to Portal */}
+      {(!showPortal && (isAdmin || isJamaahLoggedIn)) && (
+        <div className="fixed bottom-6 right-6 z-[60] animate-bounce">
+          <button
+            onClick={() => setShowPortal(true)}
+            className="flex items-center gap-2 px-6 py-4 bg-lime-600 hover:bg-lime-700 text-white rounded-full shadow-[0_10px_40px_-10px_rgba(101,163,13,1)] font-bold border-4 border-white dark:border-slate-800 transition-all cursor-pointer"
+          >
+            <LayoutDashboard className="w-6 h-6" /> 
+            Buka Portal Anda
+          </button>
+        </div>
+      )}
 
       {/* Footer */}
       {!isAdmin && !isJamaahLoggedIn && <Footer onNavigate={() => {}} onOpenWakafModal={() => {}} />}
