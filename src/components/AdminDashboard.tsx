@@ -38,27 +38,44 @@ interface AdminDashboardProps {
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs, onAddDonation, homeVisibility, setHomeVisibility, registeredJamaahList, donasiHistory = [], onVerifyDonasi }) => {
   const [activeMenu, setActiveMenu] = useState('utama');
+  const [activeCategory, setActiveCategory] = useState('utama');
   const [kasTab, setKasTab] = useState('ringkasan');
   const [lapkeuTab, setLapkeuTab] = useState<'neraca' | 'jurnal' | 'bukubesar' | 'coa' | 'anggaran'>('neraca');
   const [searchMenu, setSearchMenu] = useState('');
 
-  const MENU_TABS = [
+  const MENU_CATEGORIES = [
     { id: 'utama', label: 'Dashboard Utama', icon: LayoutDashboard },
-    { id: 'kas', label: 'Riwayat Transaksi', icon: Book },
-    { id: 'lapkeu', label: 'Laporan Keuangan & Akuntansi', icon: Scale, action: () => { setActiveMenu('lapkeu'); setLapkeuTab('neraca'); } },
-    { id: 'ziswaf', label: 'Input Donasi ZISWAF', icon: PlusCircle },
-    { id: 'verifikasi', label: 'Verifikasi ZISWAF', icon: ShieldCheck },
-    { id: 'konten', label: 'Manajemen Konten Publik', icon: Database },
-    { id: 'jumat', label: 'Jadwal Petugas & Jumat', icon: Clock },
-    { id: 'wa', label: 'Broadcast Informasi', icon: Smartphone },
-    { id: 'kalender', label: 'Kalender & Agenda', icon: Calendar },
-    { id: 'aset', label: 'Inventaris & Foto Aset', icon: Camera },
-    { id: 'profil', label: 'Profil & Pengurus', icon: Users },
-    { id: 'ttd', label: 'Tanda Tangan Laporan', icon: FileText },
-    { id: 'role', label: 'Manajemen Akun & Role', icon: Key },
-    { id: 'audit', label: 'Audit Log System', icon: Search },
-    { id: 'pengaturan', label: 'Pengaturan Sistem', icon: Settings, action: () => { setActiveMenu('pengaturan'); setSettingTab('admin_utama'); } },
+    { id: 'keuangan', label: 'Keuangan', icon: Wallet },
+    { id: 'operasional', label: 'Operasional', icon: Clock },
+    { id: 'administrasi', label: 'Administrasi', icon: Users },
+    { id: 'pengaturan_grup', label: 'Pengaturan', icon: Settings }
   ];
+
+  const SUB_MENUS: Record<string, any[]> = {
+    keuangan: [
+      { id: 'ziswaf', label: 'Input Donasi ZISWAF', icon: PlusCircle },
+      { id: 'verifikasi', label: 'Verifikasi ZISWAF', icon: ShieldCheck },
+      { id: 'kas', label: 'Riwayat Transaksi', icon: Book },
+      { id: 'lapkeu', label: 'Laporan Keuangan & Akuntansi', icon: Scale, action: () => { setActiveMenu('lapkeu'); setLapkeuTab('neraca'); } },
+    ],
+    operasional: [
+      { id: 'jumat', label: 'Jadwal Petugas & Jumat', icon: Clock },
+      { id: 'kalender', label: 'Kalender & Agenda', icon: Calendar },
+      { id: 'wa', label: 'Broadcast Informasi', icon: Smartphone },
+      { id: 'konten', label: 'Manajemen Konten Publik', icon: Database },
+    ],
+    administrasi: [
+      { id: 'profil', label: 'Profil & Pengurus', icon: Users },
+      { id: 'aset', label: 'Inventaris & Foto Aset', icon: Camera },
+      { id: 'ttd', label: 'Tanda Tangan Laporan', icon: FileText },
+    ],
+    pengaturan_grup: [
+      { id: 'role', label: 'Manajemen Akun & Role', icon: Key },
+      { id: 'audit', label: 'Audit Log System', icon: Search },
+      { id: 'pengaturan', label: 'Pengaturan Sistem', icon: Settings, action: () => { setActiveMenu('pengaturan'); setSettingTab('admin_utama'); } },
+    ]
+  };
+
   const [filterRingkasan, setFilterRingkasan] = useState({ start: '', end: '' });
   const [filterPemasukan, setFilterPemasukan] = useState({ start: '', end: '' });
   const [filterPengeluaran, setFilterPengeluaran] = useState({ start: '', end: '' });
@@ -588,34 +605,72 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
           </div>
         </div>
 
-        {/* Scrollable Tabs */}
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden mb-6 shadow-lg">
-          <div className="flex overflow-x-auto no-scrollbar">
-            {MENU_TABS.filter(menu => menu.label.toLowerCase().includes(searchMenu.toLowerCase())).map((menu) => {
-              const Icon = menu.icon;
-              const isActive = menu.id === 'lapkeu' 
-                ? ['lapkeu', 'jurnal', 'bukubesar', 'coa', 'anggaran'].includes(activeMenu)
-                : activeMenu === menu.id;
+        {/* Main Categories Tabs Premium */}
+        <div className="relative bg-gradient-to-r from-emerald-600 via-lime-600 to-teal-700 rounded-2xl p-2 mb-5 shadow-xl border border-lime-500/50 overflow-hidden flex flex-col md:flex-row">
+          {/* Decorative Background Glows */}
+          <div className="absolute top-0 right-10 -mt-6 w-32 h-32 bg-white opacity-20 rounded-full blur-2xl pointer-events-none"></div>
+          <div className="absolute bottom-0 left-10 -mb-6 w-24 h-24 bg-lime-300 opacity-20 rounded-full blur-2xl pointer-events-none"></div>
+          
+          <div className="flex overflow-x-auto no-scrollbar w-full gap-2 relative z-10">
+            {MENU_CATEGORIES.map((cat) => {
+              const Icon = cat.icon;
+              const isActive = activeCategory === cat.id;
 
               return (
                 <button 
-                  key={menu.id}
-                  onClick={() => menu.action ? menu.action() : setActiveMenu(menu.id)} 
-                  className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap border-b-4 transition-colors ${isActive ? (menu.id === 'lapkeu' ? 'border-lime-600 text-lime-700 bg-lime-50/50 font-bold shadow-sm border border-lime-200' : 'border-lime-500 text-slate-800 bg-white shadow-sm border border-slate-200 font-bold') : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50'}`}
+                  key={cat.id}
+                  onClick={() => {
+                    setActiveCategory(cat.id);
+                    if (cat.id === 'utama') {
+                      setActiveMenu('utama');
+                    } else if (SUB_MENUS[cat.id]?.length > 0) {
+                      const firstMenu = SUB_MENUS[cat.id][0];
+                      if (firstMenu.action) firstMenu.action();
+                      else setActiveMenu(firstMenu.id);
+                    }
+                  }} 
+                  className={`flex items-center gap-2 px-5 py-3.5 whitespace-nowrap transition-all duration-300 flex-1 justify-center rounded-xl ${isActive ? 'bg-white text-emerald-800 font-extrabold shadow-lg scale-[1.02] ring-1 ring-black/5' : 'text-emerald-50 hover:bg-white/20 hover:text-white font-medium border border-transparent hover:border-white/30 backdrop-blur-sm'}`}
                 >
-                  <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-lime-600' : ''}`} />
-                  <span className="text-sm font-semibold">{menu.label}</span>
+                  <Icon className={`w-5 h-5 shrink-0 transition-colors ${isActive ? 'text-emerald-600' : 'text-emerald-100'}`} />
+                  <span className="text-sm tracking-wide">{cat.label}</span>
                 </button>
               );
             })}
-            
-            {MENU_TABS.filter(menu => menu.label.toLowerCase().includes(searchMenu.toLowerCase())).length === 0 && (
-              <div className="px-5 py-4 text-sm text-slate-500 flex items-center gap-2 font-medium">
-                <Search className="w-4 h-4" /> Tidak ada fitur yang cocok dengan "{searchMenu}".
-              </div>
-            )}
           </div>
         </div>
+
+        {/* Sub Menus Tabs */}
+        {activeCategory !== 'utama' && SUB_MENUS[activeCategory] && (
+          <div className="bg-slate-100 rounded-xl border border-slate-200 overflow-hidden mb-6 p-1.5 shadow-inner">
+            <div className="flex overflow-x-auto no-scrollbar gap-1.5">
+              {SUB_MENUS[activeCategory]
+                .filter(menu => menu.label.toLowerCase().includes(searchMenu.toLowerCase()))
+                .map((menu) => {
+                const Icon = menu.icon;
+                const isActive = menu.id === 'lapkeu' 
+                  ? ['lapkeu', 'jurnal', 'bukubesar', 'coa', 'anggaran'].includes(activeMenu)
+                  : activeMenu === menu.id;
+
+                return (
+                  <button 
+                    key={menu.id}
+                    onClick={() => menu.action ? menu.action() : setActiveMenu(menu.id)} 
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-colors ${isActive ? 'bg-white text-lime-700 font-bold shadow-sm border border-slate-200' : 'text-slate-600 hover:bg-white/50 hover:text-slate-800 border border-transparent'}`}
+                  >
+                    <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-lime-600' : ''}`} />
+                    <span className="text-sm font-semibold">{menu.label}</span>
+                  </button>
+                );
+              })}
+              
+              {SUB_MENUS[activeCategory].filter(menu => menu.label.toLowerCase().includes(searchMenu.toLowerCase())).length === 0 && (
+                <div className="px-4 py-2.5 text-sm text-slate-500 flex items-center gap-2 font-medium">
+                  <Search className="w-4 h-4" /> Tidak ada fitur yang cocok dengan "{searchMenu}".
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* CONTEN AREA */}
         
@@ -624,43 +679,47 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
           <div className="animate-in fade-in space-y-6">
             {/* Top Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xl flex flex-col items-center justify-center gap-3 transition-transform hover:-translate-y-1">
-                <div className="w-14 h-14 bg-blue-50 rounded-full flex items-center justify-center">
-                  <Users className="w-7 h-7 text-blue-500" />
+              <div className="bg-white p-6 rounded-2xl border-b-4 border-b-blue-500 shadow-xl flex flex-col items-start justify-center gap-2 transition-all hover:-translate-y-1 hover:shadow-2xl relative overflow-hidden group">
+                <div className="absolute -right-6 -top-6 w-24 h-24 bg-blue-50 rounded-full group-hover:scale-150 transition-transform duration-500 ease-out z-0"></div>
+                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center relative z-10 shadow-inner">
+                  <Users className="w-6 h-6 text-blue-600" />
                 </div>
-                <div className="text-center">
-                  <p className="text-slate-500 text-sm font-bold uppercase tracking-wider mb-2">Total Jamaah Terdaftar</p>
-                  <h3 className="text-4xl font-extrabold text-slate-800">{registeredJamaahList.length}</h3>
-                </div>
-              </div>
-
-              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xl flex flex-col items-center justify-center gap-3 transition-transform hover:-translate-y-1">
-                <div className="w-14 h-14 bg-emerald-50 rounded-full flex items-center justify-center">
-                  <Heart className="w-7 h-7 text-emerald-500" />
-                </div>
-                <div className="text-center">
-                  <p className="text-slate-500 text-sm font-bold uppercase tracking-wider mb-2">Total Program Donasi</p>
-                  <h3 className="text-4xl font-extrabold text-slate-800">{programs.length}</h3>
+                <div className="relative z-10 mt-2">
+                  <h3 className="text-4xl font-black text-slate-800 tracking-tight">{registeredJamaahList.length}</h3>
+                  <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mt-1">Total Jamaah</p>
                 </div>
               </div>
 
-              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xl flex flex-col items-center justify-center gap-3 transition-transform hover:-translate-y-1">
-                <div className="w-14 h-14 bg-amber-50 rounded-full flex items-center justify-center">
-                  <Calendar className="w-7 h-7 text-amber-500" />
+              <div className="bg-white p-6 rounded-2xl border-b-4 border-b-emerald-500 shadow-xl flex flex-col items-start justify-center gap-2 transition-all hover:-translate-y-1 hover:shadow-2xl relative overflow-hidden group">
+                <div className="absolute -right-6 -top-6 w-24 h-24 bg-emerald-50 rounded-full group-hover:scale-150 transition-transform duration-500 ease-out z-0"></div>
+                <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center relative z-10 shadow-inner">
+                  <Heart className="w-6 h-6 text-emerald-600" />
                 </div>
-                <div className="text-center">
-                  <p className="text-slate-500 text-sm font-bold uppercase tracking-wider mb-2">Jadwal Petugas Aktif</p>
-                  <h3 className="text-4xl font-extrabold text-slate-800">4</h3>
+                <div className="relative z-10 mt-2">
+                  <h3 className="text-4xl font-black text-slate-800 tracking-tight">{programs.length}</h3>
+                  <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mt-1">Program Donasi</p>
                 </div>
               </div>
 
-              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xl flex flex-col items-center justify-center gap-3 transition-transform hover:-translate-y-1">
-                <div className="w-14 h-14 bg-purple-50 rounded-full flex items-center justify-center">
-                  <Building className="w-7 h-7 text-purple-500" />
+              <div className="bg-white p-6 rounded-2xl border-b-4 border-b-amber-500 shadow-xl flex flex-col items-start justify-center gap-2 transition-all hover:-translate-y-1 hover:shadow-2xl relative overflow-hidden group">
+                <div className="absolute -right-6 -top-6 w-24 h-24 bg-amber-50 rounded-full group-hover:scale-150 transition-transform duration-500 ease-out z-0"></div>
+                <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center relative z-10 shadow-inner">
+                  <Calendar className="w-6 h-6 text-amber-600" />
                 </div>
-                <div className="text-center">
-                  <p className="text-slate-500 text-sm font-bold uppercase tracking-wider mb-2">Aset & Inventaris</p>
-                  <h3 className="text-4xl font-extrabold text-slate-800">{inventarisList.length}</h3>
+                <div className="relative z-10 mt-2">
+                  <h3 className="text-4xl font-black text-slate-800 tracking-tight">4</h3>
+                  <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mt-1">Jadwal Petugas</p>
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-2xl border-b-4 border-b-purple-500 shadow-xl flex flex-col items-start justify-center gap-2 transition-all hover:-translate-y-1 hover:shadow-2xl relative overflow-hidden group">
+                <div className="absolute -right-6 -top-6 w-24 h-24 bg-purple-50 rounded-full group-hover:scale-150 transition-transform duration-500 ease-out z-0"></div>
+                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center relative z-10 shadow-inner">
+                  <Building className="w-6 h-6 text-purple-600" />
+                </div>
+                <div className="relative z-10 mt-2">
+                  <h3 className="text-4xl font-black text-slate-800 tracking-tight">{inventarisList.length}</h3>
+                  <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mt-1">Aset Inventaris</p>
                 </div>
               </div>
             </div>
@@ -668,42 +727,72 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
             {/* Main Content Area */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Saldo Kas Utama (COA) */}
-              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xl flex flex-col h-80">
-                <h3 className="text-lg font-bold text-slate-800 mb-6 font-serif">Saldo Kas Utama (COA)</h3>
+              <div className="bg-gradient-to-br from-emerald-900 via-emerald-800 to-teal-900 p-8 rounded-3xl shadow-[0_20px_50px_-12px_rgba(4,120,87,0.5)] flex flex-col h-96 relative overflow-hidden text-white">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500 opacity-20 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
+                <div className="absolute bottom-0 left-0 w-40 h-40 bg-teal-400 opacity-20 rounded-full blur-2xl pointer-events-none -ml-10 -mb-10"></div>
+                
+                <div className="relative z-10 flex justify-between items-start mb-6">
+                  <div>
+                    <h3 className="text-xl font-bold text-emerald-50 tracking-wide">Saldo Kas Utama</h3>
+                    <p className="text-emerald-200/70 text-xs font-medium mt-1">Terhubung dengan ISAK 35</p>
+                  </div>
+                  <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-md border border-white/20">
+                    <Wallet className="w-6 h-6 text-emerald-300" />
+                  </div>
+                </div>
+
                 {kasEntries.length > 0 ? (
-                  <div className="flex-1 flex flex-col items-center justify-center">
-                    <Wallet className="w-16 h-16 text-slate-200 mb-4" />
-                    <p className="text-slate-500 font-medium">Chart kas aktif (Terhubung dengan ISAK 35)</p>
-                    <p className="text-3xl font-extrabold text-emerald-600 mt-2">Rp {
-                      (kasEntries.filter(e => e.type === 'in').reduce((sum, e) => sum + e.amount, 0) -
-                       kasEntries.filter(e => e.type === 'out').reduce((sum, e) => sum + e.amount, 0)).toLocaleString('id-ID')
-                    }</p>
+                  <div className="relative z-10 flex-1 flex flex-col justify-center">
+                    <p className="text-emerald-100 text-sm font-medium mb-2">Total Saldo Aktif Saat Ini</p>
+                    <p className="text-5xl md:text-6xl font-black text-white tracking-tighter drop-shadow-md">
+                      <span className="text-3xl text-emerald-300 font-bold mr-2">Rp</span>
+                      {(kasEntries.filter(e => e.type === 'in').reduce((sum, e) => sum + e.amount, 0) -
+                       kasEntries.filter(e => e.type === 'out').reduce((sum, e) => sum + e.amount, 0)).toLocaleString('id-ID')}
+                    </p>
+                    
+                    <div className="mt-8 grid grid-cols-2 gap-4">
+                      <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
+                        <p className="text-emerald-200 text-xs font-bold uppercase mb-1 flex items-center gap-1"><TrendingUp className="w-3 h-3 text-emerald-400" /> Pemasukan</p>
+                        <p className="text-lg font-bold text-white">Rp {kasEntries.filter(e => e.type === 'in').reduce((sum, e) => sum + e.amount, 0).toLocaleString('id-ID')}</p>
+                      </div>
+                      <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
+                        <p className="text-emerald-200 text-xs font-bold uppercase mb-1 flex items-center gap-1"><TrendingDown className="w-3 h-3 text-red-400" /> Pengeluaran</p>
+                        <p className="text-lg font-bold text-white">Rp {kasEntries.filter(e => e.type === 'out').reduce((sum, e) => sum + e.amount, 0).toLocaleString('id-ID')}</p>
+                      </div>
+                    </div>
                   </div>
                 ) : (
-                  <div className="flex-1 flex flex-col items-center justify-center">
-                    <p className="text-slate-400 font-medium">Belum ada data kas.</p>
+                  <div className="flex-1 flex flex-col items-center justify-center relative z-10">
+                    <p className="text-emerald-200/50 font-medium">Belum ada data kas bulan ini.</p>
                   </div>
                 )}
               </div>
 
               {/* Progres Program Donasi */}
-              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xl flex flex-col h-80">
-                <h3 className="text-lg font-bold text-slate-800 mb-6 font-serif">Progres Program Donasi</h3>
-                <div className="flex items-center gap-4 mb-4 justify-center text-xs text-slate-500 font-bold">
-                  <div className="flex items-center gap-1.5"><div className="w-6 h-3 bg-emerald-500 rounded-sm"></div> Terkumpul</div>
-                  <div className="flex items-center gap-1.5"><div className="w-6 h-3 bg-slate-200 rounded-sm"></div> Target</div>
+              <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-xl flex flex-col h-96">
+                <div className="flex justify-between items-center mb-8">
+                  <h3 className="text-xl font-bold text-slate-800">Progres Program Donasi</h3>
+                  <div className="flex items-center gap-3 text-xs font-bold text-slate-500 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-200">
+                    <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-emerald-500 rounded-full shadow-sm"></div> Terkumpul</div>
+                    <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-slate-200 rounded-full shadow-inner"></div> Target</div>
+                  </div>
                 </div>
                 
-                <div className="flex-1 overflow-y-auto pr-2 space-y-5">
+                <div className="flex-1 overflow-y-auto pr-3 space-y-6">
                   {programs.map(prog => (
-                    <div key={prog.id} className="w-full">
-                      <div className="flex justify-between text-xs mb-1">
-                        <span className="font-bold text-slate-700 truncate max-w-[60%]">{prog.judul}</span>
-                        <span className="font-bold text-slate-500">{prog.terkumpulPersen}%</span>
+                    <div key={prog.id} className="w-full group">
+                      <div className="flex justify-between items-end mb-2">
+                        <div>
+                          <p className="text-xs font-bold text-emerald-600 mb-0.5">{prog.kategori}</p>
+                          <p className="font-bold text-slate-700 text-sm group-hover:text-emerald-700 transition-colors">{prog.judul}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-black text-slate-800 text-lg">{prog.terkumpulPersen}%</p>
+                        </div>
                       </div>
-                      <div className="w-full bg-slate-100 h-4 rounded-full overflow-hidden border border-slate-200">
+                      <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden shadow-inner">
                         <div 
-                          className="h-full bg-emerald-500 rounded-full transition-all" 
+                          className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full transition-all duration-1000 ease-out" 
                           style={{ width: `${Math.min(100, prog.terkumpulPersen)}%` }}
                         ></div>
                       </div>
