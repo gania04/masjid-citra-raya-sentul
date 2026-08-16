@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Wallet, Upload, X, CheckCircle } from 'lucide-react';
+import { Wallet, Upload, X, CheckCircle, ZoomIn, ZoomOut, Download } from 'lucide-react';
 
 interface Program {
   id: number;
@@ -26,6 +26,29 @@ export const DaftarProgram: React.FC<DaftarProgramProps> = ({ programs, onDonate
   const [namaDonatur, setNamaDonatur] = useState('');
   const [kontakDonatur, setKontakDonatur] = useState('');
   const [step, setStep] = useState<'form' | 'success'>('form');
+  const [showQrisZoom, setShowQrisZoom] = useState(false);
+  const [isQrisZoomed, setIsQrisZoomed] = useState(false);
+
+  const handleDownloadQris = async () => {
+    try {
+      const response = await fetch('/images/qris-masjid.jpg');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'QRIS-Masjid-Citra-Sentul-Raya.jpg';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch {
+      const link = document.createElement('a');
+      link.href = '/images/qris-masjid.jpg';
+      link.download = 'QRIS-Masjid-Citra-Sentul-Raya.jpg';
+      link.target = '_blank';
+      link.click();
+    }
+  };
   const formatRp = (angka: number) => {
     if (angka >= 1000000000) {
       return `Rp ${(angka / 1000000000).toFixed(1).replace('.0', '')}M`;
@@ -163,18 +186,51 @@ export const DaftarProgram: React.FC<DaftarProgramProps> = ({ programs, onDonate
                   <div>
                     <label className="block text-sm font-bold text-slate-700 mb-2">Metode Pembayaran</label>
                     <select value={metode} onChange={(e) => setMetode(e.target.value)} className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 font-semibold focus:outline-none focus:border-lime-600 mb-3">
-                      <option value="QRIS">Scan QRIS (Semua Bank/E-Wallet)</option>
-                      <option value="Bank Transfer (BSI)">Bank BSI (No: 711 222 3333)</option>
-                      <option value="Bank Transfer (Mandiri)">Bank Mandiri (No: 133 00 1111 2222)</option>
+                      <option value="QRIS">Scan QRIS Instant (Semua Bank & E-Wallet)</option>
+                      <option value="Bank Transfer (BSI)">Bank BSI (7257159102 a.n Masjid Citra Sentul Raya)</option>
                     </select>
                     
                     {metode === 'QRIS' && (
-                      <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-center animate-in fade-in">
-                        <p className="text-sm font-bold text-slate-700 mb-2">Scan QRIS Berikut:</p>
-                        <div className="bg-white p-2 inline-block rounded-xl shadow-sm border border-slate-100 mb-2">
-                          <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg" alt="QRIS" className="w-32 h-32 mx-auto" />
+                      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-center animate-in fade-in space-y-2">
+                        <p className="text-xs font-bold text-slate-700">Scan QRIS Standar Nasional (GPN):</p>
+                        <div 
+                          onClick={() => {
+                            setIsQrisZoomed(false);
+                            setShowQrisZoom(true);
+                          }}
+                          className="bg-white p-2 inline-block rounded-2xl shadow-sm border border-slate-200 cursor-pointer relative group overflow-hidden max-w-[200px]"
+                        >
+                          <img src="/images/qris-masjid.jpg" alt="QRIS Masjid Citra Sentul Raya" className="w-full h-auto rounded-lg mx-auto transition-transform group-hover:scale-105" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1 text-white text-[11px] font-bold rounded-2xl">
+                            <ZoomIn className="w-4 h-4" />
+                            <span>Perbesar</span>
+                          </div>
                         </div>
-                        <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">A.N: Masjid Citra Sentul Raya</p>
+
+                        <p className="text-xs text-slate-900 font-extrabold uppercase tracking-wide">MASJID CITRA SENTUL RAYA</p>
+                        <p className="text-[10px] text-slate-500 font-mono">NMID: ID1023304558381</p>
+
+                        <div className="flex items-center justify-center gap-2 pt-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsQrisZoomed(false);
+                              setShowQrisZoom(true);
+                            }}
+                            className="text-xs font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1 rounded-lg border border-emerald-200 flex items-center gap-1 transition-colors cursor-pointer"
+                          >
+                            <ZoomIn className="w-3.5 h-3.5" />
+                            <span>Perbesar</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleDownloadQris}
+                            className="text-xs font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1 rounded-lg border border-emerald-200 flex items-center gap-1 transition-colors cursor-pointer"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            <span>Unduh QR</span>
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -213,6 +269,95 @@ export const DaftarProgram: React.FC<DaftarProgramProps> = ({ programs, onDonate
                   </button>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* FULLSCREEN / INTERACTIVE ZOOM QRIS MODAL (PROGRAMS) */}
+      {showQrisZoom && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-in fade-in overflow-y-auto">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full text-center relative shadow-2xl space-y-4 border border-slate-200 my-auto">
+            <button
+              onClick={() => {
+                setShowQrisZoom(false);
+                setIsQrisZoomed(false);
+              }}
+              className="absolute top-4 right-4 p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
+              title="Tutup Modal"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="pt-2">
+              <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full uppercase tracking-wider">
+                QRIS Resmi DKM
+              </span>
+              <h3 className="text-lg font-black text-slate-900 mt-2">
+                MASJID CITRA SENTUL RAYA
+              </h3>
+              <p className="text-xs text-slate-500 font-mono">NMID: ID1023304558381</p>
+            </div>
+
+            {/* QR Image Container with Click-to-Zoom */}
+            <div className="relative group">
+              <div 
+                onClick={() => setIsQrisZoomed(!isQrisZoomed)}
+                className={`bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner inline-block overflow-hidden cursor-pointer transition-all duration-300 ${
+                  isQrisZoomed ? 'scale-125 z-10 shadow-2xl ring-4 ring-emerald-500/30' : 'hover:border-emerald-400'
+                }`}
+              >
+                <img
+                  src="/images/qris-masjid.jpg"
+                  alt="QRIS Masjid Citra Sentul Raya Full"
+                  className="w-full max-w-[280px] h-auto rounded-xl mx-auto shadow-sm select-none"
+                />
+              </div>
+
+              <div className="mt-2 flex items-center justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsQrisZoomed(!isQrisZoomed)}
+                  className="text-xs text-emerald-700 font-bold bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg border border-emerald-200 flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  {isQrisZoomed ? (
+                    <>
+                      <ZoomOut className="w-3.5 h-3.5" />
+                      <span>Kecilkan (Reset Zoom)</span>
+                    </>
+                  ) : (
+                    <>
+                      <ZoomIn className="w-3.5 h-3.5" />
+                      <span>Klik Gambar / Tombol Untuk Zoom</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed px-2">
+              Arahkan kamera scanner aplikasi m-banking atau e-wallet (BSI, BCA, Mandiri, BRI, GoPay, OVO, Dana, ShopeePay) untuk melakukan pembayaran.
+            </p>
+
+            <div className="flex gap-2 pt-2">
+              <button
+                type="button"
+                onClick={handleDownloadQris}
+                className="flex-1 py-3 px-4 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-md flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
+              >
+                <Download className="w-4 h-4 text-lime-300" />
+                <span>Unduh Gambar QRIS</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowQrisZoom(false);
+                  setIsQrisZoomed(false);
+                }}
+                className="py-3 px-4 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs rounded-xl transition-colors cursor-pointer"
+              >
+                Tutup
+              </button>
             </div>
           </div>
         </div>
