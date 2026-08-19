@@ -59,10 +59,16 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Wallet Connection State
-  const [connectedWallet, setConnectedWallet] = useState<string | null>(null);
-  const [selectedWalletToConnect, setSelectedWalletToConnect] = useState('GoPay');
-  const [connectionStep, setConnectionStep] = useState<'select' | 'phone' | 'otp' | 'connected'>('select');
-  const [walletPhone, setWalletPhone] = useState('081219200400');
+  const [connectedWallet, setConnectedWallet] = useState<string | null>(() => {
+    return localStorage.getItem('masjid_connected_wallet') || null;
+  });
+  const [selectedWalletToConnect, setSelectedWalletToConnect] = useState('DANA');
+  const [connectionStep, setConnectionStep] = useState<'select' | 'phone' | 'otp' | 'connected'>(() => {
+    return localStorage.getItem('masjid_connected_wallet') ? 'connected' : 'select';
+  });
+  const [walletPhone, setWalletPhone] = useState(() => {
+    return localStorage.getItem('masjid_wallet_phone') || kontak || '081517045406';
+  });
   const [otpCode, setOtpCode] = useState('');
 
   // Registration date tracking ("Bergabung Sejak")
@@ -632,19 +638,231 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
                 )}
               </div>
             ) : (
-              <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200 space-y-4">
-                <p className="text-xs font-bold text-slate-700">Pilih E-Wallet Untuk Auto-Debit</p>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {['GoPay', 'OVO', 'DANA', 'ShopeePay'].map((w) => (
-                    <button 
-                      key={w} 
-                      onClick={() => setSelectedWalletToConnect(w)}
-                      className={`p-3 rounded-xl text-xs font-bold border-2 transition-all ${selectedWalletToConnect === w ? 'border-emerald-600 bg-emerald-50 text-emerald-900' : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'}`}
-                    >
-                      {w}
-                    </button>
-                  ))}
+              <div className="bg-slate-50/80 rounded-2xl p-6 border border-slate-200/80 space-y-6 animate-in fade-in">
+                
+                {/* E-Wallet Selection Grid */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-2">
+                    Pilih Layanan E-Wallet Terintegrasi (DANA, OVO, GoPay, ShopeePay, LinkAja)
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                    {[
+                      { id: 'DANA', name: 'DANA', color: 'bg-blue-600 border-blue-500 text-white', badge: 'DANA ID' },
+                      { id: 'OVO', name: 'OVO', color: 'bg-purple-700 border-purple-600 text-white', badge: 'OVO Cash' },
+                      { id: 'GoPay', name: 'GoPay', color: 'bg-cyan-600 border-cyan-500 text-white', badge: 'GoPay Auto' },
+                      { id: 'ShopeePay', name: 'ShopeePay', color: 'bg-orange-600 border-orange-500 text-white', badge: 'ShopeePay' },
+                      { id: 'LinkAja', name: 'LinkAja', color: 'bg-red-600 border-red-500 text-white', badge: 'LinkAja' },
+                    ].map((w) => (
+                      <button 
+                        key={w.id} 
+                        type="button"
+                        onClick={() => {
+                          setSelectedWalletToConnect(w.id);
+                          if (connectedWallet !== w.id) {
+                            setConnectionStep('phone');
+                          }
+                        }}
+                        className={`p-3.5 rounded-2xl text-xs font-bold border-2 transition-all flex flex-col items-center justify-center gap-1.5 cursor-pointer ${
+                          selectedWalletToConnect === w.id 
+                            ? 'border-emerald-600 bg-white ring-2 ring-emerald-500/20 shadow-md text-emerald-950 scale-102' 
+                            : 'border-slate-200 bg-white hover:border-emerald-300 text-slate-700'
+                        }`}
+                      >
+                        <div className={`px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider ${w.color}`}>
+                          {w.name}
+                        </div>
+                        <span className="text-[11px] font-semibold text-slate-600">
+                          {connectedWallet === w.id ? '✓ Terhubung' : 'Integrasi'}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
+
+                {/* CONNECTION STEPS */}
+                
+                {/* STEP 1: Phone Verification */}
+                {connectionStep === 'phone' && connectedWallet !== selectedWalletToConnect && (
+                  <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4 animate-in fade-in">
+                    <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
+                      <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm border border-blue-100">
+                        1
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-800">Otorisasi Akun {selectedWalletToConnect}</h4>
+                        <p className="text-[11px] text-slate-500">Masukkan nomor handphone yang terdaftar di aplikasi {selectedWalletToConnect}</p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Nomor HP {selectedWalletToConnect} <span className="text-red-500">*</span>
+                      </label>
+                      <input 
+                        type="text" 
+                        value={walletPhone}
+                        onChange={(e) => setWalletPhone(e.target.value)}
+                        placeholder="Contoh: 081517045406"
+                        className="w-full p-3 border border-slate-300 rounded-xl bg-slate-50 text-slate-800 font-semibold text-xs md:text-sm"
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!walletPhone) {
+                          alert('Masukkan nomor HP terlebih dahulu!');
+                          return;
+                        }
+                        setWaSendingStatus(`Kode OTP telah dikirimkan via SMS/WA ke ${walletPhone}...`);
+                        setConnectionStep('otp');
+                        setTimeout(() => setWaSendingStatus(null), 5000);
+                      }}
+                      className="w-full py-3 bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-700 hover:to-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      Kirim Kode OTP Otorisasi {selectedWalletToConnect}
+                    </button>
+                  </div>
+                )}
+
+                {/* STEP 2: OTP Verification */}
+                {connectionStep === 'otp' && connectedWallet !== selectedWalletToConnect && (
+                  <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4 animate-in fade-in">
+                    <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
+                      <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-sm border border-amber-100">
+                        2
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-800">Verifikasi Kode OTP {selectedWalletToConnect}</h4>
+                        <p className="text-[11px] text-slate-500">Masukkan 6 digit kode OTP yang terkirim ke {walletPhone}</p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Kode OTP / PIN Transaksi (Simulasi: 123456)</label>
+                      <input 
+                        type="text" 
+                        value={otpCode}
+                        maxLength={6}
+                        onChange={(e) => setOtpCode(e.target.value)}
+                        placeholder="Masukkan 6 digit OTP"
+                        className="w-full p-3 border border-slate-300 rounded-xl bg-slate-50 text-slate-800 font-bold text-center tracking-widest text-base"
+                      />
+                    </div>
+
+                    <div className="flex gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setConnectionStep('phone')}
+                        className="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer"
+                      >
+                        Kembali
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setConnectedWallet(selectedWalletToConnect);
+                          setConnectionStep('connected');
+                          localStorage.setItem('masjid_connected_wallet', selectedWalletToConnect);
+                          localStorage.setItem('masjid_wallet_phone', walletPhone);
+                          alert(`✅ Akun ${selectedWalletToConnect} Berhasil Terhubung ke Sistem Autodebet Masjid Citra Sentul Raya!`);
+                        }}
+                        className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer flex items-center justify-center gap-2"
+                      >
+                        Verifikasi & Hubungkan {selectedWalletToConnect}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* STEP 3: Connected & Auto-Debit Configuration */}
+                {(connectionStep === 'connected' || connectedWallet === selectedWalletToConnect) && (
+                  <div className="bg-emerald-50/90 border border-emerald-200/80 rounded-2xl p-5 space-y-4 animate-in fade-in">
+                    
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-3 border-b border-emerald-200/60">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-bold shadow-sm">
+                          <CheckCircle2 className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-xs font-bold text-emerald-950">Terhubung dengan {connectedWallet || selectedWalletToConnect}</h4>
+                            <span className="bg-emerald-600 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-full">Aktif</span>
+                          </div>
+                          <p className="text-[11px] text-emerald-800 mt-0.5">Nomor Terhubung: <strong>{walletPhone || profilContact}</strong></p>
+                        </div>
+                      </div>
+                      <div className="bg-white px-3.5 py-1.5 rounded-xl border border-emerald-300/70 text-right">
+                        <p className="text-[9px] font-bold text-slate-500 uppercase">Estimasi Saldo {connectedWallet || selectedWalletToConnect}</p>
+                        <p className="text-xs font-extrabold text-emerald-700">Rp 1.250.000 (Cukup)</p>
+                      </div>
+                    </div>
+
+                    {/* Auto Debit Schedule Configuration */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1.5">Tanggal Auto-Debit Tiap Bulan</label>
+                        <select 
+                          value={tanggalPengingat} 
+                          onChange={(e) => setTanggalPengingat(e.target.value)} 
+                          className="w-full p-3 border border-slate-300 rounded-xl bg-white text-slate-800 font-semibold text-xs md:text-sm"
+                        >
+                          {[...Array(31)].map((_, i) => (
+                            <option key={i+1} value={i+1}>Tanggal {i+1} Setiap Bulannya</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1.5">Nominal Auto-Debit Rutin (Rp)</label>
+                        <input 
+                          type="text" 
+                          value={targetNominal}
+                          onChange={(e) => setTargetNominal(e.target.value)}
+                          placeholder="Contoh: 50.000" 
+                          className="w-full p-3 border border-slate-300 rounded-xl bg-white text-slate-800 font-semibold text-xs md:text-sm" 
+                        />
+                      </div>
+                    </div>
+
+                    {/* Action buttons for Auto Debit test */}
+                    <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setWaSendingStatus(`Mengolah potongan saldo Rp ${targetNominal} via ${connectedWallet || selectedWalletToConnect}...`);
+                          setTimeout(() => {
+                            setWaSendingStatus(`✅ [SIMULASI BERHASIL]: Saldo ${connectedWallet || selectedWalletToConnect} sebesar Rp ${targetNominal} berhasil dipotong secara otomatis untuk donasi rutin! Kuitansi PDF dapat diunduh di tab Histori Donasi.`);
+                          }, 1500);
+                        }}
+                        className="flex-1 py-3 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer flex items-center justify-center gap-2"
+                      >
+                        <Zap className="w-4 h-4 text-amber-300" /> Uji Coba Potong Saldo Real-Time
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setConnectedWallet(null);
+                          setConnectionStep('select');
+                          localStorage.removeItem('masjid_connected_wallet');
+                          alert(`Koneksi ${connectedWallet || selectedWalletToConnect} telah diputuskan.`);
+                        }}
+                        className="px-4 py-3 bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold text-xs rounded-xl transition-all cursor-pointer"
+                      >
+                        Putuskan Hubungan
+                      </button>
+                    </div>
+
+                  </div>
+                )}
+
+                {waSendingStatus && (
+                  <div className="bg-emerald-50 border border-emerald-300 text-emerald-900 p-3 rounded-xl text-xs font-bold flex items-center gap-2 animate-in fade-in">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> {waSendingStatus}
+                  </div>
+                )}
+
               </div>
             )}
 
