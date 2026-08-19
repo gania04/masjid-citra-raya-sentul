@@ -76,53 +76,8 @@ export interface PengajuanPengeluaran {
   riwayatApproval: ApprovalStep[];
 }
 
-// ─── INITIAL CHART OF ACCOUNTS (CoA - PSAK 109 Syariah Masjid) ───
-export const INITIAL_CHART_OF_ACCOUNTS: AkunCoA[] = [
-  // 1. AKTIVA / ASET (1-xxxx)
-  { kode: '1-1100', nama: 'Kas Tunai Masjid', jenis: 'Aktiva', kelompok: 'Aktiva Lancar', saldoNormal: 'Debit', saldoAwal: 0 },
-  { kode: '1-1200', nama: 'Bank BSI - Rekening Operasional (No. 7001234567)', jenis: 'Aktiva', kelompok: 'Aktiva Lancar', saldoNormal: 'Debit', saldoAwal: 0 },
-  { kode: '1-1300', nama: 'Bank BSI - Rekening Donasi & Wakaf (No. 7009876543)', jenis: 'Aktiva', kelompok: 'Aktiva Lancar', saldoNormal: 'Debit', saldoAwal: 0 },
-  { kode: '1-1400', nama: 'Piutang Donasi & Infaq Portal Jamaah', jenis: 'Aktiva', kelompok: 'Aktiva Lancar', saldoNormal: 'Debit', saldoAwal: 0 },
-  { kode: '1-1500', nama: 'Uang Muka / Uang Muka Operasional Panitia', jenis: 'Aktiva', kelompok: 'Aktiva Lancar', saldoNormal: 'Debit', saldoAwal: 0 },
-  { kode: '1-2100', nama: 'Tanah Wakaf Masjid & Fasum', jenis: 'Aktiva', kelompok: 'Aktiva Tetap', saldoNormal: 'Debit', saldoAwal: 0 },
-  { kode: '1-2200', nama: 'Bangunan Utama Masjid & Gedung Serbaguna', jenis: 'Aktiva', kelompok: 'Aktiva Tetap', saldoNormal: 'Debit', saldoAwal: 0 },
-  { kode: '1-2300', nama: 'Peralatan, Sound System & Inventaris Masjid', jenis: 'Aktiva', kelompok: 'Aktiva Tetap', saldoNormal: 'Debit', saldoAwal: 0 },
-  { kode: '1-2400', nama: 'Kendaraan Operasional / Ambulance Masjid', jenis: 'Aktiva', kelompok: 'Aktiva Tetap', saldoNormal: 'Debit', saldoAwal: 0 },
-  { kode: '1-2500', nama: 'Akumulasi Penyusutan Aktiva Tetap', jenis: 'Aktiva', kelompok: 'Aktiva Tetap', saldoNormal: 'Kredit', saldoAwal: 0 },
-
-  // 2. KEWAJIBAN / LIABILITAS (2-xxxx)
-  { kode: '2-1100', nama: 'Hutang Usaha / Vendor Kontraktor Pembangunan', jenis: 'Kewajiban', kelompok: 'Kewajiban Lancar', saldoNormal: 'Kredit', saldoAwal: 0 },
-  { kode: '2-1200', nama: 'Titipan Zakat Fitrah Belum Disalurkan', jenis: 'Kewajiban', kelompok: 'Kewajiban ZIS', saldoNormal: 'Kredit', saldoAwal: 0 },
-  { kode: '2-1300', nama: 'Titipan Zakat Mal Belum Disalurkan', jenis: 'Kewajiban', kelompok: 'Kewajiban ZIS', saldoNormal: 'Kredit', saldoAwal: 0 },
-  { kode: '2-1400', nama: 'Titipan Qurban Belum Tersalurkan', jenis: 'Kewajiban', kelompok: 'Kewajiban Program', saldoNormal: 'Kredit', saldoAwal: 0 },
-
-  // 3. EKUITAS / SALDO DANA (3-xxxx)
-  { kode: '3-1100', nama: 'Dana Terikat - Wakaf Pembangunan & Renovasi', jenis: 'Ekuitas', kelompok: 'Dana Terikat', saldoNormal: 'Kredit', saldoAwal: 0 },
-  { kode: '3-1200', nama: 'Dana Tidak Terikat - Operasional Masjid', jenis: 'Ekuitas', kelompok: 'Dana Tidak Terikat', saldoNormal: 'Kredit', saldoAwal: 0 },
-  { kode: '3-1300', nama: 'Dana Terikat - Zakat, Infak, Sedekah & Sosial', jenis: 'Ekuitas', kelompok: 'Dana Terikat', saldoNormal: 'Kredit', saldoAwal: 0 },
-  { kode: '3-1400', nama: 'Dana Amil Zakat', jenis: 'Ekuitas', kelompok: 'Dana Amil', saldoNormal: 'Kredit', saldoAwal: 0 },
-
-  // 4. PENDAPATAN (4-xxxx)
-  { kode: '4-1100', nama: 'Pendapatan Wakaf Pembangunan & Infrastruktur', jenis: 'Pendapatan', kelompok: 'Pendapatan Wakaf', saldoNormal: 'Kredit', saldoAwal: 0 },
-  { kode: '4-1200', nama: 'Pendapatan Infaq Kotak Amal Jumat & Harian', jenis: 'Pendapatan', kelompok: 'Pendapatan Infaq', saldoNormal: 'Kredit', saldoAwal: 0 },
-  { kode: '4-1300', nama: 'Pendapatan Donasi Portal Jamaah Online (QRIS/Transfer)', jenis: 'Pendapatan', kelompok: 'Pendapatan Digital', saldoNormal: 'Kredit', saldoAwal: 0 },
-  { kode: '4-1400', nama: 'Pendapatan Zakat Mal (Harta & Penghasilan)', jenis: 'Pendapatan', kelompok: 'Pendapatan Zakat', saldoNormal: 'Kredit', saldoAwal: 0 },
-  { kode: '4-1500', nama: 'Pendapatan Zakat Fitrah', jenis: 'Pendapatan', kelompok: 'Pendapatan Zakat', saldoNormal: 'Kredit', saldoAwal: 0 },
-  { kode: '4-1600', nama: 'Pendapatan Sedekah Subuh & Khusus', jenis: 'Pendapatan', kelompok: 'Pendapatan Sedekah', saldoNormal: 'Kredit', saldoAwal: 0 },
-  { kode: '4-1700', nama: 'Pendapatan Infaq Perparkiran & Kantin Masjid', jenis: 'Pendapatan', kelompok: 'Pendapatan Usaha Masjid', saldoNormal: 'Kredit', saldoAwal: 0 },
-  { kode: '4-1800', nama: 'Pendapatan Bagi Hasil Bank Syariah', jenis: 'Pendapatan', kelompok: 'Pendapatan Lain-lain', saldoNormal: 'Kredit', saldoAwal: 0 },
-
-  // 5. BEBAN / PENGELUARAN (5-xxxx)
-  { kode: '5-1100', nama: 'Beban Listrik, Air PLN & PDAM', jenis: 'Beban', kelompok: 'Beban Operasional', saldoNormal: 'Debit', saldoAwal: 0 },
-  { kode: '5-1200', nama: 'Beban Kebersihan, Sanitisasi & Alat Kebersihan', jenis: 'Beban', kelompok: 'Beban Operasional', saldoNormal: 'Debit', saldoAwal: 0 },
-  { kode: '5-1300', nama: 'Beban Honorarium Imam, Muadzin & Marbot', jenis: 'Beban', kelompok: 'Beban SDM', saldoNormal: 'Debit', saldoAwal: 0 },
-  { kode: '5-1400', nama: 'Beban Konstruksi, Pembangunan & Material', jenis: 'Beban', kelompok: 'Beban Pembangunan', saldoNormal: 'Debit', saldoAwal: 0 },
-  { kode: '5-1500', nama: 'Beban Kajian, Dakwah, penceramah & Hari Besar Islam', jenis: 'Beban', kelompok: 'Beban Dakwah', saldoNormal: 'Debit', saldoAwal: 0 },
-  { kode: '5-1600', nama: 'Beban Penyaluran Zakat & Santunan Mustahik', jenis: 'Beban', kelompok: 'Beban Sosial ZIS', saldoNormal: 'Debit', saldoAwal: 0 },
-  { kode: '5-1700', nama: 'Beban Pengadaan ATK, Cetak & Administrasi DKM', jenis: 'Beban', kelompok: 'Beban Administrasi', saldoNormal: 'Debit', saldoAwal: 0 },
-  { kode: '5-1800', nama: 'Beban Maintenance Sound System, AC & Genset', jenis: 'Beban', kelompok: 'Beban Pemeliharaan', saldoNormal: 'Debit', saldoAwal: 0 },
-  { kode: '5-1900', nama: 'Beban Langganan Internet & Server Portal Digital', jenis: 'Beban', kelompok: 'Beban Teknologi', saldoNormal: 'Debit', saldoAwal: 0 },
-];
+// ─── INITIAL CHART OF ACCOUNTS (CoA - Syariah Masjid) ───
+export const INITIAL_CHART_OF_ACCOUNTS: AkunCoA[] = [];
 
 // ─── INITIAL JURNAL UMUM (Double Entry Jurnal & Jurnal Lawan) ──────
 export const INITIAL_JURNAL_ENTRIES: JurnalEntry[] = [];

@@ -23,7 +23,7 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) return parsed;
       } catch (e) {
         console.error('Error loading COA from localStorage', e);
       }
@@ -121,6 +121,13 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
     }
   };
 
+  const handleClearAllAccounts = () => {
+    if (confirm('⚠️ Apakah Anda yakin ingin MENGHAPUS SELURUH COA yang terdaftar saat ini? Tindakan ini akan mengosongkan seluruh master akun.')) {
+      updateAndSaveAccounts([]);
+      alert('✅ Seluruh data COA telah berhasil dihapus dan dikosongkan!');
+    }
+  };
+
   const handleEditClick = (akun: AkunCoA) => {
     setEditingKode(akun.kode);
     setNewKode(akun.kode);
@@ -206,9 +213,9 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
   };
 
   const handleResetDefaultCOA = () => {
-    if (confirm('Apakah Anda yakin ingin mengembalikan daftar COA ke Standar Akuntansi Syariah Masjid (PSAK 109)?')) {
-      updateAndSaveAccounts(INITIAL_CHART_OF_ACCOUNTS);
-      alert('Daftar COA telah di-reset ke Standar Syariah Masjid.');
+    if (confirm('Apakah Anda yakin ingin mengosongkan seluruh COA yang terdaftar?')) {
+      updateAndSaveAccounts([]);
+      alert('Daftar COA telah dikosongkan.');
     }
   };
 
@@ -249,11 +256,11 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
             </button>
 
             <button
-              onClick={handleResetDefaultCOA}
-              title="Reset ke COA Standar"
-              className="p-2.5 bg-white/10 hover:bg-white/20 text-white font-bold rounded-2xl text-xs transition-all border border-white/20 cursor-pointer"
+              onClick={handleClearAllAccounts}
+              title="Hapus Seluruh COA"
+              className="flex items-center gap-1.5 px-3 py-2.5 bg-rose-600/80 hover:bg-rose-600 text-white font-bold rounded-2xl text-xs transition-all border border-rose-400/30 cursor-pointer"
             >
-              <RefreshCw className="w-4 h-4 text-lime-200" />
+              <Trash2 className="w-4 h-4" /> Hapus Seluruh COA
             </button>
           </div>
         </div>
