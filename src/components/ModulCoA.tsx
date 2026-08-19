@@ -37,6 +37,7 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [rawSpreadsheetText, setRawSpreadsheetText] = useState('');
   const [importStatusMsg, setImportStatusMsg] = useState('');
+  const [replaceExisting, setReplaceExisting] = useState(true);
 
   // Editing Account state
   const [editingKode, setEditingKode] = useState<string | null>(null);
@@ -185,13 +186,15 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
     });
 
     if (importedAccs.length > 0) {
-      // Merge imported accounts with existing ones by Kode
-      const existingMap = new Map(accounts.map(a => [a.kode, a]));
-      importedAccs.forEach(newA => existingMap.set(newA.kode, newA));
-      const mergedList = Array.from(existingMap.values());
+      let finalAccs = importedAccs;
+      if (!replaceExisting) {
+        const existingMap = new Map(accounts.map(a => [a.kode, a]));
+        importedAccs.forEach(newA => existingMap.set(newA.kode, newA));
+        finalAccs = Array.from(existingMap.values());
+      }
 
-      updateAndSaveAccounts(mergedList);
-      setImportStatusMsg(`✅ Berhasil mengimpor & memperbarui ${successCount} Akun COA dari spreadsheet!`);
+      updateAndSaveAccounts(finalAccs);
+      setImportStatusMsg(`✅ Berhasil ${replaceExisting ? 'mengosongkan COA lama &' : ''} mengimpor ${successCount} Akun COA baru dari spreadsheet!`);
       setTimeout(() => {
         setShowImportModal(false);
         setRawSpreadsheetText('');
@@ -542,7 +545,7 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
                 className="w-full p-3.5 border border-slate-300 rounded-2xl text-xs font-mono bg-slate-50 focus:bg-white focus:outline-none focus:border-lime-500"
               />
 
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-1">
                 <label className="inline-flex items-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold cursor-pointer transition-all">
                   <Upload className="w-4 h-4 text-lime-700" /> Upload File CSV / TXT
                   <input
@@ -561,7 +564,16 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
                     }}
                   />
                 </label>
-                <span className="text-[11px] text-slate-400">Support file .csv dan copy-paste tabulasi.</span>
+
+                <label className="inline-flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={replaceExisting}
+                    onChange={e => setReplaceExisting(e.target.checked)}
+                    className="w-4 h-4 text-lime-600 rounded focus:ring-lime-500"
+                  />
+                  <span>Hapus/Timpa Seluruh COA Lama</span>
+                </label>
               </div>
             </div>
 
