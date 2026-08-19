@@ -22,6 +22,49 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
   const [profilName, setProfilName] = useState<string>(nama || 'Hamba Allah');
   const [profilContact, setProfilContact] = useState<string>(kontak || '');
   
+  // Al-Quran Digital State
+  const [isQuranModalOpen, setIsQuranModalOpen] = useState(false);
+  const [selectedSurahNomor, setSelectedSurahNomor] = useState<number | null>(null);
+  const [initialQuranTab, setInitialQuranTab] = useState<'surah' | 'dzikir'>('surah');
+  const [bookmark, setBookmark] = useState<BookmarkData | null>(null);
+  const [khatamCount, setKhatamCount] = useState<number>(0);
+
+  // Adzan Alarms State
+  const [adzanAlarms, setAdzanAlarms] = useState<{ [key: string]: boolean }>({
+    subuh: true,
+    dzuhur: true,
+    ashar: true,
+    maghrib: true,
+    isya: true,
+    tahajjud: false,
+    dhuha: false,
+  });
+
+  // Settings State for Routine Donation & Reminders
+  const [tipeDonasi, setTipeDonasi] = useState<'otomatis' | 'pengingat'>(() => {
+    return (localStorage.getItem('masjid_tipe_donasi') as 'otomatis' | 'pengingat') || 'pengingat';
+  });
+  const [tanggalPengingat, setTanggalPengingat] = useState<string>(() => {
+    return localStorage.getItem('masjid_tanggal_pengingat') || '25';
+  });
+  const [targetNominal, setTargetNominal] = useState<string>(() => {
+    return localStorage.getItem('masjid_target_nominal') || '100.000';
+  });
+  const [waGatewayToken, setWaGatewayToken] = useState<string>(() => {
+    return localStorage.getItem('masjid_wa_gateway_token') || '';
+  });
+  const [showWaNotification, setShowWaNotification] = useState(false);
+  const [waNotificationMsg, setWaNotificationMsg] = useState('');
+  const [waSendingStatus, setWaSendingStatus] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Wallet Connection State
+  const [connectedWallet, setConnectedWallet] = useState<string | null>(null);
+  const [selectedWalletToConnect, setSelectedWalletToConnect] = useState('GoPay');
+  const [connectionStep, setConnectionStep] = useState<'select' | 'phone' | 'otp' | 'connected'>('select');
+  const [walletPhone, setWalletPhone] = useState('081219200400');
+  const [otpCode, setOtpCode] = useState('');
+
   // Registration date tracking ("Bergabung Sejak")
   const [joinDate, setJoinDate] = useState<string>(() => {
     const key = `masjid_created_at_${kontak || nama}`;
@@ -35,6 +78,29 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
     }
     return formatted;
   });
+
+  useEffect(() => {
+    const savedPic = localStorage.getItem('masjid_user_pic');
+    if (savedPic) setProfilePic(savedPic);
+
+    const savedName = localStorage.getItem('masjid_user_name');
+    if (savedName) setProfilName(savedName);
+
+    const savedPhone = localStorage.getItem('masjid_user_phone');
+    if (savedPhone) setProfilContact(savedPhone);
+
+    const savedKhatam = localStorage.getItem('masjid_quran_khatam');
+    if (savedKhatam) setKhatamCount(parseInt(savedKhatam, 10));
+
+    const savedBookmark = localStorage.getItem('masjid_quran_bookmark');
+    if (savedBookmark) {
+      try {
+        setBookmark(JSON.parse(savedBookmark));
+      } catch (e) {
+        console.error('Error parsing bookmark', e);
+      }
+    }
+  }, []);
 
   // Safe string values to prevent uncaught TypeError during render
   const safeName = (profilName || nama || 'Hamba Allah').toString().toLowerCase();
