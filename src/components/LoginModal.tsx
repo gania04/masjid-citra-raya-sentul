@@ -98,9 +98,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       }
 
       // 2. Check Jamaah
-      const matchedUser = registeredJamaahList.find(u => (u.c === identifier || u.e === identifier) && u.p === pass);
+      const matchedUser = (registeredJamaahList || []).find(u => u && (u.c === identifier || u.e === identifier) && u.p === pass);
       if (matchedUser) {
-        onJamaahLogin(matchedUser.n, matchedUser.c || matchedUser.e);
+        onJamaahLogin(matchedUser.n || matchedUser.c || matchedUser.e || 'Jamaah', matchedUser.c || matchedUser.e || '');
         onClose();
         return;
       }

@@ -36,11 +36,17 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
     return formatted;
   });
 
+  // Safe string values to prevent uncaught TypeError during render
+  const safeName = (profilName || nama || 'Hamba Allah').toString().toLowerCase();
+  const safeContact = (profilContact || kontak || '').toString().toLowerCase();
+
   // Filter transactions strictly for this user (starts empty [] for new users!)
-  const userDonasiHistory = donasiHistory.filter(d => 
-    (d.kontakDonatur && d.kontakDonatur === (profilContact || kontak)) || 
-    (d.namaDonatur && d.namaDonatur.toLowerCase() === (profilName || nama).toLowerCase())
-  );
+  const userDonasiHistory = (donasiHistory || []).filter(d => {
+    if (!d) return false;
+    const matchContact = Boolean(d.kontakDonatur && safeContact && String(d.kontakDonatur).toLowerCase() === safeContact);
+    const matchName = Boolean(d.namaDonatur && safeName && String(d.namaDonatur).toLowerCase() === safeName);
+    return matchContact || matchName;
+  });
 
   const totalGaji = (parseFloat(penghasilan) || 0) + (parseFloat(bonus) || 0);
   const nisabBulan = (85 * 1000000) / 12;
