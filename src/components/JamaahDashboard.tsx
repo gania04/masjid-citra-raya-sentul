@@ -8,9 +8,10 @@ interface JamaahDashboardProps {
   onBack: () => void;
   nama: string;
   kontak: string;
+  donasiHistory?: any[];
 }
 
-export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, kontak }) => {
+export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, kontak, donasiHistory = [] }) => {
   const [activeTab, setActiveTab] = useState<'ringkasan' | 'donasi' | 'laporan' | 'histori' | 'profil' | 'jadwal' | 'quran'>('ringkasan');
   const [penghasilan, setPenghasilan] = useState('');
   const [bonus, setBonus] = useState('');
@@ -19,82 +20,27 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
 
   // Load profile from localStorage if present
   const [profilName, setProfilName] = useState<string>(nama || 'Hamba Allah');
-  const [profilContact, setProfilContact] = useState<string>(kontak || '0812-1920-0400');
+  const [profilContact, setProfilContact] = useState<string>(kontak || '');
   
-  // Al-Quran Digital State
-  const [isQuranModalOpen, setIsQuranModalOpen] = useState(false);
-  const [selectedSurahNomor, setSelectedSurahNomor] = useState<number | null>(null);
-  const [initialQuranTab, setInitialQuranTab] = useState<'surah' | 'dzikir'>('surah');
-  const [bookmark, setBookmark] = useState<BookmarkData | null>(null);
-  const [khatamCount, setKhatamCount] = useState<number>(0);
+  // Registration date tracking ("Bergabung Sejak")
+  const [joinDate, setJoinDate] = useState<string>(() => {
+    const key = `masjid_created_at_${kontak || nama}`;
+    const saved = localStorage.getItem(key);
+    if (saved) return saved;
 
-  // Adzan Alarms State
-  const [adzanAlarms, setAdzanAlarms] = useState<{ [key: string]: boolean }>({
-    subuh: true,
-    dzuhur: true,
-    ashar: true,
-    maghrib: true,
-    isya: true,
-    tahajjud: false,
-    dhuha: false,
-  });
-
-  // Settings State for Routine Donation
-  const [tipeDonasi, setTipeDonasi] = useState<'otomatis' | 'pengingat'>(() => {
-    return (localStorage.getItem('masjid_tipe_donasi') as 'otomatis' | 'pengingat') || 'pengingat';
-  });
-  const [tanggalPengingat, setTanggalPengingat] = useState<string>(() => {
-    return localStorage.getItem('masjid_tanggal_pengingat') || '25';
-  });
-  const [targetNominal, setTargetNominal] = useState<string>(() => {
-    return localStorage.getItem('masjid_target_nominal') || '100.000';
-  });
-  const [waGatewayToken, setWaGatewayToken] = useState<string>(() => {
-    return localStorage.getItem('masjid_wa_gateway_token') || '';
-  });
-  const [showWaNotification, setShowWaNotification] = useState(false);
-  const [waNotificationMsg, setWaNotificationMsg] = useState('');
-  const [waSendingStatus, setWaSendingStatus] = useState<string | null>(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
-  useEffect(() => {
-    const savedPic = localStorage.getItem('masjid_user_pic');
-    if (savedPic) setProfilePic(savedPic);
-
-    const savedName = localStorage.getItem('masjid_user_name');
-    if (savedName) setProfilName(savedName);
-
-    const savedPhone = localStorage.getItem('masjid_user_phone');
-    if (savedPhone) setProfilContact(savedPhone);
-
-    const savedKhatam = localStorage.getItem('masjid_quran_khatam');
-    if (savedKhatam) setKhatamCount(parseInt(savedKhatam, 10));
-
-    const savedBookmark = localStorage.getItem('masjid_quran_bookmark');
-    if (savedBookmark) {
-      try {
-        setBookmark(JSON.parse(savedBookmark));
-      } catch (e) {
-        console.error('Error parsing bookmark', e);
-      }
+    const now = new Date();
+    const formatted = now.toLocaleDateString('id-ID', { month: 'short', year: 'numeric' });
+    if (kontak || nama) {
+      localStorage.setItem(key, formatted);
     }
-  }, []);
+    return formatted;
+  });
 
-  useEffect(() => {
-    // Keep initial page load clean without popups
-  }, []);
-
-  const [connectedWallet, setConnectedWallet] = useState<string | null>(null);
-  const [selectedWalletToConnect, setSelectedWalletToConnect] = useState('GoPay');
-  const [connectionStep, setConnectionStep] = useState<'select' | 'phone' | 'otp' | 'connected'>('select');
-  const [walletPhone, setWalletPhone] = useState('081219200400');
-  const [otpCode, setOtpCode] = useState('');
-
-  const donasiHistory = [
-    { id: 1, tanggal: '28 Juli 2026', programName: 'Infaq Pembangunan Subuh', nominal: 100000, status: 'Berhasil' },
-    { id: 2, tanggal: '25 Juni 2026', programName: 'Sedekah Jumat Berkah', nominal: 50000, status: 'Berhasil' },
-    { id: 3, tanggal: '20 Mei 2026', programName: 'Zakat Maal Mal', nominal: 1250000, status: 'Berhasil' },
-  ];
+  // Filter transactions strictly for this user (starts empty [] for new users!)
+  const userDonasiHistory = donasiHistory.filter(d => 
+    (d.kontakDonatur && d.kontakDonatur === (profilContact || kontak)) || 
+    (d.namaDonatur && d.namaDonatur.toLowerCase() === (profilName || nama).toLowerCase())
+  );
 
   const totalGaji = (parseFloat(penghasilan) || 0) + (parseFloat(bonus) || 0);
   const nisabBulan = (85 * 1000000) / 12;
@@ -260,8 +206,12 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
               <div className="bg-emerald-800/50 backdrop-blur-md rounded-xl px-4 py-2 border border-emerald-700/50 text-center">
                 <p className="text-[9px] text-emerald-300 font-bold uppercase tracking-wider mb-0.5">Total Infaq</p>
                 <p className="text-base md:text-lg font-bold text-amber-300">
-                  {formatRp(donasiHistory.filter(d => d.status === 'Berhasil').reduce((acc, curr) => acc + curr.nominal, 0) || 0)}
+                  {formatRp(userDonasiHistory.filter(d => d.status === 'Berhasil').reduce((acc, curr) => acc + curr.nominal, 0) || 0)}
                 </p>
+              </div>
+              <div className="bg-emerald-800/50 backdrop-blur-md rounded-xl px-4 py-2 border border-emerald-700/50 text-center">
+                <p className="text-[9px] text-emerald-300 font-bold uppercase tracking-wider mb-0.5">Bergabung Sejak</p>
+                <p className="text-base md:text-lg font-bold text-white">{joinDate}</p>
               </div>
               <div className="bg-emerald-800/50 backdrop-blur-md rounded-xl px-4 py-2 border border-emerald-700/50 text-center">
                 <p className="text-[9px] text-emerald-300 font-bold uppercase tracking-wider mb-0.5">Jadwal Pengingat</p>
@@ -331,7 +281,7 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
                 <div>
                   <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Donasi Anda</p>
                   <p className="text-xl font-bold text-slate-800 mt-0.5">
-                    {formatRp(donasiHistory.filter(d => d.status === 'Berhasil').reduce((acc, curr) => acc + curr.nominal, 0))}
+                    {formatRp(userDonasiHistory.filter(d => d.status === 'Berhasil').reduce((acc, curr) => acc + curr.nominal, 0))}
                   </p>
                 </div>
               </div>
@@ -343,7 +293,7 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
                 <div>
                   <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Program Didukung</p>
                   <p className="text-xl font-bold text-slate-800 mt-0.5">
-                    {new Set(donasiHistory.filter(d => d.status === 'Berhasil').map(d => d.programName)).size} Program ZISWAF
+                    {new Set(userDonasiHistory.filter(d => d.status === 'Berhasil').map(d => d.programName)).size} Program ZISWAF
                   </p>
                 </div>
               </div>
@@ -802,7 +752,7 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {donasiHistory.map(d => (
+                  {userDonasiHistory.map(d => (
                     <tr key={d.id} className="bg-white border-b border-slate-100 hover:bg-slate-50/60 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap text-slate-600">{d.tanggal}</td>
                       <td className="px-6 py-4 font-bold text-slate-800">{d.programName}</td>
@@ -821,6 +771,13 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
                       </td>
                     </tr>
                   ))}
+                  {userDonasiHistory.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-8 text-center text-slate-500 font-medium">
+                        Belum ada histori donasi.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>

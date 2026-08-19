@@ -302,7 +302,7 @@ export default function App() {
                 setNamaJamaah('Hamba Allah');
                 setKontakJamaah('');
               }} 
-              donasiHistory={donasiHistory.filter(d => true)} // Passing all for demo, usually filtered by user
+              donasiHistory={donasiHistory}
             />
           </div>
         ) : (

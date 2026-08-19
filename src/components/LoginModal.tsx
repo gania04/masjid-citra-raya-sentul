@@ -68,8 +68,14 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         phone = identifier;
       }
 
+      const joinedAt = new Date().toLocaleDateString('id-ID', { month: 'short', year: 'numeric' });
+      const userKey = phone || e || identifier;
+      
+      localStorage.setItem(`masjid_created_at_${userKey}`, joinedAt);
+      localStorage.setItem(`masjid_history_${userKey}`, JSON.stringify([]));
+
       if (onRegisterJamaah) {
-        onRegisterJamaah({ n: nama, c: phone, e: e, s: 'Aktif', p: pass });
+        onRegisterJamaah({ n: nama, c: phone, e: e, s: 'Aktif', p: pass, joinedAt });
       }
       onJamaahLogin(nama, identifier);
       onClose();
