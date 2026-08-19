@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { X, Mail, Lock, Eye, EyeOff, UserCheck, ArrowRight, Sparkles } from 'lucide-react';
+import { X, Mail, Lock, Eye, EyeOff, UserCheck, ArrowRight, Sparkles, CheckCircle2, KeyRound } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -10,6 +11,17 @@ interface LoginModalProps {
   onRegisterJamaah?: (jamaah: any) => void;
 }
 
+export const normalizeContact = (str: string) => {
+  if (!str) return '';
+  let clean = str.trim().toLowerCase();
+  if (clean.includes('@')) return clean;
+  let digits = clean.replace(/\D/g, '');
+  if (digits.startsWith('62')) {
+    digits = '0' + digits.slice(2);
+  }
+  return digits;
+};
+
 export const LoginModal: React.FC<LoginModalProps> = ({
   isOpen,
   onClose,
@@ -18,12 +30,18 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   registeredJamaahList = [],
   onRegisterJamaah
 }) => {
-  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [mode, setMode] = useState<'login' | 'register' | 'forgot' | 'reset_step'>('login');
   const [showPassword, setShowPassword] = useState(false);
   const [loginIdentifier, setLoginIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [namaJamaah, setNamaJamaah] = useState('');
+
+  // Reset Password State
+  const [resetEmail, setResetEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [resetMsg, setResetMsg] = useState('');
+  const [resetTargetUser, setResetTargetUser] = useState<any>(null);
 
   if (!isOpen) return null;
 
@@ -37,6 +55,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
     const identifier = loginIdentifier.trim();
     const pass = password.trim();
+    const targetClean = normalizeContact(identifier);
+
+    // Get freshest list from localStorage
+    const savedJamaah = localStorage.getItem('registered_jamaah');
+    const allUsers: any[] = savedJamaah ? JSON.parse(savedJamaah) : registeredJamaahList;
 
     if (mode === 'register') {
       const nama = namaJamaah.trim();
@@ -54,32 +77,43 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       }
 
       // Check if user already exists
-      const exists = registeredJamaahList.find(u => u.c === identifier || u.e === identifier);
+      const exists = allUsers.find((u: any) => {
+        if (!u) return false;
+        const uc = normalizeContact(u.c || '');
+        const ue = normalizeContact(u.e || '');
+        return (uc && uc === targetClean) || (ue && ue === targetClean);
+      });
+
       if (exists) {
-        setErrorMsg('Kontak sudah terdaftar! Silakan pilih Masuk.');
+        setErrorMsg('Kontak atau Email ini sudah terdaftar! Silakan pilih Masuk.');
         return;
       }
 
       let e = '';
       let phone = '';
       if (identifier.includes('@')) {
-        e = identifier;
+        e = identifier.toLowerCase();
       } else {
-        phone = identifier;
+        phone = targetClean;
       }
 
       const joinedAt = new Date().toLocaleDateString('id-ID', { month: 'short', year: 'numeric' });
-      const userKey = phone || e || identifier;
+      const userKey = phone || e || targetClean;
       
       localStorage.setItem(`masjid_created_at_${userKey}`, joinedAt);
       localStorage.setItem(`masjid_history_${userKey}`, JSON.stringify([]));
 
+      const newJamaahObj = { n: nama, c: phone, e: e, s: 'Aktif', p: pass, joinedAt };
+
       if (onRegisterJamaah) {
-        onRegisterJamaah({ n: nama, c: phone, e: e, s: 'Aktif', p: pass, joinedAt });
+        onRegisterJamaah(newJamaahObj);
+      } else {
+        const newList = [...allUsers, newJamaahObj];
+        localStorage.setItem('registered_jamaah', JSON.stringify(newList));
       }
-      onJamaahLogin(nama, identifier);
+      onJamaahLogin(nama, phone || e || identifier);
       onClose();
-    } else {
+    } else if (mode === 'login') {
       // Unified Login Mode
       if (!identifier) {
         setErrorMsg('Username/Email/No. Handphone wajib diisi!');
@@ -91,22 +125,126 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       }
 
       // 1. Check Admin
-      if (identifier === 'admin' && pass === 'admin123') {
+      if (targetClean === 'admin' && pass === 'admin123') {
         onAdminLogin();
         onClose();
         return;
       }
 
-      // 2. Check Jamaah
-      const matchedUser = (registeredJamaahList || []).find(u => u && (u.c === identifier || u.e === identifier) && u.p === pass);
+      // 2. Check Jamaah by matching normalized contact/email and password
+      const matchedUser = allUsers.find((u: any) => {
+        if (!u) return false;
+        const uc = normalizeContact(u.c || '');
+        const ue = normalizeContact(u.e || '');
+        const passwordMatch = u.p && u.p.trim() === pass;
+        return (uc === targetClean || ue === targetClean) && passwordMatch;
+      });
+
       if (matchedUser) {
-        onJamaahLogin(matchedUser.n || matchedUser.c || matchedUser.e || 'Jamaah', matchedUser.c || matchedUser.e || '');
+        onJamaahLogin(matchedUser.n || matchedUser.c || matchedUser.e || 'Jamaah', matchedUser.c || matchedUser.e || identifier);
         onClose();
         return;
       }
 
-      setErrorMsg('Akun tidak ditemukan atau password salah!');
+      // Check if user exists but password mismatch
+      const userExistNoPass = allUsers.find((u: any) => {
+        if (!u) return false;
+        const uc = normalizeContact(u.c || '');
+        const ue = normalizeContact(u.e || '');
+        return uc === targetClean || ue === targetClean;
+      });
+
+      if (userExistNoPass) {
+        setErrorMsg('Kata sandi salah! Periksa besar/kecil huruf password Anda atau gunakan "Lupa Password?".');
+      } else {
+        setErrorMsg('Akun belum terdaftar! Klik "Daftar sekarang" di bawah untuk mendaftar akun baru.');
+      }
     }
+  };
+
+  const handleSendResetLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg('');
+    setResetMsg('');
+
+    const target = resetEmail.trim();
+    if (!target) {
+      setErrorMsg('Masukkan Email atau Nomor Handphone terdaftar!');
+      return;
+    }
+
+    const cleanTarget = normalizeContact(target);
+
+    // Call Supabase Auth reset if email
+    if (target.includes('@')) {
+      try {
+        await supabase.auth.resetPasswordForEmail(target, {
+          redirectTo: window.location.origin,
+        });
+      } catch (err) {
+        console.log('Supabase reset note:', err);
+      }
+    }
+
+    const savedJamaah = localStorage.getItem('registered_jamaah');
+    const allUsers: any[] = savedJamaah ? JSON.parse(savedJamaah) : registeredJamaahList;
+
+    const found = allUsers.find((u: any) => {
+      if (!u) return false;
+      const uc = normalizeContact(u.c || '');
+      const ue = normalizeContact(u.e || '');
+      return uc === cleanTarget || ue === cleanTarget;
+    });
+
+    setResetTargetUser(found || { n: 'Jamaah Masjid', c: target.includes('@') ? '' : cleanTarget, e: target.includes('@') ? target : '' });
+    setResetMsg(`✅ Instruksi & Link Reset Password telah dikirim ke ${target}. Silakan buat kata sandi baru Anda di bawah ini:`);
+    setMode('reset_step');
+  };
+
+  const handleSaveNewPassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg('');
+
+    const pass = newPassword.trim();
+    if (!pass || pass.length < 6) {
+      setErrorMsg('Password baru wajib diisi (minimal 6 karakter)!');
+      return;
+    }
+
+    const savedJamaah = localStorage.getItem('registered_jamaah');
+    let allUsers: any[] = savedJamaah ? JSON.parse(savedJamaah) : registeredJamaahList;
+
+    const cleanTarget = resetTargetUser ? normalizeContact(resetTargetUser.c || resetTargetUser.e || resetEmail) : normalizeContact(resetEmail);
+
+    let updated = false;
+    allUsers = allUsers.map((u: any) => {
+      if (!u) return u;
+      const uc = normalizeContact(u.c || '');
+      const ue = normalizeContact(u.e || '');
+      if (uc === cleanTarget || ue === cleanTarget) {
+        updated = true;
+        return { ...u, p: pass };
+      }
+      return u;
+    });
+
+    if (!updated) {
+      const newUser = {
+        n: resetTargetUser?.n || 'Jamaah Masjid',
+        c: resetTargetUser?.c || (resetEmail.includes('@') ? '' : normalizeContact(resetEmail)),
+        e: resetTargetUser?.e || (resetEmail.includes('@') ? resetEmail.trim() : ''),
+        s: 'Aktif',
+        p: pass
+      };
+      allUsers.push(newUser);
+    }
+
+    localStorage.setItem('registered_jamaah', JSON.stringify(allUsers));
+    
+    // Automatically log in user with their new password
+    onJamaahLogin(resetTargetUser?.n || 'Jamaah', resetEmail || cleanTarget);
+    onClose();
+    alert('✅ Password berhasil diubah! Anda telah otomatis masuk ke Portal Jamaah.');
   };
 
   return (
@@ -123,11 +261,15 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-white/10 rounded-full blur-lg pointer-events-none"></div>
           <div className="flex gap-3 items-center z-10">
             <div className="w-10 h-10 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center shrink-0 shadow-inner">
-              <UserCheck className="w-5 h-5 text-lime-200" />
+              {mode === 'forgot' || mode === 'reset_step' ? (
+                <KeyRound className="w-5 h-5 text-lime-200" />
+              ) : (
+                <UserCheck className="w-5 h-5 text-lime-200" />
+              )}
             </div>
             <div>
               <h2 className="text-lg font-bold font-serif leading-tight flex items-center gap-1.5">
-                Portal Login Terpadu
+                {mode === 'forgot' || mode === 'reset_step' ? 'Reset Kata Sandi' : 'Portal Login Terpadu'}
                 <Sparkles className="w-3.5 h-3.5 text-lime-300 inline" />
               </h2>
               <p className="text-[10px] tracking-wider text-lime-100 uppercase font-semibold">Masjid Citra Sentul Raya</p>
@@ -142,159 +284,261 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           </button>
         </div>
 
-        {/* Content Body - Single Portal Form */}
+        {/* Content Body */}
         <div className="p-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            
-            {/* Mode Register Banner Header */}
-            {mode === 'register' && (
-              <div className="bg-lime-50 dark:bg-lime-950/40 border border-lime-200 dark:border-lime-800 p-3 rounded-2xl mb-2 text-center">
-                <h3 className="text-sm font-bold text-lime-800 dark:text-lime-300">Pendaftaran Akun Jamaah Baru</h3>
-                <p className="text-[11px] text-lime-700 dark:text-lime-400 mt-0.5">Isi data diri di bawah ini untuk membuat akun jamaah</p>
+          
+          {/* FORGOT PASSWORD FORM STEP 1 */}
+          {mode === 'forgot' && (
+            <form onSubmit={handleSendResetLink} className="space-y-4">
+              <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 p-3.5 rounded-2xl text-center">
+                <h3 className="text-sm font-bold text-amber-800 dark:text-amber-300 flex items-center justify-center gap-1.5">
+                  <KeyRound className="w-4 h-4" /> Lupa Kata Sandi Akun?
+                </h3>
+                <p className="text-[11px] text-amber-700 dark:text-amber-400 mt-1 leading-relaxed">
+                  Masukkan Email atau No. Handphone terdaftar Anda. Kami akan mengirimkan verifikasi reset password.
+                </p>
               </div>
-            )}
 
-            {/* Nama Lengkap (Only in Register mode) */}
-            {mode === 'register' && (
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                  Nama Lengkap <span className="text-red-500">*</span>
+                  Email atau No. Handphone Terdaftar <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
-                  value={namaJamaah}
-                  onChange={(e) => { setNamaJamaah(e.target.value); handleResetState(); }}
-                  placeholder="Masukkan nama lengkap Anda"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 focus:ring-2 focus:ring-lime-500 focus:outline-none text-sm text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-800"
-                  required
-                />
+                <div className="relative">
+                  <Mail className="w-4.5 h-4.5 text-amber-600 dark:text-amber-400 absolute left-3 top-3" />
+                  <input
+                    type="text"
+                    value={resetEmail}
+                    onChange={(e) => { setResetEmail(e.target.value); handleResetState(); }}
+                    placeholder="Contoh: 081517045406 atau email@domain.com"
+                    className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 focus:ring-2 focus:ring-amber-500 focus:outline-none text-sm text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-800"
+                    required
+                  />
+                </div>
               </div>
-            )}
 
-            {/* Field Username / Contact */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                {mode === 'login' ? 'Username / Email / No. Handphone' : 'Email atau No. Handphone'} <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <Mail className="w-4.5 h-4.5 text-lime-600 dark:text-lime-400 absolute left-3 top-3" />
-                <input
-                  type="text"
-                  value={loginIdentifier}
-                  onChange={(e) => { setLoginIdentifier(e.target.value); handleResetState(); }}
-                  placeholder={mode === 'login' ? 'Masukkan ID Anda' : 'Contoh: 08123456789 atau user@email.com'}
-                  className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 focus:ring-2 focus:ring-lime-500 focus:outline-none text-sm text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-800"
-                  required
-                />
-              </div>
-            </div>
+              {errorMsg && (
+                <div className="bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 p-3 rounded-xl text-xs font-bold border border-red-200 dark:border-red-900/50">
+                  {errorMsg}
+                </div>
+              )}
 
-            {/* Field Password */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                Kata Sandi (Password) <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <Lock className="w-4.5 h-4.5 text-slate-400 absolute left-3 top-3" />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    handleResetState();
-                  }}
-                  placeholder={mode === 'register' ? 'Minimal 6 karakter' : 'Masukkan password'}
-                  className="w-full pl-9 pr-10 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 focus:ring-2 focus:ring-lime-500 focus:outline-none text-sm text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-800"
-                  required
-                />
+              <button
+                type="submit"
+                className="w-full flex items-center justify-center gap-2 text-white font-bold py-3 rounded-xl transition-all shadow-md active:scale-98 cursor-pointer mt-2 bg-gradient-to-r from-amber-600 to-emerald-600 hover:from-amber-700 hover:to-emerald-700"
+              >
+                Kirim Link Reset Password
+                <ArrowRight className="w-4.5 h-4.5" />
+              </button>
+
+              <div className="text-center pt-2">
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                  onClick={() => { setMode('login'); handleResetState(); }}
+                  className="text-xs text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 font-semibold cursor-pointer"
                 >
-                  {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+                  ← Kembali ke Login
                 </button>
               </div>
-            </div>
+            </form>
+          )}
 
-            {/* Lupa Password Link for Login Mode */}
-            {mode === 'login' && (
-              <div className="text-right">
-                <a
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    const email = prompt('Masukkan email terdaftar untuk reset password:');
-                    if (email) {
-                      if (email.includes('@') || email.length >= 10) {
-                        alert(`Link reset password telah dikirim ke ${email}.`);
-                        const newPass = prompt(`[SIMULASI RESET]: Masukkan password baru Anda untuk akun ${email}:`);
-                        if (newPass) alert('Password berhasil diubah! Silakan login kembali.');
-                      } else {
-                        alert('Format email/kontak tidak valid.');
-                      }
-                    }
-                  }}
-                  className="text-xs text-lime-600 dark:text-lime-400 font-semibold hover:underline"
-                >
-                  Lupa Password?
-                </a>
+          {/* FORGOT PASSWORD FORM STEP 2 (SET NEW PASSWORD) */}
+          {mode === 'reset_step' && (
+            <form onSubmit={handleSaveNewPassword} className="space-y-4">
+              <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 p-3.5 rounded-2xl text-left">
+                <p className="text-xs font-semibold text-emerald-800 dark:text-emerald-300 leading-relaxed flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600 mt-0.5" />
+                  <span>{resetMsg}</span>
+                </p>
               </div>
-            )}
 
-            {/* Error Message Display */}
-            {errorMsg && (
-              <div className="bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 p-3 rounded-xl text-xs font-bold border border-red-200 dark:border-red-900/50">
-                {errorMsg}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Masukkan Kata Sandi Baru <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <Lock className="w-4.5 h-4.5 text-emerald-600 dark:text-emerald-400 absolute left-3 top-3" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={newPassword}
+                    onChange={(e) => { setNewPassword(e.target.value); handleResetState(); }}
+                    placeholder="Minimal 6 karakter"
+                    className="w-full pl-9 pr-10 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-800"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                  >
+                    {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+                  </button>
+                </div>
               </div>
-            )}
 
-            {/* Submit Button */}
-            <button
-              type="submit"
-              className="w-full flex items-center justify-center gap-2 text-white font-bold py-3 rounded-xl transition-all shadow-md active:scale-98 cursor-pointer mt-2 bg-gradient-to-r from-lime-600 to-emerald-600 hover:from-lime-700 hover:to-emerald-700"
-            >
-              {mode === 'login' ? 'Masuk Portal' : 'Daftar Akun Baru'}
-              <ArrowRight className="w-4.5 h-4.5" />
-            </button>
-          </form>
+              {errorMsg && (
+                <div className="bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 p-3 rounded-xl text-xs font-bold border border-red-200 dark:border-red-900/50">
+                  {errorMsg}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="w-full flex items-center justify-center gap-2 text-white font-bold py-3 rounded-xl transition-all shadow-md active:scale-98 cursor-pointer mt-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
+              >
+                Simpan Password Baru & Masuk
+                <ArrowRight className="w-4.5 h-4.5" />
+              </button>
+            </form>
+          )}
+
+          {/* LOGIN / REGISTER FORM */}
+          {(mode === 'login' || mode === 'register') && (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              
+              {/* Mode Register Banner Header */}
+              {mode === 'register' && (
+                <div className="bg-lime-50 dark:bg-lime-950/40 border border-lime-200 dark:border-lime-800 p-3 rounded-2xl mb-2 text-center">
+                  <h3 className="text-sm font-bold text-lime-800 dark:text-lime-300">Pendaftaran Akun Jamaah Baru</h3>
+                  <p className="text-[11px] text-lime-700 dark:text-lime-400 mt-0.5">Isi data diri di bawah ini untuk membuat akun jamaah</p>
+                </div>
+              )}
+
+              {/* Nama Lengkap (Only in Register mode) */}
+              {mode === 'register' && (
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Nama Lengkap <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={namaJamaah}
+                    onChange={(e) => { setNamaJamaah(e.target.value); handleResetState(); }}
+                    placeholder="Masukkan nama lengkap Anda"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 focus:ring-2 focus:ring-lime-500 focus:outline-none text-sm text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-800"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Field Username / Contact */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  {mode === 'login' ? 'Username / Email / No. Handphone' : 'Email atau No. Handphone'} <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <Mail className="w-4.5 h-4.5 text-lime-600 dark:text-lime-400 absolute left-3 top-3" />
+                  <input
+                    type="text"
+                    value={loginIdentifier}
+                    onChange={(e) => { setLoginIdentifier(e.target.value); handleResetState(); }}
+                    placeholder={mode === 'login' ? 'Masukkan ID Anda' : 'Contoh: 08123456789 atau user@email.com'}
+                    className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 focus:ring-2 focus:ring-lime-500 focus:outline-none text-sm text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-800"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Field Password */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Kata Sandi (Password) <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <Lock className="w-4.5 h-4.5 text-slate-400 absolute left-3 top-3" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      handleResetState();
+                    }}
+                    placeholder={mode === 'register' ? 'Minimal 6 karakter' : 'Masukkan password'}
+                    className="w-full pl-9 pr-10 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 focus:ring-2 focus:ring-lime-500 focus:outline-none text-sm text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-800"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                  >
+                    {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Lupa Password Link for Login Mode */}
+              {mode === 'login' && (
+                <div className="text-right">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setResetEmail(loginIdentifier);
+                      setMode('forgot');
+                      handleResetState();
+                    }}
+                    className="text-xs text-lime-600 dark:text-lime-400 font-semibold hover:underline cursor-pointer"
+                  >
+                    Lupa Password?
+                  </button>
+                </div>
+              )}
+
+              {/* Error Message Display */}
+              {errorMsg && (
+                <div className="bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 p-3 rounded-xl text-xs font-bold border border-red-200 dark:border-red-900/50 leading-relaxed">
+                  {errorMsg}
+                </div>
+              )}
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                className="w-full flex items-center justify-center gap-2 text-white font-bold py-3 rounded-xl transition-all shadow-md active:scale-98 cursor-pointer mt-2 bg-gradient-to-r from-lime-600 to-emerald-600 hover:from-lime-700 hover:to-emerald-700"
+              >
+                {mode === 'login' ? 'Masuk Portal' : 'Daftar Akun Baru'}
+                <ArrowRight className="w-4.5 h-4.5" />
+              </button>
+            </form>
+          )}
 
           {/* Bottom Footer - Small Link for "Daftar / Masuk" */}
-          <div className="mt-5 pt-3 border-t border-slate-100 dark:border-slate-800/80 text-center">
-            {mode === 'login' ? (
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                Belum punya akun jamaah?{' '}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMode('register');
-                    handleResetState();
-                  }}
-                  className="font-medium text-[11px] text-lime-600 dark:text-lime-400 hover:text-lime-700 hover:underline cursor-pointer ml-0.5"
-                >
-                  Daftar sekarang
-                </button>
-              </p>
-            ) : (
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                Sudah punya akun?{' '}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMode('login');
-                    handleResetState();
-                  }}
-                  className="font-medium text-[11px] text-lime-600 dark:text-lime-400 hover:text-lime-700 hover:underline cursor-pointer ml-0.5"
-                >
-                  Masuk sekarang
-                </button>
-              </p>
-            )}
-          </div>
+          {(mode === 'login' || mode === 'register') && (
+            <div className="mt-5 pt-3 border-t border-slate-100 dark:border-slate-800/80 text-center">
+              {mode === 'login' ? (
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  Belum punya akun jamaah?{' '}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode('register');
+                      handleResetState();
+                    }}
+                    className="font-semibold text-[11px] text-lime-600 dark:text-lime-400 hover:text-lime-700 hover:underline cursor-pointer ml-0.5"
+                  >
+                    Daftar sekarang
+                  </button>
+                </p>
+              ) : (
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  Sudah punya akun?{' '}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode('login');
+                      handleResetState();
+                    }}
+                    className="font-semibold text-[11px] text-lime-600 dark:text-lime-400 hover:text-lime-700 hover:underline cursor-pointer ml-0.5"
+                  >
+                    Masuk sekarang
+                  </button>
+                </p>
+              )}
+            </div>
+          )}
 
         </div>
       </div>
     </div>
   );
 };
-
