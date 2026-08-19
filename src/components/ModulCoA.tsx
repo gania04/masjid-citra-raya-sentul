@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { PlusCircle, Search, BookOpen, TrendingUp, TrendingDown, Shield, DollarSign, X, Check } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { PlusCircle, Search, BookOpen, TrendingUp, TrendingDown, Shield, DollarSign, X, Check, FileSpreadsheet, Upload, RefreshCw, Trash2, Edit3 } from 'lucide-react';
 import { INITIAL_CHART_OF_ACCOUNTS, AkunCoA, JurnalEntry } from '../data/akuntansiData';
 
 const formatRp = (n: number) =>
@@ -18,18 +18,42 @@ interface ModulCoAProps {
 }
 
 export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
-  const [accounts, setAccounts] = useState<AkunCoA[]>(INITIAL_CHART_OF_ACCOUNTS);
+  const [accounts, setAccounts] = useState<AkunCoA[]>(() => {
+    const saved = localStorage.getItem('masjid_chart_of_accounts');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (e) {
+        console.error('Error loading COA from localStorage', e);
+      }
+    }
+    return INITIAL_CHART_OF_ACCOUNTS;
+  });
+
   const [search, setSearch] = useState('');
   const [filterJenis, setFilterJenis] = useState('Semua');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [rawSpreadsheetText, setRawSpreadsheetText] = useState('');
+  const [importStatusMsg, setImportStatusMsg] = useState('');
 
-  // Form state for new CoA account
+  // Editing Account state
+  const [editingKode, setEditingKode] = useState<string | null>(null);
+
+  // Form state for new/edit CoA account
   const [newKode, setNewKode] = useState('');
   const [newNama, setNewNama] = useState('');
   const [newJenis, setNewJenis] = useState<'Aktiva' | 'Kewajiban' | 'Ekuitas' | 'Pendapatan' | 'Beban'>('Aktiva');
   const [newKelompok, setNewKelompok] = useState('Aktiva Lancar');
   const [newSaldoNormal, setNewSaldoNormal] = useState<'Debit' | 'Kredit'>('Debit');
   const [newSaldoAwal, setNewSaldoAwal] = useState('');
+
+  // Persist accounts state changes to localStorage
+  const updateAndSaveAccounts = (newAccList: AkunCoA[]) => {
+    setAccounts(newAccList);
+    localStorage.setItem('masjid_chart_of_accounts', JSON.stringify(newAccList));
+  };
 
   // Compute Live Saldo by combining Saldo Awal + Posted Journals
   const getLiveSaldo = (akun: AkunCoA) => {
@@ -75,33 +99,160 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
       saldoAwal: parseInt(newSaldoAwal.replace(/\D/g, ''), 10) || 0,
     };
 
-    setAccounts([...accounts, newAcc]);
+    if (editingKode) {
+      const updated = accounts.map(a => a.kode === editingKode ? newAcc : a);
+      updateAndSaveAccounts(updated);
+      setEditingKode(null);
+    } else {
+      updateAndSaveAccounts([...accounts, newAcc]);
+    }
+
     setShowAddModal(false);
     setNewKode('');
     setNewNama('');
     setNewSaldoAwal('');
   };
 
+  const handleDeleteAccount = (kode: string) => {
+    if (confirm(`Apakah Anda yakin ingin menghapus Akun ${kode}?`)) {
+      const updated = accounts.filter(a => a.kode !== kode);
+      updateAndSaveAccounts(updated);
+    }
+  };
+
+  const handleEditClick = (akun: AkunCoA) => {
+    setEditingKode(akun.kode);
+    setNewKode(akun.kode);
+    setNewNama(akun.nama);
+    setNewJenis(akun.jenis);
+    setNewKelompok(akun.kelompok);
+    setNewSaldoNormal(akun.saldoNormal);
+    setNewSaldoAwal(akun.saldoAwal.toString());
+    setShowAddModal(true);
+  };
+
+  // Batch Parser for Google Sheets / Excel copy-paste text
+  const handleImportSpreadsheet = () => {
+    if (!rawSpreadsheetText.trim()) {
+      setImportStatusMsg('Teks spreadsheet kosong. Silakan paste teks atau tabel dari Google Sheets / Excel.');
+      return;
+    }
+
+    const lines = rawSpreadsheetText.split('\n');
+    const importedAccs: AkunCoA[] = [];
+    let successCount = 0;
+
+    lines.forEach(line => {
+      const cleanLine = line.trim();
+      if (!cleanLine) return;
+
+      // Handle tab-separated (from Google Sheets paste) or comma/semicolon separated
+      const delimiter = cleanLine.includes('\t') ? '\t' : cleanLine.includes(';') ? ';' : cleanLine.includes(',') ? ',' : ' ';
+      const parts = cleanLine.split(delimiter).map(p => p.trim().replace(/^["']|["']$/g, ''));
+
+      if (parts.length >= 2) {
+        const kode = parts[0];
+        const nama = parts[1];
+        
+        // Skip header lines like "Kode", "Nama Akun"
+        if (kode.toLowerCase().includes('kode') || nama.toLowerCase().includes('nama')) return;
+
+        let jenis: 'Aktiva' | 'Kewajiban' | 'Ekuitas' | 'Pendapatan' | 'Beban' = 'Aktiva';
+        const rawJenis = (parts[2] || '').toLowerCase();
+        if (rawJenis.includes('kewajiban') || rawJenis.includes('liabilit') || rawJenis.includes('utang') || rawJenis.includes('hutang')) jenis = 'Kewajiban';
+        else if (rawJenis.includes('ekuitas') || rawJenis.includes('modal') || rawJenis.includes('dana')) jenis = 'Ekuitas';
+        else if (rawJenis.includes('pendapatan') || rawJenis.includes('infaq') || rawJenis.includes('zakat') || rawJenis.includes('donasi')) jenis = 'Pendapatan';
+        else if (rawJenis.includes('beban') || rawJenis.includes('biaya') || rawJenis.includes('pengeluaran')) jenis = 'Beban';
+        else if (kode.startsWith('2')) jenis = 'Kewajiban';
+        else if (kode.startsWith('3')) jenis = 'Ekuitas';
+        else if (kode.startsWith('4')) jenis = 'Pendapatan';
+        else if (kode.startsWith('5')) jenis = 'Beban';
+
+        const kelompok = parts[3] || (jenis === 'Aktiva' ? 'Aktiva Lancar' : jenis === 'Beban' ? 'Beban Operasional' : 'Pendapatan Donasi');
+        const saldoNormal: 'Debit' | 'Kredit' = (parts[4] || '').toLowerCase().includes('kredit') || (jenis === 'Kewajiban' || jenis === 'Ekuitas' || jenis === 'Pendapatan') ? 'Kredit' : 'Debit';
+        const saldoAwal = parseInt((parts[5] || '0').replace(/\D/g, ''), 10) || 0;
+
+        importedAccs.push({
+          kode,
+          nama,
+          jenis,
+          kelompok,
+          saldoNormal,
+          saldoAwal,
+        });
+        successCount++;
+      }
+    });
+
+    if (importedAccs.length > 0) {
+      // Merge imported accounts with existing ones by Kode
+      const existingMap = new Map(accounts.map(a => [a.kode, a]));
+      importedAccs.forEach(newA => existingMap.set(newA.kode, newA));
+      const mergedList = Array.from(existingMap.values());
+
+      updateAndSaveAccounts(mergedList);
+      setImportStatusMsg(`✅ Berhasil mengimpor & memperbarui ${successCount} Akun COA dari spreadsheet!`);
+      setTimeout(() => {
+        setShowImportModal(false);
+        setRawSpreadsheetText('');
+        setImportStatusMsg('');
+      }, 1500);
+    } else {
+      setImportStatusMsg('Format tidak dikenali. Pastikan minimal ada kolom Kode Akun dan Nama Akun.');
+    }
+  };
+
+  const handleResetDefaultCOA = () => {
+    if (confirm('Apakah Anda yakin ingin mengembalikan daftar COA ke Standar Akuntansi Syariah Masjid (PSAK 109)?')) {
+      updateAndSaveAccounts(INITIAL_CHART_OF_ACCOUNTS);
+      alert('Daftar COA telah di-reset ke Standar Syariah Masjid.');
+    }
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in">
       {/* Header Banner */}
       <div className="bg-gradient-to-r from-lime-700 via-lime-700 to-lime-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center shrink-0">
               <BookOpen className="w-6 h-6 text-lime-200" />
             </div>
             <div>
               <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight">Chart of Accounts (CoA)</h2>
-              <p className="text-lime-200 text-xs sm:text-sm">Struktur Master Akun Keuangan Masjid Citra Sentul Raya</p>
+              <p className="text-lime-200 text-xs sm:text-sm">Struktur Master Akun Keuangan Masjid Citra Sentul Raya ({accounts.length} Akun)</p>
             </div>
           </div>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="flex items-center justify-center gap-2 bg-lime-400 hover:bg-lime-300 text-lime-950 font-bold px-5 py-3 rounded-2xl text-xs sm:text-sm transition-all shadow-md active:scale-95 cursor-pointer"
-          >
-            <PlusCircle className="w-4 h-4" /> Tambah Akun Baru
-          </button>
+          
+          <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
+            <button
+              onClick={() => {
+                setEditingKode(null);
+                setNewKode('');
+                setNewNama('');
+                setNewSaldoAwal('');
+                setShowAddModal(true);
+              }}
+              className="flex-1 lg:flex-none flex items-center justify-center gap-2 bg-lime-400 hover:bg-lime-300 text-lime-950 font-bold px-4 py-2.5 rounded-2xl text-xs sm:text-sm transition-all shadow-md active:scale-95 cursor-pointer"
+            >
+              <PlusCircle className="w-4 h-4" /> Tambah Akun Baru
+            </button>
+
+            <button
+              onClick={() => setShowImportModal(true)}
+              className="flex-1 lg:flex-none flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white font-bold px-4 py-2.5 rounded-2xl text-xs sm:text-sm transition-all border border-white/20 cursor-pointer"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-lime-300" /> Import Google Spreadsheet / CSV
+            </button>
+
+            <button
+              onClick={handleResetDefaultCOA}
+              title="Reset ke COA Standar"
+              className="p-2.5 bg-white/10 hover:bg-white/20 text-white font-bold rounded-2xl text-xs transition-all border border-white/20 cursor-pointer"
+            >
+              <RefreshCw className="w-4 h-4 text-lime-200" />
+            </button>
+          </div>
         </div>
 
         {/* Dynamic Metric Cards */}
@@ -175,6 +326,7 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
                 <th className="px-5 py-4">Kelompok Sub-Laporan</th>
                 <th className="px-5 py-4">Saldo Normal</th>
                 <th className="px-5 py-4 text-right">Saldo Saat Ini (Live)</th>
+                <th className="px-5 py-4 text-center">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -204,6 +356,24 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
                     }`}>
                       {formatRp(liveSaldo)}
                     </td>
+                    <td className="px-5 py-3.5 text-center">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <button
+                          onClick={() => handleEditClick(akun)}
+                          title="Edit Akun"
+                          className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteAccount(akun.kode)}
+                          title="Hapus Akun"
+                          className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition-colors cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 );
               })}
@@ -220,15 +390,15 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
         )}
       </div>
 
-      {/* Modal Form Add Account */}
+      {/* Modal Form Add/Edit Account */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-5 border border-slate-100">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                <PlusCircle className="w-5 h-5 text-lime-600" /> Tambah Akun CoA Baru
+                <PlusCircle className="w-5 h-5 text-lime-600" /> {editingKode ? 'Edit Akun CoA' : 'Tambah Akun CoA Baru'}
               </h3>
-              <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-slate-600">
+              <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -319,18 +489,104 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="flex-1 py-3 border border-slate-200 rounded-xl text-slate-600 font-bold text-sm hover:bg-slate-100 transition-colors"
+                  className="flex-1 py-3 border border-slate-200 rounded-xl text-slate-600 font-bold text-sm hover:bg-slate-100 transition-colors cursor-pointer"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-3 bg-lime-700 hover:bg-lime-800 text-white rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-1.5 shadow-md"
+                  className="flex-1 py-3 bg-lime-700 hover:bg-lime-800 text-white rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-1.5 shadow-md cursor-pointer"
                 >
                   <Check className="w-4 h-4" /> Simpan Akun
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Import Spreadsheet / CSV */}
+      {showImportModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-2xl w-full shadow-2xl space-y-5 border border-slate-100 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-lime-100 text-lime-800">
+                  <FileSpreadsheet className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-800">Import COA dari Google Spreadsheet / Excel</h3>
+                  <p className="text-xs text-slate-500">Copy-paste baris tabel dari Google Sheets / Excel langsung ke kolom di bawah ini</p>
+                </div>
+              </div>
+              <button onClick={() => setShowImportModal(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 text-xs text-slate-600 space-y-1.5">
+              <p className="font-bold text-slate-800">💡 Panduan Format Baris (Tab, Titik Koma, atau Koma):</p>
+              <p className="font-mono text-[11px] bg-white p-2.5 rounded-xl border border-slate-200 text-slate-700">
+                KodeAkun [TAB] NamaAkun [TAB] Jenis [TAB] Kelompok [TAB] SaldoNormal [TAB] SaldoAwal<br/>
+                <span className="text-lime-700 font-bold">Contoh: 1-1100   Kas Tunai Masjid   Aktiva   Aktiva Lancar   Debit   1000000</span>
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <label className="block text-xs font-bold text-slate-700">Paste Data Baris Spreadsheet Di Sini:</label>
+              <textarea
+                rows={8}
+                value={rawSpreadsheetText}
+                onChange={e => setRawSpreadsheetText(e.target.value)}
+                placeholder="Paste baris dari Google Sheets di sini..."
+                className="w-full p-3.5 border border-slate-300 rounded-2xl text-xs font-mono bg-slate-50 focus:bg-white focus:outline-none focus:border-lime-500"
+              />
+
+              <div className="flex items-center justify-between">
+                <label className="inline-flex items-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold cursor-pointer transition-all">
+                  <Upload className="w-4 h-4 text-lime-700" /> Upload File CSV / TXT
+                  <input
+                    type="file"
+                    accept=".csv,.txt"
+                    className="hidden"
+                    onChange={e => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (evt) => {
+                          setRawSpreadsheetText(evt.target?.result as string || '');
+                        };
+                        reader.readAsText(file);
+                      }
+                    }}
+                  />
+                </label>
+                <span className="text-[11px] text-slate-400">Support file .csv dan copy-paste tabulasi.</span>
+              </div>
+            </div>
+
+            {importStatusMsg && (
+              <div className={`p-3.5 rounded-xl text-xs font-bold ${importStatusMsg.includes('✅') ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'}`}>
+                {importStatusMsg}
+              </div>
+            )}
+
+            <div className="pt-2 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowImportModal(false)}
+                className="flex-1 py-3 border border-slate-200 rounded-xl text-slate-600 font-bold text-xs hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleImportSpreadsheet}
+                className="flex-1 py-3 bg-lime-700 hover:bg-lime-800 text-white rounded-xl font-bold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-md cursor-pointer"
+              >
+                <Check className="w-4 h-4" /> Impor & Proses Data COA
+              </button>
+            </div>
           </div>
         </div>
       )}
