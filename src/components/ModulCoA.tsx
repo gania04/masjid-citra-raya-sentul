@@ -23,7 +23,7 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       } catch (e) {
         console.error('Error loading COA from localStorage', e);
       }
@@ -256,11 +256,24 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
             </button>
 
             <button
+              onClick={() => {
+                if (confirm('Muat ulang 65 Akun COA lengkap dari Google Spreadsheet?')) {
+                  updateAndSaveAccounts(INITIAL_CHART_OF_ACCOUNTS);
+                  alert('✅ Berhasil memuat 65 Akun COA dari Google Spreadsheet!');
+                }
+              }}
+              title="Muat Ulang 65 Akun COA dari Spreadsheet"
+              className="flex items-center gap-1.5 px-3.5 py-2.5 bg-emerald-600/90 hover:bg-emerald-500 text-white font-bold rounded-2xl text-xs transition-all border border-emerald-400/40 cursor-pointer"
+            >
+              <RefreshCw className="w-4 h-4" /> Muat COA Spreadsheet
+            </button>
+
+            <button
               onClick={handleClearAllAccounts}
               title="Hapus Seluruh COA"
               className="flex items-center gap-1.5 px-3 py-2.5 bg-rose-600/80 hover:bg-rose-600 text-white font-bold rounded-2xl text-xs transition-all border border-rose-400/30 cursor-pointer"
             >
-              <Trash2 className="w-4 h-4" /> Hapus Seluruh COA
+              <Trash2 className="w-4 h-4" /> Hapus COA
             </button>
           </div>
         </div>
