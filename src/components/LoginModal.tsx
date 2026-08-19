@@ -124,14 +124,29 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         return;
       }
 
-      // 1. Check Admin
-      if (targetClean === 'admin' && pass === 'admin123') {
-        onAdminLogin();
-        onClose();
-        return;
+      const lowerId = identifier.trim().toLowerCase();
+
+      // Strict Admin / DKM Role Detection
+      const isAdminIdentifier = 
+        lowerId === 'admin' || 
+        lowerId === 'dkm' || 
+        lowerId === 'petugas' ||
+        lowerId === 'admin@masjid.com' ||
+        lowerId === 'admin@citrasentul.id' ||
+        targetClean === 'admin';
+
+      if (isAdminIdentifier) {
+        if (pass === 'admin123' || pass === 'admin') {
+          onAdminLogin();
+          onClose();
+          return;
+        } else {
+          setErrorMsg('Kata sandi Admin/DKM salah! Silakan coba lagi (Default: admin123).');
+          return;
+        }
       }
 
-      // 2. Check Jamaah by matching normalized contact/email and password
+      // Check Jamaah by matching normalized contact/email and password
       const matchedUser = allUsers.find((u: any) => {
         if (!u) return false;
         const uc = normalizeContact(u.c || '');
@@ -197,7 +212,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     });
 
     setResetTargetUser(found || { n: 'Jamaah Masjid', c: target.includes('@') ? '' : cleanTarget, e: target.includes('@') ? target : '' });
-    setResetMsg(`✅ Instruksi & Link Reset Password telah dikirim ke ${target}. Silakan buat kata sandi baru Anda di bawah ini:`);
+    setResetMsg(`Instruksi & Link Reset Password telah dikirim ke ${target}. Silakan buat kata sandi baru Anda di bawah ini:`);
     setMode('reset_step');
   };
 
@@ -241,10 +256,13 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
     localStorage.setItem('registered_jamaah', JSON.stringify(allUsers));
     
-    // Automatically log in user with their new password
-    onJamaahLogin(resetTargetUser?.n || 'Jamaah', resetEmail || cleanTarget);
-    onClose();
-    alert('✅ Password berhasil diubah! Anda telah otomatis masuk ke Portal Jamaah.');
+    // Return back to the initial login screen (menu awal untuk masuk ulang)
+    setLoginIdentifier(resetEmail || cleanTarget);
+    setPassword('');
+    setNewPassword('');
+    setResetEmail('');
+    setMode('login');
+    alert('✅ Password berhasil diperbarui! Silakan masuk kembali menggunakan password baru Anda.');
   };
 
   return (
