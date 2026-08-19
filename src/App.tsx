@@ -253,7 +253,7 @@ export default function App() {
       {/* Navigation Header Always Visible */}
       <Header 
         onLoginClick={() => {
-          if (isAdmin || isJamaahLoggedIn) {
+          if ((isAdmin || isJamaahLoggedIn) && !showPortal) {
             setShowPortal(true);
           } else {
             setIsLoginModalOpen(true);

@@ -110,8 +110,13 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md flex flex-col overflow-hidden shadow-2xl animate-in zoom-in-95 border border-lime-200/50 dark:border-slate-800">
+    <div 
+      className="fixed inset-0 z-[9999] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md flex flex-col overflow-hidden shadow-2xl border border-lime-200/50 dark:border-slate-800 my-auto relative z-10">
         
         {/* Header - Single Unified Portal Header */}
         <div className="bg-gradient-to-r from-emerald-800 via-lime-700 to-emerald-900 text-white p-5 flex items-center justify-between relative overflow-hidden">
