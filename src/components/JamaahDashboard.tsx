@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, User, Calculator, Clock, Calendar, ChevronRight, LogOut, Download, Activity, Image as ImageIcon, LayoutDashboard, Settings, Bell, Camera, Wallet, BookOpen, Volume2, VolumeX, BookMarked, Sparkles, Play, Award, Heart, RefreshCw } from 'lucide-react';
+import { ArrowLeft, User, Calculator, Clock, Calendar, ChevronRight, LogOut, Download, Activity, Image as ImageIcon, LayoutDashboard, Settings, Bell, Camera, Wallet, BookOpen, Volume2, VolumeX, BookMarked, Sparkles, Play, Award, Heart, RefreshCw, Send, Smartphone, CheckCircle2 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { AlQuranDigital, BookmarkData } from './AlQuranDigital';
+import { triggerWaApp, sendWaViaGateway, generateWaReminderMessage, formatWaPhone, triggerDeviceNotification, requestDeviceNotificationPermission } from '../utils/whatsappReminder';
 
 interface JamaahDashboardProps {
   onBack: () => void;
@@ -44,8 +45,23 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
   const [profilePic, setProfilePic] = useState('https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80');
 
   // Pengingat & E-Wallet state
-  const [tipeDonasi, setTipeDonasi] = useState<'otomatis' | 'pengingat'>('pengingat');
-  const [tanggalPengingat, setTanggalPengingat] = useState('25');
+  const [tipeDonasi, setTipeDonasi] = useState<'otomatis' | 'pengingat'>(() => {
+    return (localStorage.getItem('masjid_tipe_donasi') as 'otomatis' | 'pengingat') || 'pengingat';
+  });
+  const [tanggalPengingat, setTanggalPengingat] = useState(() => {
+    return localStorage.getItem('masjid_tanggal_pengingat') || '25';
+  });
+  const [targetNominal, setTargetNominal] = useState(() => localStorage.getItem('masjid_target_nominal') || '100.000');
+  const [waGatewayToken, setWaGatewayToken] = useState(() => localStorage.getItem('masjid_wa_gateway_token') || '');
+  const [waSendingStatus, setWaSendingStatus] = useState<string | null>(null);
+  const [hasShownReminder, setHasShownReminder] = useState(false);
+
+  const [showWaNotification, setShowWaNotification] = useState(false);
+  const [waNotificationMsg, setWaNotificationMsg] = useState('');
+
+  useEffect(() => {
+    // Keep initial page load completely clean without automatic browser popups
+  }, []);
   const [connectedWallet, setConnectedWallet] = useState<string | null>(null);
   const [selectedWalletToConnect, setSelectedWalletToConnect] = useState('GoPay');
   const [connectionStep, setConnectionStep] = useState<'select' | 'phone' | 'otp' | 'connected'>('select');
@@ -106,6 +122,51 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-800 pb-20 md:pb-12">
+      {/* Push Notification WhatsApp Otomatis ke HP Jamaah */}
+      {showWaNotification && (
+        <div className="fixed top-6 left-0 right-0 z-[100] flex justify-center px-4 animate-in slide-in-from-top-10 fade-in duration-500">
+          <div className="bg-white rounded-2xl shadow-2xl border border-emerald-200 p-4 max-w-md w-full flex flex-col gap-3 relative overflow-hidden">
+             <div className="absolute top-0 left-0 w-2 h-full bg-[#25D366]"></div>
+             <div className="flex items-start justify-between gap-3">
+               <div className="flex items-center gap-3">
+                 <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center shrink-0 border border-emerald-100 shadow-sm">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WA" className="w-6 h-6 object-contain" />
+                 </div>
+                 <div>
+                   <h4 className="font-bold text-[13px] text-slate-800 flex items-center gap-1.5">
+                     WhatsApp Notification <span className="bg-emerald-100 text-emerald-800 text-[9px] px-2 py-0.5 rounded-full font-bold">Otomatis Terkirim</span>
+                   </h4>
+                   <p className="text-[11px] text-slate-500">Penerima: <span className="font-semibold text-slate-700">{profilName}</span> ({profilContact})</p>
+                 </div>
+               </div>
+               <button onClick={() => setShowWaNotification(false)} className="text-slate-400 hover:text-slate-600 font-bold text-xs p-1 cursor-pointer">✕</button>
+             </div>
+             
+             <p className="text-[12px] text-slate-700 bg-slate-50 p-2.5 rounded-xl border border-slate-100 whitespace-pre-wrap leading-relaxed font-sans">{waNotificationMsg}</p>
+
+             <div className="flex gap-2">
+               <button 
+                 onClick={() => {
+                   triggerWaApp({
+                     nama: profilName,
+                     phone: profilContact,
+                     tanggal: tanggalPengingat,
+                     nominal: `Rp ${targetNominal}`,
+                     programName: 'Infaq & Shadaqah Rutin Jamaah'
+                   });
+                 }}
+                 className="flex-1 bg-[#25D366] hover:bg-[#20ba5a] text-white text-xs font-bold py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
+               >
+                 <Send className="w-4 h-4" /> Buka & Kirim di Aplikasi WhatsApp HP
+               </button>
+               <button onClick={() => setShowWaNotification(false)} className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-xl transition-colors cursor-pointer">
+                 Tutup
+               </button>
+             </div>
+          </div>
+        </div>
+      )}
+
       {/* Banner Profile (Dark Blue) */}
       <div className="max-w-7xl mx-auto px-4 mt-6">
         <div className="bg-[#064e3b] rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center gap-6 shadow-lg relative overflow-hidden">
@@ -490,25 +551,115 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
 
                 <div className="mt-8 bg-slate-50 rounded-xl p-5 border border-slate-200">
                   {tipeDonasi === 'pengingat' ? (
-                    <div className="space-y-4">
-                      <h4 className="font-bold text-slate-800 text-sm">Jadwal Pengingat Bulanan</h4>
+                    <div className="space-y-5">
+                      <div className="flex justify-between items-center border-b border-slate-200 pb-3">
+                        <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+                          <Smartphone className="w-4 h-4 text-emerald-600" /> Jadwal Pengingat WhatsApp HP Jamaah
+                        </h4>
+                        <span className="text-[11px] bg-emerald-100 text-emerald-800 font-bold px-2.5 py-0.5 rounded-full">Nomor HP: {profilContact}</span>
+                      </div>
+
                       <div className="flex flex-col sm:flex-row gap-4 items-end">
                         <div className="w-full sm:flex-1">
-                          <label className="block text-xs font-semibold text-slate-500 mb-1">Pilih Tanggal Pengingat (1-31)</label>
-                          <select value={tanggalPengingat} onChange={(e) => setTanggalPengingat(e.target.value)} className="w-full p-3 border border-slate-300 rounded-lg bg-white">
+                          <label className="block text-xs font-semibold text-slate-600 mb-1">Pilih Tanggal Pengingat (1-31)</label>
+                          <select value={tanggalPengingat} onChange={(e) => setTanggalPengingat(e.target.value)} className="w-full p-3 border border-slate-300 rounded-xl bg-white text-slate-800 font-semibold text-sm">
                             {[...Array(31)].map((_, i) => (
                               <option key={i+1} value={i+1}>Tanggal {i+1} Setiap Bulannya</option>
                             ))}
                           </select>
                         </div>
                         <div className="w-full sm:flex-1">
-                          <label className="block text-xs font-semibold text-slate-500 mb-1">Target Nominal (Rp)</label>
-                          <input type="text" placeholder="Contoh: 100000" className="w-full p-3 border border-slate-300 rounded-lg bg-white" />
+                          <label className="block text-xs font-semibold text-slate-600 mb-1">Target Nominal Donasi (Rp)</label>
+                          <input 
+                            type="text" 
+                            value={targetNominal}
+                            onChange={(e) => setTargetNominal(e.target.value)}
+                            placeholder="Contoh: 100.000" 
+                            className="w-full p-3 border border-slate-300 rounded-xl bg-white text-slate-800 font-semibold text-sm" 
+                          />
                         </div>
                       </div>
-                      <p className="text-xs text-lime-700 bg-lime-100 p-3 rounded-lg font-semibold flex items-center gap-2">
-                        <Bell className="w-4 h-4" /> Anda akan menerima pesan pengingat donasi setiap tanggal {tanggalPengingat}.
-                      </p>
+
+                      {/* Status Layanan Terpusat Masjid */}
+                      <div className="bg-emerald-50/70 p-4 rounded-xl border border-emerald-200/60 flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 text-emerald-700 font-bold">
+                          ✓
+                        </div>
+                        <div className="text-xs text-slate-700 leading-relaxed">
+                          Pesan pengingat donasi otomatis dikirim langsung oleh **Sistem Terpusat Masjid** ke WhatsApp HP Anda (<span className="font-semibold text-emerald-900">{profilContact}</span>) tanpa perlu pengaturan rumit.
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-emerald-50 border border-emerald-200 p-4 rounded-xl">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-[#25D366]/20 flex items-center justify-center shrink-0">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WA" className="w-5 h-5 object-contain" />
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-slate-800">Status Integrasi WhatsApp HP</p>
+                            <p className="text-[11px] text-slate-600">Pesan WA akan masuk ke HP Anda pada tanggal <strong>{tanggalPengingat}</strong> setiap bulan.</p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            setWaSendingStatus('Mengirim ke WA...');
+                            const result = await sendWaViaGateway({
+                              nama: profilName,
+                              phone: profilContact,
+                              tanggal: tanggalPengingat,
+                              nominal: `Rp ${targetNominal}`,
+                              programName: 'Infaq & Shadaqah Rutin Jamaah'
+                            }, waGatewayToken);
+                            setWaSendingStatus(result.message);
+                            setTimeout(() => setWaSendingStatus(null), 6000);
+                          }}
+                          className="w-full sm:w-auto px-4 py-2.5 bg-[#25D366] hover:bg-[#20ba5a] text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer whitespace-nowrap"
+                        >
+                          <Send className="w-4 h-4" /> Uji Coba Kirim ke WA HP Sekarang
+                        </button>
+                      </div>
+
+                      {/* Push Notification Device/Smartphone Bar */}
+                      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-amber-50 border border-amber-200 p-4 rounded-xl">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0 text-amber-700">
+                            <Bell className="w-5 h-5 text-amber-700" />
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-slate-800">Push Notification Perangkat (Bilah Notifikasi HP)</p>
+                            <p className="text-[11px] text-slate-600">Notifikasi native di layar HP Anda setiap tanggal <strong>{tanggalPengingat}</strong>.</p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            setWaSendingStatus('Mengirim Push Notification ke HP...');
+                            const sent = await triggerDeviceNotification({
+                              nama: profilName,
+                              phone: profilContact,
+                              tanggal: tanggalPengingat,
+                              nominal: `Rp ${targetNominal}`,
+                              programName: 'Infaq & Shadaqah Rutin Jamaah'
+                            });
+                            if (sent) {
+                              setWaSendingStatus('🔔 Push Notification berhasil terkirim ke bilah notifikasi HP Anda!');
+                            } else {
+                              setWaSendingStatus('Gagal atau izin notifikasi browser belum diberikan.');
+                            }
+                            setTimeout(() => setWaSendingStatus(null), 6000);
+                          }}
+                          className="w-full sm:w-auto px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer whitespace-nowrap"
+                        >
+                          <Bell className="w-4 h-4" /> Uji Coba Push Notif HP Sekarang
+                        </button>
+                      </div>
+
+                      {waSendingStatus && (
+                        <div className="bg-amber-50 border border-amber-200 text-amber-900 p-3 rounded-xl text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> {waSendingStatus}
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="space-y-6">
@@ -567,7 +718,31 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
                       </div>
                     </div>
                   )}
-                  <button onClick={() => alert('Pengaturan Donasi Rutin Berhasil Disimpan!')} className="w-full mt-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl transition-colors shadow-md cursor-pointer">Simpan Pengaturan</button>
+                  <button 
+                    onClick={async () => {
+                      localStorage.setItem('masjid_tipe_donasi', tipeDonasi);
+                      localStorage.setItem('masjid_tanggal_pengingat', tanggalPengingat);
+                      localStorage.setItem('masjid_target_nominal', targetNominal);
+                      localStorage.setItem('masjid_wa_gateway_token', waGatewayToken);
+                      
+                      if (tipeDonasi === 'pengingat') {
+                        const result = await sendWaViaGateway({
+                          nama: profilName,
+                          phone: profilContact,
+                          tanggal: tanggalPengingat,
+                          nominal: `Rp ${targetNominal}`,
+                          programName: 'Infaq & Shadaqah Rutin Jamaah'
+                        }, waGatewayToken);
+
+                        alert(`Pengaturan Donasi Rutin Berhasil Disimpan!\n\nNomor WA Jamaah: ${profilContact}\nJadwal Pengingat: Tanggal ${tanggalPengingat} setiap bulan.\n\n${result.message}`);
+                      } else {
+                        alert('Pengaturan Donasi Rutin (Otomatis) Berhasil Disimpan!');
+                      }
+                    }} 
+                    className="w-full mt-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition-all shadow-md cursor-pointer flex items-center justify-center gap-2 text-sm"
+                  >
+                    <CheckCircle2 className="w-5 h-5" /> Simpan Pengaturan Donasi Rutin
+                  </button>
                 </div>
               </div>
             </div>
