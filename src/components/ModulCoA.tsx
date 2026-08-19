@@ -49,6 +49,7 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
   const [newKelompok, setNewKelompok] = useState('Aktiva Lancar');
   const [newSaldoNormal, setNewSaldoNormal] = useState<'Debit' | 'Kredit'>('Debit');
   const [newSaldoAwal, setNewSaldoAwal] = useState('');
+  const [newStatus, setNewStatus] = useState<'Aktif' | 'Non-Aktif'>('Aktif');
 
   // Persist accounts state changes to localStorage
   const updateAndSaveAccounts = (newAccList: AkunCoA[]) => {
@@ -98,6 +99,7 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
       kelompok: newKelompok,
       saldoNormal: newSaldoNormal,
       saldoAwal: parseInt(newSaldoAwal.replace(/\D/g, ''), 10) || 0,
+      status: newStatus,
     };
 
     if (editingKode) {
@@ -112,6 +114,18 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
     setNewKode('');
     setNewNama('');
     setNewSaldoAwal('');
+    setNewStatus('Aktif');
+  };
+
+  const handleToggleAccountStatus = (kode: string) => {
+    const updated = accounts.map(a => {
+      if (a.kode === kode) {
+        const current = a.status || 'Aktif';
+        return { ...a, status: (current === 'Aktif' ? 'Non-Aktif' : 'Aktif') as any };
+      }
+      return a;
+    });
+    updateAndSaveAccounts(updated);
   };
 
   const handleDeleteAccount = (kode: string) => {
@@ -136,6 +150,7 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
     setNewKelompok(akun.kelompok);
     setNewSaldoNormal(akun.saldoNormal);
     setNewSaldoAwal(akun.saldoAwal.toString());
+    setNewStatus(akun.status || 'Aktif');
     setShowAddModal(true);
   };
 
@@ -347,6 +362,7 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
                 <th className="px-5 py-4">Nama Akun (Chart of Accounts)</th>
                 <th className="px-5 py-4">Jenis Akun</th>
                 <th className="px-5 py-4">Kelompok Sub-Laporan</th>
+                <th className="px-5 py-4 text-center">Status (Enable/Disable)</th>
                 <th className="px-5 py-4">Saldo Normal</th>
                 <th className="px-5 py-4 text-right">Saldo Saat Ini (Live)</th>
                 <th className="px-5 py-4 text-center">Aksi</th>
@@ -355,16 +371,30 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
             <tbody className="divide-y divide-slate-100">
               {filtered.map(akun => {
                 const liveSaldo = getLiveSaldo(akun);
+                const isEnabled = (akun.status || 'Aktif') === 'Aktif';
                 return (
-                  <tr key={akun.kode} className="hover:bg-slate-50/80 transition-colors">
+                  <tr key={akun.kode} className={`transition-colors ${isEnabled ? 'hover:bg-slate-50/80' : 'bg-slate-50/50 opacity-60'}`}>
                     <td className="px-5 py-3.5 font-mono font-bold text-lime-700">{akun.kode}</td>
-                    <td className="px-5 py-3.5 font-semibold text-slate-800">{akun.nama}</td>
+                    <td className={`px-5 py-3.5 font-semibold ${isEnabled ? 'text-slate-800' : 'text-slate-500 line-through'}`}>{akun.nama}</td>
                     <td className="px-5 py-3.5">
                       <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${JENIS_COLOR[akun.jenis]}`}>
                         {akun.jenis}
                       </span>
                     </td>
                     <td className="px-5 py-3.5 text-xs text-slate-500 font-medium">{akun.kelompok}</td>
+                    <td className="px-5 py-3.5 text-center">
+                      <button
+                        onClick={() => handleToggleAccountStatus(akun.kode)}
+                        title="Klik untuk ubah Status (Enable/Disable)"
+                        className={`px-3 py-1 rounded-full text-xs font-extrabold border transition-all cursor-pointer ${
+                          isEnabled
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100'
+                            : 'bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-100'
+                        }`}
+                      >
+                        {isEnabled ? '✅ Aktif (Enable)' : '🔴 Non-Aktif (Disable)'}
+                      </button>
+                    </td>
                     <td className="px-5 py-3.5">
                       <span className={`text-xs font-bold ${akun.saldoNormal === 'Debit' ? 'text-lime-600' : 'text-lime-600'}`}>
                         {akun.saldoNormal}
@@ -383,7 +413,7 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
                       <div className="flex items-center justify-center gap-1.5">
                         <button
                           onClick={() => handleEditClick(akun)}
-                          title="Edit Akun"
+                          title="Edit Akun & Status"
                           className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
                         >
                           <Edit3 className="w-3.5 h-3.5" />
@@ -473,14 +503,14 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Saldo Normal</label>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Status Akun (Enable/Disable)</label>
                   <select
-                    value={newSaldoNormal}
-                    onChange={e => setNewSaldoNormal(e.target.value as any)}
-                    className="w-full p-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-lime-500"
+                    value={newStatus}
+                    onChange={e => setNewStatus(e.target.value as 'Aktif' | 'Non-Aktif')}
+                    className="w-full p-3 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:border-lime-500"
                   >
-                    <option value="Debit">Debit</option>
-                    <option value="Kredit">Kredit</option>
+                    <option value="Aktif">✅ Aktif (Enable)</option>
+                    <option value="Non-Aktif">🔴 Non-Aktif (Disable)</option>
                   </select>
                 </div>
               </div>

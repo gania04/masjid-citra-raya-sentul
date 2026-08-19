@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, User, Calculator, Clock, Calendar, ChevronRight, LogOut, Download, Activity, Image as ImageIcon, LayoutDashboard, Settings, Bell, Camera, Wallet, BookOpen, Volume2, VolumeX, BookMarked, Sparkles, Play, Award, Heart, RefreshCw, Send, Smartphone, CheckCircle2, ShieldCheck, Zap } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { AlQuranDigital, BookmarkData } from './AlQuranDigital';
+import { BukuPanduanModal } from './BukuPanduanModal';
 import { triggerWaApp, sendWaViaGateway, generateWaReminderMessage, formatWaPhone, triggerDeviceNotification, requestDeviceNotificationPermission } from '../utils/whatsappReminder';
 
 interface JamaahDashboardProps {
@@ -16,6 +17,7 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
   const [penghasilan, setPenghasilan] = useState('');
   const [bonus, setBonus] = useState('');
   const [showKalkulator, setShowKalkulator] = useState(false);
+  const [showPanduanModal, setShowPanduanModal] = useState(false);
   const [profilePic, setProfilePic] = useState<string>('https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=300&q=80');
 
   // Load profile from localStorage if present
@@ -244,6 +246,12 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
           </button>
 
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowPanduanModal(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-700 text-white hover:bg-emerald-800 rounded-full text-xs font-bold transition-all shadow-xs cursor-pointer"
+            >
+              <BookOpen className="w-3.5 h-3.5 text-lime-300" /> Buku Panduan
+            </button>
             <span className="text-xs font-semibold text-slate-500 hidden sm:inline-block">Portal Resmi Jamaah</span>
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
             <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
@@ -252,6 +260,12 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
           </div>
         </div>
       </div>
+
+      <BukuPanduanModal
+        isOpen={showPanduanModal}
+        onClose={() => setShowPanduanModal(false)}
+        defaultRole="jamaah"
+      />
 
       {/* Profile Banner - Serene Emerald Gradient */}
       <div className="max-w-7xl mx-auto px-4 mt-6">

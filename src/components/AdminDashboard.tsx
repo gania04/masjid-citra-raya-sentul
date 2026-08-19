@@ -8,6 +8,7 @@ import { ModulJurnal } from './ModulJurnal';
 import { ModulBukuBesar } from './ModulBukuBesar';
 import { ModulLaporanKeuangan } from './ModulLaporanKeuangan';
 import { ModulAnggaranApproval } from './ModulAnggaranApproval';
+import { BukuPanduanModal } from './BukuPanduanModal';
 import { INITIAL_JURNAL_ENTRIES, JurnalEntry } from '../data/akuntansiData';
 
 interface Program {
@@ -42,6 +43,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
   const [kasTab, setKasTab] = useState('ringkasan');
   const [lapkeuTab, setLapkeuTab] = useState<'neraca' | 'jurnal' | 'bukubesar' | 'coa' | 'anggaran'>('neraca');
   const [searchMenu, setSearchMenu] = useState('');
+  const [showPanduanModal, setShowPanduanModal] = useState(false);
 
   const MENU_CATEGORIES = [
     { id: 'utama', label: 'Dashboard Utama', icon: LayoutDashboard },
@@ -542,14 +544,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
           <span className="font-bold text-slate-800 hidden sm:block">Portal Pengurus Citra Sentul</span>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={() => setIsDarkMode(!isDarkMode)} className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-700 text-slate-600 rounded-full text-xs font-bold transition-colors border border-slate-300">
+          <button 
+            onClick={() => setShowPanduanModal(true)} 
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-full text-xs font-bold transition-all shadow-xs cursor-pointer"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-lime-300" /> Buku Panduan
+          </button>
+          <button onClick={() => setIsDarkMode(!isDarkMode)} className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-700 text-slate-600 rounded-full text-xs font-bold transition-colors border border-slate-300 cursor-pointer">
             <Moon className="w-3.5 h-3.5 text-lime-600 no-invert" /> {isDarkMode ? 'Mode Terang' : 'Mode Gelap'}
           </button>
-          <button onClick={onBack} className="flex items-center gap-2 px-4 py-1.5 bg-red-500/10 text-red-600 hover:bg-red-500 hover:text-slate-800 rounded-full text-xs font-bold transition-colors border border-red-500/20">
+          <button onClick={onBack} className="flex items-center gap-2 px-4 py-1.5 bg-red-500/10 text-red-600 hover:bg-red-500 hover:text-slate-800 rounded-full text-xs font-bold transition-colors border border-red-500/20 cursor-pointer">
             <LogOut className="w-3.5 h-3.5" /> LOGOUT
           </button>
         </div>
       </div>
+
+      <BukuPanduanModal
+        isOpen={showPanduanModal}
+        onClose={() => setShowPanduanModal(false)}
+        defaultRole="admin"
+      />
 
       <div className="max-w-7xl mx-auto px-4 py-6">
         

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bot, User, Sun, Moon, Sparkles } from 'lucide-react';
+import { Bot, User, Sun, Moon, Sparkles, BookOpen } from 'lucide-react';
 import { getPrayerTimesSentul, getNextPrayerInfo } from '../utils/prayerTimes';
 
 interface HeaderProps {
@@ -7,6 +7,7 @@ interface HeaderProps {
   onAiClick: () => void;
   onQuranClick?: () => void;
   onNavClick?: () => void;
+  onPanduanClick?: () => void;
   isDarkMode: boolean;
   onToggleDarkMode: () => void;
   isAutoNight?: boolean;
@@ -19,6 +20,7 @@ export const Header: React.FC<HeaderProps> = ({
   onAiClick, 
   onQuranClick,
   onNavClick,
+  onPanduanClick,
   isDarkMode,
   onToggleDarkMode,
   isAutoNight = false,
@@ -153,6 +155,16 @@ export const Header: React.FC<HeaderProps> = ({
                 <Moon className="w-4.5 h-4.5 text-green-700" />
               )}
             </button>
+
+            {onPanduanClick && (
+              <button
+                onClick={onPanduanClick}
+                className="flex items-center justify-center gap-1.5 px-3 py-2 border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold text-xs sm:text-sm rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all shadow-xs cursor-pointer"
+                title="Buka Buku Panduan Penggunaan Fitur"
+              >
+                <BookOpen className="w-4 h-4 text-lime-600 dark:text-lime-400" /> Panduan
+              </button>
+            )}
 
             <button 
               onClick={onAiClick}

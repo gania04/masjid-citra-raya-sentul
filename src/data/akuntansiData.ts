@@ -9,6 +9,7 @@ export interface AkunCoA {
   kelompok: string;
   saldoNormal: 'Debit' | 'Kredit';
   saldoAwal: number;
+  status?: 'Aktif' | 'Non-Aktif';
 }
 
 export interface JurnalBaris {

@@ -13,6 +13,7 @@ import { AdminDashboard } from './components/AdminDashboard';
 import { JamaahDashboard } from './components/JamaahDashboard';
 import { LoginModal } from './components/LoginModal';
 import { AiAsistenModal } from './components/AiAsistenModal';
+import { BukuPanduanModal } from './components/BukuPanduanModal';
 import { INITIAL_STATS } from './data/mockData';
 import { supabase } from './lib/supabase';
 import { Sun, Moon, BookOpen, LayoutDashboard } from 'lucide-react';
@@ -23,6 +24,7 @@ export default function App() {
   const [showPortal, setShowPortal] = useState(false);
   const [namaJamaah, setNamaJamaah] = useState('Hamba Allah');
   const [kontakJamaah, setKontakJamaah] = useState('');
+  const [showGlobalPanduanModal, setShowGlobalPanduanModal] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [isQuranModalOpen, setIsQuranModalOpen] = useState(false);
@@ -261,6 +263,7 @@ export default function App() {
         }} 
         onAiClick={() => setIsAiModalOpen(true)} 
         onQuranClick={() => setIsQuranModalOpen(true)}
+        onPanduanClick={() => setShowGlobalPanduanModal(true)}
         onNavClick={() => {
           // Hide portal to show Beranda, without logging out
           setShowPortal(false);
@@ -427,6 +430,11 @@ export default function App() {
           setIsAiModalOpen(false);
           document.getElementById('ziswaf')?.scrollIntoView({ behavior: 'smooth' });
         }}
+      />
+      <BukuPanduanModal
+        isOpen={showGlobalPanduanModal}
+        onClose={() => setShowGlobalPanduanModal(false)}
+        defaultRole={isAdmin ? 'admin' : 'jamaah'}
       />
     </div>
   );
