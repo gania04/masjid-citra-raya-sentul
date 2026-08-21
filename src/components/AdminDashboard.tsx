@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, MonitorPlay, RefreshCw, Book, Calendar, Video, ShieldCheck, Settings, Users, Database, PlusCircle, Save, ArrowDownCircle, ArrowUpCircle, X, FileText, Camera, Megaphone, Clock, Smartphone, UserCheck, Key, Search, Link2, Trash2, Moon, BookOpen, Scale, ClipboardList, Edit, Wallet, TrendingUp, TrendingDown, Activity, Heart, Building, LayoutDashboard } from 'lucide-react';
+import { LogOut, MonitorPlay, RefreshCw, Book, Calendar, Video, ShieldCheck, Settings, Users, Database, PlusCircle, Save, ArrowDownCircle, ArrowUpCircle, X, FileText, Camera, Megaphone, Clock, Smartphone, UserCheck, Key, Search, Link2, Trash2, Moon, BookOpen, Scale, ClipboardList, Edit, Wallet, TrendingUp, TrendingDown, Activity, Heart, Building, LayoutDashboard, ChevronDown } from 'lucide-react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -35,9 +35,10 @@ interface AdminDashboardProps {
   registeredJamaahList: any[];
   donasiHistory?: any[];
   onVerifyDonasi?: (id: string, status: 'Berhasil' | 'Ditolak') => void;
+  adminRole?: string;
 }
 
-export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs, onAddDonation, homeVisibility, setHomeVisibility, registeredJamaahList, donasiHistory = [], onVerifyDonasi }) => {
+export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs, onAddDonation, homeVisibility, setHomeVisibility, registeredJamaahList, donasiHistory = [], onVerifyDonasi, adminRole = 'direktur' }) => {
   const [activeMenu, setActiveMenu] = useState('utama');
   const [activeCategory, setActiveCategory] = useState('utama');
   const [kasTab, setKasTab] = useState('ringkasan');
@@ -45,7 +46,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
   const [searchMenu, setSearchMenu] = useState('');
   const [showPanduanModal, setShowPanduanModal] = useState(false);
 
-  const MENU_CATEGORIES = [
+  const ALL_MENU_CATEGORIES = [
     { id: 'utama', label: 'Dashboard Utama', icon: LayoutDashboard },
     { id: 'keuangan', label: 'Keuangan', icon: Wallet },
     { id: 'operasional', label: 'Operasional', icon: Clock },
@@ -53,28 +54,85 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
     { id: 'pengaturan_grup', label: 'Pengaturan', icon: Settings }
   ];
 
+  const MENU_CATEGORIES = ALL_MENU_CATEGORIES.filter(cat => {
+    if (adminRole === 'bendahara') {
+      return ['utama', 'keuangan', 'pengaturan_grup'].includes(cat.id);
+    }
+    if (adminRole === 'staff') {
+      return ['utama', 'operasional', 'administrasi', 'pengaturan_grup'].includes(cat.id);
+    }
+    return true; // direktur
+  });
+
   const SUB_MENUS: Record<string, any[]> = {
     keuangan: [
       { id: 'ziswaf', label: 'Input Donasi ZISWAF', icon: PlusCircle },
       { id: 'verifikasi', label: 'Verifikasi ZISWAF', icon: ShieldCheck },
-      { id: 'kas', label: 'Riwayat Transaksi', icon: Book },
-      { id: 'lapkeu', label: 'Laporan Keuangan & Akuntansi', icon: Scale, action: () => { setActiveMenu('lapkeu'); setLapkeuTab('neraca'); } },
+      { 
+        id: 'kas', 
+        label: 'Riwayat Transaksi', 
+        icon: Book,
+        action: () => { setActiveMenu('kas'); setKasTab('ringkasan'); },
+        subItems: [
+          { id: 'ringkasan', label: '📊 Ringkasan Kas', action: () => { setActiveMenu('kas'); setKasTab('ringkasan'); } },
+          { id: 'pemasukan', label: '📥 Input Pemasukan', action: () => { setActiveMenu('kas'); setKasTab('pemasukan'); } },
+          { id: 'pengeluaran', label: '📤 Input Pengeluaran', action: () => { setActiveMenu('kas'); setKasTab('pengeluaran'); } },
+          { id: 'laporan', label: '📈 Laporan Keuangan', action: () => { setActiveMenu('kas'); setKasTab('laporan'); } }
+        ]
+      },
+      { 
+        id: 'lapkeu', 
+        label: 'Laporan Keuangan & Akuntansi', 
+        icon: Scale, 
+        action: () => { setActiveMenu('lapkeu'); setLapkeuTab('neraca'); },
+        subItems: [
+          { id: 'neraca', label: '⚖️ Neraca Aktivitas (ISAK 35)', action: () => { setActiveMenu('lapkeu'); setLapkeuTab('neraca'); } },
+          { id: 'jurnal', label: '📄 Jurnal Umum Double-Entry', action: () => { setActiveMenu('lapkeu'); setLapkeuTab('jurnal'); } },
+          { id: 'bukubesar', label: '📕 Buku Besar', action: () => { setActiveMenu('lapkeu'); setLapkeuTab('bukubesar'); } },
+          { id: 'coa', label: '📖 Chart of Accounts (CoA)', action: () => { setActiveMenu('lapkeu'); setLapkeuTab('coa'); } },
+          { id: 'anggaran', label: '📋 Anggaran & Approval Flow', action: () => { setActiveMenu('lapkeu'); setLapkeuTab('anggaran'); } }
+        ]
+      },
     ],
     operasional: [
       { id: 'jumat', label: 'Jadwal Petugas & Jumat', icon: Clock },
       { id: 'kalender', label: 'Kalender & Agenda', icon: Calendar },
       { id: 'wa', label: 'Broadcast Informasi', icon: Smartphone },
-      { id: 'konten', label: 'Manajemen Konten Publik', icon: Database },
+      { 
+        id: 'konten', 
+        label: 'Manajemen Konten Publik', 
+        icon: Database,
+        action: () => { setActiveMenu('konten'); setKontenTab('program'); },
+        subItems: [
+          { id: 'program', label: '📢 Program & Campaign', action: () => { setActiveMenu('konten'); setKontenTab('program'); } },
+          { id: 'berita', label: '📰 Pengumuman & Berita', action: () => { setActiveMenu('konten'); setKontenTab('berita'); } },
+          { id: 'galeri', label: '🖼️ Galeri & Kajian', action: () => { setActiveMenu('konten'); setKontenTab('galeri'); } }
+        ]
+      },
     ],
     administrasi: [
       { id: 'profil', label: 'Profil & Pengurus', icon: Users },
-      { id: 'aset', label: 'Inventaris & Foto Aset', icon: Camera },
+      { 
+        id: 'aset', 
+        label: 'Inventaris & Foto Aset', 
+        icon: Camera,
+        action: () => { setActiveMenu('aset'); setAsetTab('semua'); },
+        subItems: [
+          { id: 'semua', label: '📦 Semua Aset Inventaris', action: () => { setActiveMenu('aset'); setAsetTab('semua'); } },
+          { id: 'rusak', label: '⚠️ Daftar Barang Rusak', action: () => { setActiveMenu('aset'); setAsetTab('rusak'); } }
+        ]
+      },
       { id: 'ttd', label: 'Tanda Tangan Laporan', icon: FileText },
     ],
     pengaturan_grup: [
       { id: 'role', label: 'Manajemen Akun & Role', icon: Key },
       { id: 'audit', label: 'Audit Log System', icon: Search },
-      { id: 'pengaturan', label: 'Pengaturan Sistem', icon: Settings, action: () => { setActiveMenu('pengaturan'); setSettingTab('admin_utama'); } },
+      { 
+        id: 'pengaturan', 
+        label: 'Pengaturan Sistem', 
+        icon: Settings, 
+        action: () => { setActiveMenu('pengaturan'); setSettingTab('admin_utama'); } 
+      },
     ]
   };
 
@@ -576,7 +634,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
             <div>
               <div className="flex items-center gap-3 flex-wrap">
                 <h1 className="text-xl sm:text-2xl font-extrabold text-white drop-shadow-sm">Portal Admin & Pengurus DKM</h1>
-                <span className="px-2 py-0.5 rounded-full bg-white text-lime-700 border border-white/50 text-[10px] font-extrabold uppercase tracking-wider shadow-sm">Role: Administrator</span>
+                <span className="px-2 py-0.5 rounded-full bg-white text-lime-700 border border-white/50 text-[10px] font-extrabold uppercase tracking-wider shadow-sm">
+                  Role: {adminRole.toUpperCase()}
+                </span>
               </div>
               <p className="text-sm text-lime-50 mt-1 font-medium">Manajemen Keuangan Sederhana, Update Program ZISWAF, & Pengaturan Visibilitas.</p>
             </div>
@@ -655,8 +715,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
 
         {/* Sub Menus Tabs */}
         {activeCategory !== 'utama' && SUB_MENUS[activeCategory] && (
-          <div className="bg-slate-100 rounded-xl border border-slate-200 overflow-hidden mb-6 p-1.5 shadow-inner">
-            <div className="flex overflow-x-auto no-scrollbar gap-1.5">
+          <div className="bg-slate-100 rounded-xl border border-slate-200 mb-6 p-1.5 shadow-inner">
+            <div className="flex flex-wrap gap-1.5 relative z-40">
               {SUB_MENUS[activeCategory]
                 .filter(menu => menu.label.toLowerCase().includes(searchMenu.toLowerCase()))
                 .map((menu) => {
@@ -666,14 +726,32 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                   : activeMenu === menu.id;
 
                 return (
-                  <button 
-                    key={menu.id}
-                    onClick={() => menu.action ? menu.action() : setActiveMenu(menu.id)} 
-                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-colors ${isActive ? 'bg-white text-lime-700 font-bold shadow-sm border border-slate-200' : 'text-slate-600 hover:bg-white/50 hover:text-slate-800 border border-transparent'}`}
-                  >
-                    <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-lime-600' : ''}`} />
-                    <span className="text-sm font-semibold">{menu.label}</span>
-                  </button>
+                  <div key={menu.id} className="relative group">
+                    <button 
+                      onClick={() => menu.action ? menu.action() : setActiveMenu(menu.id)} 
+                      className={`flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-colors cursor-pointer ${isActive ? 'bg-white text-lime-700 font-bold shadow-sm border border-slate-200' : 'text-slate-600 hover:bg-white/50 hover:text-slate-800 border border-transparent'}`}
+                    >
+                      <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-lime-600' : ''}`} />
+                      <span className="text-sm font-semibold">{menu.label}</span>
+                      {menu.subItems && <ChevronDown className="w-3.5 h-3.5 ml-1 opacity-50" />}
+                    </button>
+                    
+                    {menu.subItems && (
+                      <div className="absolute left-0 top-full mt-1 w-64 bg-white rounded-xl shadow-xl border border-slate-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 overflow-hidden transform origin-top-left scale-95 group-hover:scale-100 flex flex-col">
+                        {menu.subItems.map((sub: any) => (
+                          <button
+                            key={sub.id}
+                            onClick={() => {
+                              if (sub.action) sub.action();
+                            }}
+                            className="w-full text-left px-4 py-3 text-xs font-semibold text-slate-600 hover:bg-lime-50 hover:text-lime-700 transition-colors border-b border-slate-50 last:border-0 cursor-pointer flex items-center gap-2"
+                          >
+                            {sub.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
               
@@ -877,7 +955,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                 </span>
                 <h2 className="text-2xl font-extrabold text-white">Riwayat Transaksi Kas Masjid</h2>
                 <p className="text-lime-100 text-xs md:text-sm max-w-3xl leading-relaxed">
-                  Setiap mutasi kas (pemasukan & pengeluaran) di halaman ini langsung tersinkronisasi otomatis dengan **Chart of Accounts (CoA)**, **Jurnal Umum**, **Buku Besar**, **Neraca & Laba Rugi**, dan **Laporan Keuangan ISAK 35**.
+                  Setiap mutasi kas (pemasukan & pengeluaran) di halaman ini langsung tersinkronisasi otomatis dengan **Chart of Accounts (CoA)**, **Jurnal Umum**, **Buku Besar**, **Neraca Aktivitas & Laba Rugi**, dan **Laporan Keuangan ISAK 35**.
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2 shrink-0">
@@ -897,18 +975,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                   onClick={() => { setActiveMenu('lapkeu'); setLapkeuTab('neraca'); }}
                   className="px-3.5 py-2 bg-lime-400 hover:bg-lime-300 text-lime-950 font-extrabold rounded-xl text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
                 >
-                  <Scale className="w-4 h-4 text-lime-950" /> Neraca & Laba Rugi ➔
+                  <Scale className="w-4 h-4 text-lime-950" /> Neraca Aktivitas & Laba Rugi ➔
                 </button>
               </div>
             </div>
 
-            {/* Sub-menu Kas */}
-            <div className="flex gap-4 border-b border-slate-200 pb-2 overflow-x-auto no-scrollbar">
-              <button onClick={() => setKasTab('ringkasan')} className={`px-4 py-2 text-sm font-bold whitespace-nowrap ${kasTab === 'ringkasan' ? 'text-lime-600 border-b-2 border-lime-400' : 'text-slate-500 hover:text-slate-700'}`}>Ringkasan Kas</button>
-              <button onClick={() => setKasTab('pemasukan')} className={`px-4 py-2 text-sm font-bold whitespace-nowrap ${kasTab === 'pemasukan' ? 'text-lime-600 border-b-2 border-lime-400' : 'text-slate-500 hover:text-slate-700'}`}>Input Pemasukan</button>
-              <button onClick={() => setKasTab('pengeluaran')} className={`px-4 py-2 text-sm font-bold whitespace-nowrap ${kasTab === 'pengeluaran' ? 'text-lime-600 border-b-2 border-lime-400' : 'text-slate-500 hover:text-slate-700'}`}>Input Pengeluaran</button>
-              <button onClick={() => setKasTab('laporan')} className={`px-4 py-2 text-sm font-bold whitespace-nowrap ${kasTab === 'laporan' ? 'text-lime-600 border-b-2 border-lime-400' : 'text-slate-500 hover:text-slate-700'}`}>Laporan Keuangan</button>
-            </div>
+            {/* Sub-menu Kas dipindahkan ke navigasi atas */}
 
             {kasTab === 'ringkasan' && (
               <div className="grid grid-cols-1 gap-6 animate-in fade-in">
@@ -1234,14 +1306,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
           </div>
         )}
 
-        {/* MODUL: PROGRAM & CAMPAIGN */}
-        {activeMenu === 'konten' && (
-          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm flex flex-wrap mb-6">
-            <button onClick={() => setKontenTab('program')} className={`flex-1 py-3 font-bold text-sm ${kontenTab === 'program' ? 'bg-lime-50 text-lime-700 border-b-2 border-lime-600' : 'text-slate-500 hover:bg-slate-50'}`}>Program & Campaign</button>
-            <button onClick={() => setKontenTab('berita')} className={`flex-1 py-3 font-bold text-sm ${kontenTab === 'berita' ? 'bg-lime-50 text-lime-700 border-b-2 border-lime-600' : 'text-slate-500 hover:bg-slate-50'}`}>Pengumuman & Berita</button>
-            <button onClick={() => setKontenTab('galeri')} className={`flex-1 py-3 font-bold text-sm ${kontenTab === 'galeri' ? 'bg-lime-50 text-lime-700 border-b-2 border-lime-600' : 'text-slate-500 hover:bg-slate-50'}`}>Galeri & Kajian</button>
-          </div>
-        )}
+        {/* MODUL: PROGRAM & CAMPAIGN (Tab menu dipindahkan ke atas) */}
         
         {activeMenu === 'konten' && kontenTab === 'program' && (
           <div className="animate-in fade-in space-y-6">
@@ -1919,14 +1984,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
         {/* MODUL BARU: INVENTARIS ASET */}
         {activeMenu === 'aset' && (
           <div className="animate-in fade-in space-y-6">
-            <div className="flex gap-2 overflow-x-auto no-scrollbar bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm">
-              <button onClick={() => setAsetTab('semua')} className={`px-4 py-2.5 text-xs font-extrabold rounded-lg transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${asetTab === 'semua' ? 'bg-lime-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-100'}`}>
-                <Camera className="w-4 h-4" /> Semua Aset Inventaris
-              </button>
-              <button onClick={() => setAsetTab('rusak')} className={`px-4 py-2.5 text-xs font-extrabold rounded-lg transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${asetTab === 'rusak' ? 'bg-red-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-100'}`}>
-                <ArrowDownCircle className="w-4 h-4" /> Daftar Barang Rusak
-              </button>
-            </div>
+            {/* Sub-menu aset dipindahkan ke atas */}
 
             {asetTab === 'semua' ? (
               <>
@@ -2482,7 +2540,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                 </span>
                 <h2 className="text-2xl font-extrabold text-white">Fitur Laporan Keuangan & Akuntansi Masjid</h2>
                 <p className="text-lime-200 text-xs md:text-sm mt-1 max-w-3xl leading-relaxed">
-                  Terhubung langsung secara real-time dengan **Riwayat Transaksi** & **Input Donasi ZISWAF**. Mengintegrasikan Chart of Accounts (CoA), Jurnal Umum Double-Entry, Buku Besar, Neraca & Laba Rugi, serta Approval Anggaran.
+                  Terhubung langsung secara real-time dengan **Riwayat Transaksi** & **Input Donasi ZISWAF**. Mengintegrasikan Chart of Accounts (CoA), Jurnal Umum Double-Entry, Buku Besar, Neraca Aktivitas & Laba Rugi, serta Approval Anggaran.
                 </p>
               </div>
               <div className="flex gap-2 shrink-0">
@@ -2495,49 +2553,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
               </div>
             </div>
 
-            {/* Sub-Navigation Tabs */}
-            <div className="flex gap-2 overflow-x-auto no-scrollbar bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm">
-              <button 
-                onClick={() => setLapkeuTab('neraca')} 
-                className={`px-4 py-2.5 text-xs font-extrabold rounded-lg transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
-                  lapkeuTab === 'neraca' ? 'bg-lime-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                <Scale className="w-4 h-4" /> Neraca & Laba Rugi (ISAK 35)
-              </button>
-              <button 
-                onClick={() => setLapkeuTab('jurnal')} 
-                className={`px-4 py-2.5 text-xs font-extrabold rounded-lg transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
-                  lapkeuTab === 'jurnal' ? 'bg-lime-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                <FileText className="w-4 h-4" /> Jurnal Umum Double-Entry ({journals.length})
-              </button>
-              <button 
-                onClick={() => setLapkeuTab('bukubesar')} 
-                className={`px-4 py-2.5 text-xs font-extrabold rounded-lg transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
-                  lapkeuTab === 'bukubesar' ? 'bg-lime-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                <Book className="w-4 h-4" /> Buku Besar (General Ledger)
-              </button>
-              <button 
-                onClick={() => setLapkeuTab('coa')} 
-                className={`px-4 py-2.5 text-xs font-extrabold rounded-lg transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
-                  lapkeuTab === 'coa' ? 'bg-lime-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                <BookOpen className="w-4 h-4" /> Chart of Accounts (CoA)
-              </button>
-              <button 
-                onClick={() => setLapkeuTab('anggaran')} 
-                className={`px-4 py-2.5 text-xs font-extrabold rounded-lg transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
-                  lapkeuTab === 'anggaran' ? 'bg-lime-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                <ClipboardList className="w-4 h-4" /> Anggaran & Approval Flow
-              </button>
-            </div>
+            {/* Sub-Navigation Tabs dipindahkan ke atas menu dropdown */}
 
             {/* Sub-Tab Module Display */}
             {lapkeuTab === 'neraca' && <ModulLaporanKeuangan journals={journals} />}

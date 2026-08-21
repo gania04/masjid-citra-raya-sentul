@@ -210,7 +210,7 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
     if (importedAccs.length > 0) {
       let finalAccs = importedAccs;
       if (!replaceExisting) {
-        const existingMap = new Map(accounts.map(a => [a.kode, a]));
+        const existingMap = new Map<string, AkunCoA>(accounts.map(a => [a.kode, a]));
         importedAccs.forEach(newA => existingMap.set(newA.kode, newA));
         finalAccs = Array.from(existingMap.values());
       }

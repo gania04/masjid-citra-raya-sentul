@@ -134,6 +134,19 @@ export const BukuPanduanModal: React.FC<BukuPanduanModalProps> = ({
       ],
       tip: 'Informasi kegiatan yang di-update admin langsung tampil otomatis di Portal Jamaah.',
     },
+    {
+      id: 'a-5',
+      icon: ShieldCheck,
+      title: '5. Panduan & Batasan Hak Akses (RBAC)',
+      summary: 'Penjelasan kewenangan akses berdasarkan role (Direktur, Bendahara, Staff Admin).',
+      steps: [
+        '**Direktur / Ketua DKM**: Memiliki akses penuh (Super Admin) ke seluruh fitur portal, termasuk Utama, Keuangan, Operasional, Administrasi, dan Pengaturan.',
+        '**Bendahara (Keuangan)**: Akses dibatasi secara eksklusif hanya untuk modul **Keuangan** (ZISWAF, Ringkasan Kas, Laporan Keuangan ISAK 35) dan Pengaturan. Modul operasional dan administrasi disembunyikan.',
+        '**Staff Admin (Operasional)**: Akses difokuskan pada manajemen harian masjid. Dapat mengakses modul **Operasional** (Jadwal, Kalender) dan **Administrasi** (Aset, Profil). **Tidak memiliki akses ke laporan keuangan**.',
+        '**Cara Menggunakan Akses**: Saat login di awal, sistem otomatis membaca role dari akun/kredensial yang digunakan (misal: login dengan `bendahara` atau `staff`). Fitur yang tidak menjadi wewenang akan otomatis terkunci dan tidak ditampilkan di menu navigasi.',
+      ],
+      tip: 'Gunakan kredensial yang sesuai dengan divisi Anda untuk menjaga keamanan data & privasi keuangan masjid.',
+    },
   ];
 
   const currentGuideList = activeTab === 'jamaah' ? panduanJamaah : panduanAdmin;

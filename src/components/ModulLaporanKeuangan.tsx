@@ -1,9 +1,22 @@
 import React, { useState } from 'react';
-import { BarChart3, Scale, TrendingUp, TrendingDown, Download, FileSpreadsheet, Shield, Layers } from 'lucide-react';
+import { BarChart3, Scale, Download, FileSpreadsheet, Layers, Filter, CheckCircle, AlertTriangle, ArrowRightLeft } from 'lucide-react';
 import { INITIAL_CHART_OF_ACCOUNTS, INITIAL_JURNAL_ENTRIES, AkunCoA, JurnalEntry } from '../data/akuntansiData';
 
 const formatRp = (n: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
+
+export type FundCategory = 'Semua' | 'Zakat' | 'Infaq' | 'Wakaf' | 'Sodaqoh' | 'Operasional' | 'Komparatif' | 'Multi';
+
+export const getAccountFundCategory = (akun: AkunCoA): 'Zakat' | 'Infaq' | 'Wakaf' | 'Sodaqoh' | 'Operasional' => {
+  if (akun.kategoriDana) return akun.kategoriDana;
+  const name = akun.nama.toLowerCase();
+  const kel = akun.kelompok.toLowerCase();
+  if (name.includes('zakat') || kel.includes('zakat')) return 'Zakat';
+  if (name.includes('infak') || name.includes('infaq') || kel.includes('infak')) return 'Infaq';
+  if (name.includes('wakaf') || name.includes('bangunan') || name.includes('tanah') || kel.includes('wakaf')) return 'Wakaf';
+  if (name.includes('sedekah') || name.includes('sodaqoh') || name.includes('yatim') || name.includes('sembako') || name.includes('fakir')) return 'Sodaqoh';
+  return 'Operasional';
+};
 
 interface ModulLaporanKeuanganProps {
   journals?: JurnalEntry[];
@@ -15,6 +28,7 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
   accounts = INITIAL_CHART_OF_ACCOUNTS,
 }) => {
   const [tab, setTab] = useState<'neraca' | 'labarugi'>('neraca');
+  const [selectedFundFilter, setSelectedFundFilter] = useState<FundCategory>('Semua');
   const [filterStartDate, setFilterStartDate] = useState('');
   const [filterEndDate, setFilterEndDate] = useState('');
 
@@ -48,12 +62,36 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
     return balance;
   };
 
-  // Group accounts by category
-  const aktivaList = accounts.filter(a => a.jenis === 'Aktiva');
-  const kewajibanList = accounts.filter(a => a.jenis === 'Kewajiban');
-  const ekuitasList = accounts.filter(a => a.jenis === 'Ekuitas');
-  const pendapatanList = accounts.filter(a => a.jenis === 'Pendapatan');
-  const bebanList = accounts.filter(a => a.jenis === 'Beban');
+  // Helper for fund specific metrics
+  const getFundMetrics = (fundCategory: 'Zakat' | 'Infaq' | 'Wakaf' | 'Sodaqoh' | 'Operasional') => {
+    const fundAccounts = accounts.filter(a => getAccountFundCategory(a) === fundCategory);
+    const aktiva = fundAccounts.filter(a => a.jenis === 'Aktiva').reduce((s, a) => s + getLiveBalance(a.kode), 0);
+    const kewajiban = fundAccounts.filter(a => a.jenis === 'Kewajiban').reduce((s, a) => s + getLiveBalance(a.kode), 0);
+    const ekuitas = fundAccounts.filter(a => a.jenis === 'Ekuitas').reduce((s, a) => s + getLiveBalance(a.kode), 0);
+    const pendapatan = fundAccounts.filter(a => a.jenis === 'Pendapatan').reduce((s, a) => s + getLiveBalance(a.kode), 0);
+    const beban = fundAccounts.filter(a => a.jenis === 'Beban').reduce((s, a) => s + getLiveBalance(a.kode), 0);
+    const surplus = pendapatan - beban;
+
+    return { aktiva, kewajiban, ekuitas, pendapatan, beban, surplus, totalSaldoNeto: ekuitas + surplus, accounts: fundAccounts };
+  };
+
+  const zakatMetrics = getFundMetrics('Zakat');
+  const infaqMetrics = getFundMetrics('Infaq');
+  const wakafMetrics = getFundMetrics('Wakaf');
+  const sodaqohMetrics = getFundMetrics('Sodaqoh');
+  const operasionalMetrics = getFundMetrics('Operasional');
+
+  // Filter lists based on selected fund category tab
+  const filterByFund = (list: AkunCoA[]) => {
+    if (selectedFundFilter === 'Semua' || selectedFundFilter === 'Komparatif' || selectedFundFilter === 'Multi') return list;
+    return list.filter(a => getAccountFundCategory(a) === selectedFundFilter);
+  };
+
+  const aktivaList = filterByFund(accounts.filter(a => a.jenis === 'Aktiva'));
+  const kewajibanList = filterByFund(accounts.filter(a => a.jenis === 'Kewajiban'));
+  const ekuitasList = filterByFund(accounts.filter(a => a.jenis === 'Ekuitas'));
+  const pendapatanList = filterByFund(accounts.filter(a => a.jenis === 'Pendapatan'));
+  const bebanList = filterByFund(accounts.filter(a => a.jenis === 'Beban'));
 
   const totalAktiva = aktivaList.reduce((s, a) => s + getLiveBalance(a.kode), 0);
   const totalKewajiban = kewajibanList.reduce((s, a) => s + getLiveBalance(a.kode), 0);
@@ -65,18 +103,157 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
 
   const isBalanced = Math.abs(totalAktiva - (totalKewajiban + totalEkuitas + surplusDefisit)) < 1;
 
-  // Breakdown sources for transparent integration
-  const donasiUmumTotal = filteredJournals
-    .filter(j => j.status === 'Posted' && j.sumber === 'Donasi Umum')
-    .reduce((s, j) => s + j.baris.reduce((b, r) => b + r.debit, 0), 0);
-
-  const donasiPortalTotal = filteredJournals
-    .filter(j => j.status === 'Posted' && j.sumber === 'Donasi Portal Jamaah')
-    .reduce((s, j) => s + j.baris.reduce((b, r) => b + r.debit, 0), 0);
-
   const aktivaGroups = [...new Set(aktivaList.map(a => a.kelompok))];
   const pendapatanGroups = [...new Set(pendapatanList.map(a => a.kelompok))];
   const bebanGroups = [...new Set(bebanList.map(a => a.kelompok))];
+
+  // Helper renderer for a single fund balance sheet card
+  const renderFundBalanceSheetDoc = (
+    fundName: 'Zakat' | 'Infaq' | 'Wakaf' | 'Sodaqoh' | 'Operasional',
+    badgeColor: string,
+    themeBorder: string,
+    metrics: ReturnType<typeof getFundMetrics>
+  ) => {
+    const fundAktiva = metrics.accounts.filter(a => a.jenis === 'Aktiva');
+    const fundKewajiban = metrics.accounts.filter(a => a.jenis === 'Kewajiban');
+    const fundEkuitas = metrics.accounts.filter(a => a.jenis === 'Ekuitas');
+
+    const totalFktiva = fundAktiva.reduce((s, a) => s + getLiveBalance(a.kode), 0);
+    const totalFkewajiban = fundKewajiban.reduce((s, a) => s + getLiveBalance(a.kode), 0);
+    const totalFekuitas = fundEkuitas.reduce((s, a) => s + getLiveBalance(a.kode), 0);
+    const fSurplus = metrics.surplus;
+
+    const fBalanced = Math.abs(totalFktiva - (totalFkewajiban + totalFekuitas + fSurplus)) < 1;
+    const fAktivaGroups = [...new Set(fundAktiva.map(a => a.kelompok))];
+
+    return (
+      <div key={fundName} className={`bg-white border-2 ${themeBorder} rounded-3xl overflow-hidden shadow-sm space-y-0`}>
+        {/* Document Header */}
+        <div className="p-4 sm:p-5 border-b border-slate-200 bg-slate-50 flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-3">
+            <span className={`px-3 py-1 rounded-xl text-xs font-black text-white ${badgeColor}`}>
+              DANA {fundName.toUpperCase()}
+            </span>
+            <div>
+              <h4 className="text-base sm:text-lg font-black text-slate-900">
+                LAPORAN NERACA AKTIVITAS DANA {fundName.toUpperCase()}
+              </h4>
+              <p className="text-[11px] text-slate-500 font-medium">Standar ISAK 35 - Posisi Keuangan Terpisah Dana {fundName}</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <span className="text-xs font-mono font-extrabold text-slate-700 block">
+              Total Aktiva Neto: {formatRp(metrics.totalSaldoNeto)}
+            </span>
+          </div>
+        </div>
+
+        {/* Document Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-200 text-xs sm:text-sm">
+          {/* LEFT: AKTIVA */}
+          <div className="p-5 space-y-4">
+            <div className="flex items-center justify-between border-b-2 border-lime-600 pb-1.5">
+              <h5 className="font-black text-lime-800 uppercase tracking-wider text-xs">
+                1. AKTIVA / ASET (DANA {fundName.toUpperCase()})
+              </h5>
+            </div>
+
+            {fundAktiva.length === 0 ? (
+              <p className="text-slate-400 italic text-xs py-3 text-center">Tidak ada akun Aktiva tercatat untuk Dana {fundName}.</p>
+            ) : (
+              fAktivaGroups.map(grp => (
+                <div key={grp} className="space-y-1.5">
+                  <p className="font-bold text-slate-400 text-[11px] uppercase tracking-wider">{grp}</p>
+                  {fundAktiva.filter(a => a.kelompok === grp).map(a => (
+                    <div key={a.kode} className="flex justify-between py-1 border-b border-slate-100">
+                      <span className="text-slate-700 font-medium">{a.kode} – {a.nama}</span>
+                      <span className="font-mono font-bold text-slate-900">{formatRp(getLiveBalance(a.kode))}</span>
+                    </div>
+                  ))}
+                </div>
+              ))
+            )}
+
+            <div className="border-t-2 border-lime-700 pt-3 flex justify-between font-black text-sm text-lime-900 bg-lime-50/60 p-2.5 rounded-xl">
+              <span>TOTAL AKTIVA DANA {fundName.toUpperCase()}</span>
+              <span className="font-mono">{formatRp(totalFktiva)}</span>
+            </div>
+          </div>
+
+          {/* RIGHT: KEWAJIBAN & SALDO DANA */}
+          <div className="p-5 space-y-4">
+            {/* Kewajiban */}
+            <div className="space-y-2">
+              <div className="border-b-2 border-rose-600 pb-1.5">
+                <h5 className="font-black text-rose-800 uppercase tracking-wider text-xs">
+                  2. KEWAJIBAN (LIABILITIES) DANA {fundName.toUpperCase()}
+                </h5>
+              </div>
+              {fundKewajiban.length === 0 ? (
+                <p className="text-slate-400 italic text-xs py-1">Tidak ada kewajiban tercatat.</p>
+              ) : (
+                fundKewajiban.map(a => (
+                  <div key={a.kode} className="flex justify-between py-1 border-b border-slate-100">
+                    <span className="text-slate-700 font-medium">{a.kode} – {a.nama}</span>
+                    <span className="font-mono font-bold text-slate-900">{formatRp(getLiveBalance(a.kode))}</span>
+                  </div>
+                ))
+              )}
+              <div className="flex justify-between font-bold text-rose-700 text-xs">
+                <span>Total Kewajiban</span>
+                <span className="font-mono">{formatRp(totalFkewajiban)}</span>
+              </div>
+            </div>
+
+            {/* Saldo Dana */}
+            <div className="space-y-2 pt-2">
+              <div className="border-b-2 border-lime-600 pb-1.5">
+                <h5 className="font-black text-lime-800 uppercase tracking-wider text-xs">
+                  3. SALDO DANA & SURPLUS AKTIVITAS DANA {fundName.toUpperCase()}
+                </h5>
+              </div>
+              {fundEkuitas.map(a => (
+                <div key={a.kode} className="flex justify-between py-1 border-b border-slate-100">
+                  <span className="text-slate-700 font-medium">{a.kode} – {a.nama}</span>
+                  <span className="font-mono font-bold text-slate-900">{formatRp(getLiveBalance(a.kode))}</span>
+                </div>
+              ))}
+              <div className="flex justify-between py-1 border-b border-slate-100 font-semibold text-lime-800">
+                <span>Surplus / Defisit Aktivitas Dana {fundName}</span>
+                <span className="font-mono font-bold">{formatRp(fSurplus)}</span>
+              </div>
+              <div className="flex justify-between font-bold text-lime-800 text-xs">
+                <span>Total Saldo Dana & Surplus</span>
+                <span className="font-mono">{formatRp(totalFekuitas + fSurplus)}</span>
+              </div>
+            </div>
+
+            <div className="border-t-2 border-lime-700 pt-3 flex justify-between font-black text-sm text-lime-900 bg-lime-50/60 p-2.5 rounded-xl">
+              <span>TOTAL KEWAJIBAN + SALDO DANA</span>
+              <span className="font-mono">{formatRp(totalFkewajiban + totalFekuitas + fSurplus)}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer Balance Check */}
+        <div className={`p-3 text-center font-bold text-xs border-t flex items-center justify-center gap-2 ${
+          fBalanced ? 'bg-lime-50 text-lime-900 border-lime-200' : 'bg-rose-50 text-rose-900 border-rose-200'
+        }`}>
+          {fBalanced ? (
+            <>
+              <CheckCircle className="w-4 h-4 text-lime-600" />
+              <span>✅ Neraca Aktivitas Dana {fundName} Seimbang (Total Aktiva = Kewajiban + Saldo Dana & Surplus)</span>
+            </>
+          ) : (
+            <>
+              <AlertTriangle className="w-4 h-4 text-rose-600" />
+              <span>⚠️ Neraca Aktivitas Dana {fundName} Tidak Seimbang!</span>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in">
@@ -87,8 +264,8 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
             <BarChart3 className="w-6 h-6 text-lime-200" />
           </div>
           <div>
-            <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight">Laporan Keuangan Profesional</h2>
-            <p className="text-lime-200 text-xs sm:text-sm">Standar ISAK 35 / Akuntansi Masjid Terintegrasi</p>
+            <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight">Laporan Neraca Aktivitas & Keuangan</h2>
+            <p className="text-lime-200 text-xs sm:text-sm">Terintegrasi Pemisahan Dana Zakat, Infaq, Wakaf & Sodaqoh (ISAK 35 / PSAK 109)</p>
           </div>
         </div>
 
@@ -101,14 +278,14 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => alert('Mengekspor Laporan Keuangan ke PDF...')}
-              className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white font-bold px-4 py-2.5 rounded-2xl text-xs transition-all border border-white/20"
+              onClick={() => alert(`Mengekspor Laporan Neraca Aktivitas ${selectedFundFilter === 'Semua' ? 'Konsolidasi' : selectedFundFilter === 'Komparatif' ? 'Matrix Perbandingan' : selectedFundFilter === 'Multi' ? 'Multi-Neraca Terpisah' : 'Dana ' + selectedFundFilter} ke PDF...`)}
+              className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white font-bold px-4 py-2.5 rounded-2xl text-xs transition-all border border-white/20 cursor-pointer"
             >
               <Download className="w-4 h-4 text-lime-300" /> Export PDF
             </button>
             <button
-              onClick={() => alert('Mengekspor Laporan Keuangan ke Excel...')}
-              className="flex items-center gap-1.5 bg-lime-600 hover:bg-lime-500 text-white font-bold px-4 py-2.5 rounded-2xl text-xs transition-all shadow-md"
+              onClick={() => alert(`Mengekspor Laporan Neraca Aktivitas ${selectedFundFilter === 'Semua' ? 'Konsolidasi' : selectedFundFilter === 'Komparatif' ? 'Matrix Perbandingan' : selectedFundFilter === 'Multi' ? 'Multi-Neraca Terpisah' : 'Dana ' + selectedFundFilter} ke Excel...`)}
+              className="flex items-center gap-1.5 bg-lime-600 hover:bg-lime-500 text-white font-bold px-4 py-2.5 rounded-2xl text-xs transition-all shadow-md cursor-pointer"
             >
               <FileSpreadsheet className="w-4 h-4" /> Export Excel
             </button>
@@ -116,168 +293,574 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
         </div>
       </div>
 
-      {/* Integration Sources Summary Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-        <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Aset (Aktiva)</span>
-            <Scale className="w-4 h-4 text-lime-600" />
+      {/* Dynamic Summary Cards by ZISWAF Fund Categories */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        
+        {/* DANA ZAKAT CARD */}
+        <div className="bg-gradient-to-br from-emerald-50 to-white border border-emerald-200 rounded-2xl p-4 shadow-xs relative overflow-hidden">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[11px] font-black text-emerald-800 uppercase tracking-wider flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span> Dana Zakat
+            </span>
+            <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md font-bold">Mustahik</span>
           </div>
-          <p className="text-lg font-black font-mono text-slate-900">{formatRp(totalAktiva)}</p>
-          <p className="text-[10px] text-slate-400 mt-1">Kas, Bank BSI & Tanah Wakaf</p>
+          <p className="text-xl font-black font-mono text-emerald-900">{formatRp(zakatMetrics.totalSaldoNeto)}</p>
+          <div className="mt-2 pt-2 border-t border-emerald-100/80 text-[11px] space-y-0.5 font-medium">
+            <div className="flex justify-between text-emerald-700">
+              <span>Terima Zakat:</span>
+              <span className="font-mono font-bold">{formatRp(zakatMetrics.pendapatan)}</span>
+            </div>
+            <div className="flex justify-between text-slate-500">
+              <span>Penyaluran:</span>
+              <span className="font-mono font-bold text-rose-600">{formatRp(zakatMetrics.beban)}</span>
+            </div>
+          </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Donasi Portal Jamaah</span>
-            <TrendingUp className="w-4 h-4 text-lime-600" />
+        {/* DANA INFAQ CARD */}
+        <div className="bg-gradient-to-br from-blue-50 to-white border border-blue-200 rounded-2xl p-4 shadow-xs relative overflow-hidden">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[11px] font-black text-blue-800 uppercase tracking-wider flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-blue-500"></span> Dana Infaq
+            </span>
+            <span className="text-[10px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md font-bold">Jumat & Harian</span>
           </div>
-          <p className="text-lg font-black font-mono text-lime-600">{formatRp(donasiPortalTotal)}</p>
-          <p className="text-[10px] text-lime-600 font-semibold mt-1">✓ Terintegrasi Realtime</p>
+          <p className="text-xl font-black font-mono text-blue-900">{formatRp(infaqMetrics.totalSaldoNeto)}</p>
+          <div className="mt-2 pt-2 border-t border-blue-100/80 text-[11px] space-y-0.5 font-medium">
+            <div className="flex justify-between text-blue-700">
+              <span>Terima Infak:</span>
+              <span className="font-mono font-bold">{formatRp(infaqMetrics.pendapatan)}</span>
+            </div>
+            <div className="flex justify-between text-slate-500">
+              <span>Program Infak:</span>
+              <span className="font-mono font-bold text-rose-600">{formatRp(infaqMetrics.beban)}</span>
+            </div>
+          </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Donasi Umum / Kotak</span>
-            <Shield className="w-4 h-4 text-lime-600" />
+        {/* DANA WAKAF CARD */}
+        <div className="bg-gradient-to-br from-purple-50 to-white border border-purple-200 rounded-2xl p-4 shadow-xs relative overflow-hidden">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[11px] font-black text-purple-800 uppercase tracking-wider flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-purple-500"></span> Dana Wakaf
+            </span>
+            <span className="text-[10px] bg-purple-100 text-purple-800 px-2 py-0.5 rounded-md font-bold">Aset Restriksi</span>
           </div>
-          <p className="text-lg font-black font-mono text-lime-700">{formatRp(donasiUmumTotal)}</p>
-          <p className="text-[10px] text-lime-700 font-semibold mt-1">✓ Terintegrasi Realtime</p>
+          <p className="text-xl font-black font-mono text-purple-900">{formatRp(wakafMetrics.totalSaldoNeto)}</p>
+          <div className="mt-2 pt-2 border-t border-purple-100/80 text-[11px] space-y-0.5 font-medium">
+            <div className="flex justify-between text-purple-700">
+              <span>Wakaf Uang:</span>
+              <span className="font-mono font-bold">{formatRp(wakafMetrics.pendapatan)}</span>
+            </div>
+            <div className="flex justify-between text-slate-500">
+              <span>Aset Tetap Wakaf:</span>
+              <span className="font-mono font-bold text-purple-700">{formatRp(wakafMetrics.aktiva)}</span>
+            </div>
+          </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Surplus Periode Ini</span>
-            <Layers className="w-4 h-4 text-lime-600" />
+        {/* DANA SODAQOH CARD */}
+        <div className="bg-gradient-to-br from-amber-50 to-white border border-amber-200 rounded-2xl p-4 shadow-xs relative overflow-hidden">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[11px] font-black text-amber-800 uppercase tracking-wider flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-amber-500"></span> Dana Sodaqoh
+            </span>
+            <span className="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md font-bold">Sosial & Yatim</span>
           </div>
-          <p className={`text-lg font-black font-mono ${surplusDefisit >= 0 ? 'text-lime-700' : 'text-rose-700'}`}>
-            {formatRp(surplusDefisit)}
-          </p>
-          <p className="text-[10px] text-slate-400 mt-1">Pendapatan dikurangi Beban</p>
+          <p className="text-xl font-black font-mono text-amber-900">{formatRp(sodaqohMetrics.totalSaldoNeto)}</p>
+          <div className="mt-2 pt-2 border-t border-amber-100/80 text-[11px] space-y-0.5 font-medium">
+            <div className="flex justify-between text-amber-700">
+              <span>Sedekah Masuk:</span>
+              <span className="font-mono font-bold">{formatRp(sodaqohMetrics.pendapatan)}</span>
+            </div>
+            <div className="flex justify-between text-slate-500">
+              <span>Santunan/Sembako:</span>
+              <span className="font-mono font-bold text-rose-600">{formatRp(sodaqohMetrics.beban)}</span>
+            </div>
+          </div>
         </div>
+
       </div>
 
-      {/* Tabs Selector */}
+      {/* Main Mode Tabs Selector */}
       <div className="flex gap-2 bg-white p-2 rounded-2xl border border-slate-200 shadow-xs">
         <button
           onClick={() => setTab('neraca')}
-          className={`flex-1 py-3 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+          className={`flex-1 py-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
             tab === 'neraca'
               ? 'bg-lime-700 text-white shadow-md'
               : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
-          Laporan Neraca (Balance Sheet)
+          <Scale className="w-4 h-4" /> Laporan Neraca Aktivitas (Zakat, Infaq, Wakaf, Sodaqoh)
         </button>
         <button
           onClick={() => setTab('labarugi')}
-          className={`flex-1 py-3 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+          className={`flex-1 py-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
             tab === 'labarugi'
               ? 'bg-lime-700 text-white shadow-md'
               : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
-          Laporan Surplus & Defisit (Laba Rugi Operasional)
+          <Layers className="w-4 h-4" /> Laporan Surplus & Defisit (Laba Rugi Operasional)
         </button>
       </div>
 
-      {/* REPORT CONTENT: NERACA */}
+      {/* REPORT CONTENT: NERACA AKTIVITAS */}
       {tab === 'neraca' && (
-        <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm space-y-0">
-          
-          {/* Header Document */}
-          <div className="p-6 text-center border-b border-slate-200 bg-slate-50">
-            <span className="text-xs font-black text-lime-700 uppercase tracking-widest">DKM MASJID CITRA SENTUL RAYA</span>
-            <h3 className="text-xl font-black text-slate-900 mt-1">LAPORAN NERACA (BALANCE SHEET)</h3>
-            <p className="text-xs text-slate-500 font-medium">Periode per 31 Juli 2026 • Disajikan dalam Rupiah (IDR)</p>
-          </div>
-
-          {/* Grid Aktiva vs Kewajiban & Ekuitas */}
-          <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-200 text-xs sm:text-sm">
+        <div className="space-y-5">
+          {/* Main Container Card for Filter Controls & Single/Comparative View */}
+          <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm space-y-0">
             
-            {/* LEFT COLUMN: AKTIVA */}
-            <div className="p-6 space-y-5">
-              <h4 className="font-black text-lime-700 uppercase tracking-wider text-xs border-b-2 border-lime-600 pb-2">
-                AKTIVA (ASSETS)
-              </h4>
+            {/* Header Document */}
+            <div className="p-6 text-center border-b border-slate-200 bg-slate-50/70">
+              <span className="text-xs font-black text-lime-700 uppercase tracking-widest">DKM MASJID CITRA SENTUL RAYA</span>
+              <h3 className="text-xl sm:text-2xl font-black text-slate-900 mt-1">
+                {selectedFundFilter === 'Semua' && 'LAPORAN NERACA AKTIVITAS KONSOLIDASI (SEMUA DANA)'}
+                {selectedFundFilter === 'Zakat' && 'LAPORAN NERACA AKTIVITAS DANA ZAKAT'}
+                {selectedFundFilter === 'Infaq' && 'LAPORAN NERACA AKTIVITAS DANA INFAQ'}
+                {selectedFundFilter === 'Wakaf' && 'LAPORAN NERACA AKTIVITAS DANA WAKAF'}
+                {selectedFundFilter === 'Sodaqoh' && 'LAPORAN NERACA AKTIVITAS DANA SODAQOH'}
+                {selectedFundFilter === 'Operasional' && 'LAPORAN NERACA AKTIVITAS DANA OPERASIONAL'}
+                {selectedFundFilter === 'Komparatif' && 'MATRIX PERBANDINGAN NERACA AKTIVITAS 4 DANA (ISAK 35)'}
+                {selectedFundFilter === 'Multi' && 'KUMPULAN LAPORAN NERACA AKTIVITAS TERPISAH (ZAKAT, INFAQ, WAKAF, SODAQOH)'}
+              </h3>
+              <p className="text-xs text-slate-500 font-medium mt-1">
+                Rincian Posisi Keuangan & Perubahan Aktiva Neto Berdasarkan Pemisahan Dana Zakat, Infaq, Wakaf & Sodaqoh (ISAK 35)
+              </p>
 
-              {aktivaGroups.map(grp => (
-                <div key={grp} className="space-y-2">
-                  <p className="font-bold text-slate-400 text-xs uppercase tracking-wider">{grp}</p>
-                  {aktivaList.filter(a => a.kelompok === grp).map(a => {
-                    const b = getLiveBalance(a.kode);
-                    return (
+              {/* Fund Breakdown Filter Controls */}
+              <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1 mr-1">
+                  <Filter className="w-3.5 h-3.5" /> Pilih Laporan Neraca Aktivitas:
+                </span>
+                <button
+                  onClick={() => setSelectedFundFilter('Semua')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    selectedFundFilter === 'Semua'
+                      ? 'bg-slate-900 text-white shadow-xs'
+                      : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  Semua Dana (Konsolidasi)
+                </button>
+                <button
+                  onClick={() => setSelectedFundFilter('Zakat')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    selectedFundFilter === 'Zakat'
+                      ? 'bg-emerald-600 text-white shadow-xs'
+                      : 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100'
+                  }`}
+                >
+                  <span className="w-2 h-2 rounded-full bg-emerald-400"></span> Neraca Zakat
+                </button>
+                <button
+                  onClick={() => setSelectedFundFilter('Infaq')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    selectedFundFilter === 'Infaq'
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100'
+                  }`}
+                >
+                  <span className="w-2 h-2 rounded-full bg-blue-400"></span> Neraca Infaq
+                </button>
+                <button
+                  onClick={() => setSelectedFundFilter('Wakaf')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    selectedFundFilter === 'Wakaf'
+                      ? 'bg-purple-600 text-white shadow-xs'
+                      : 'bg-purple-50 text-purple-800 border border-purple-200 hover:bg-purple-100'
+                  }`}
+                >
+                  <span className="w-2 h-2 rounded-full bg-purple-400"></span> Neraca Wakaf
+                </button>
+                <button
+                  onClick={() => setSelectedFundFilter('Sodaqoh')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    selectedFundFilter === 'Sodaqoh'
+                      ? 'bg-amber-600 text-white shadow-xs'
+                      : 'bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100'
+                  }`}
+                >
+                  <span className="w-2 h-2 rounded-full bg-amber-400"></span> Neraca Sodaqoh
+                </button>
+                <button
+                  onClick={() => setSelectedFundFilter('Operasional')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    selectedFundFilter === 'Operasional'
+                      ? 'bg-slate-700 text-white shadow-xs'
+                      : 'bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200'
+                  }`}
+                >
+                  <span className="w-2 h-2 rounded-full bg-slate-400"></span> Dana Operasional
+                </button>
+                <button
+                  onClick={() => setSelectedFundFilter('Komparatif')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    selectedFundFilter === 'Komparatif'
+                      ? 'bg-lime-700 text-white shadow-md ring-2 ring-lime-400/50'
+                      : 'bg-lime-100 text-lime-800 border border-lime-300 hover:bg-lime-200'
+                  }`}
+                >
+                  <ArrowRightLeft className="w-3.5 h-3.5 text-lime-700" /> Tabel Perbandingan 4 Dana
+                </button>
+                <button
+                  onClick={() => setSelectedFundFilter('Multi')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    selectedFundFilter === 'Multi'
+                      ? 'bg-emerald-800 text-white shadow-md ring-2 ring-emerald-400/50'
+                      : 'bg-emerald-100 text-emerald-900 border border-emerald-300 hover:bg-emerald-200'
+                  }`}
+                >
+                  <Layers className="w-3.5 h-3.5" /> Tampilkan 4 Neraca Terpisah (Multi-View)
+                </button>
+              </div>
+            </div>
+
+            {/* VIEW MODE 1: COMPARATIVE MULTI-FUND MATRIX TABLE */}
+            {selectedFundFilter === 'Komparatif' && (
+              <div className="p-6 overflow-x-auto space-y-4">
+                <div className="bg-lime-50/60 border border-lime-200 p-4 rounded-2xl flex items-center justify-between text-xs text-lime-900 font-semibold">
+                  <span className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-lime-700" /> Matrix Laporan Neraca Aktivitas Terpisah Berdasarkan Standar Akuntansi Syariah ISAK 35
+                  </span>
+                  <span className="font-mono text-lime-700 font-bold">Mata Uang: IDR (Rupiah)</span>
+                </div>
+
+                <table className="w-full text-left text-xs whitespace-nowrap border-collapse">
+                  <thead>
+                    <tr className="bg-slate-900 text-white uppercase text-[11px] tracking-wider font-extrabold">
+                      <th className="p-3.5 rounded-l-xl">Komponen Neraca Aktivitas</th>
+                      <th className="p-3.5 text-right font-mono bg-emerald-950 text-emerald-200">🟢 Dana Zakat</th>
+                      <th className="p-3.5 text-right font-mono bg-blue-950 text-blue-200">🔵 Dana Infaq</th>
+                      <th className="p-3.5 text-right font-mono bg-purple-950 text-purple-200">🟣 Dana Wakaf</th>
+                      <th className="p-3.5 text-right font-mono bg-amber-950 text-amber-200">🟠 Dana Sodaqoh</th>
+                      <th className="p-3.5 text-right font-mono bg-slate-800 text-slate-200">⚪ Operasional</th>
+                      <th className="p-3.5 text-right font-mono bg-lime-950 text-lime-300 rounded-r-xl">Total Konsolidasi</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200 font-medium text-slate-800">
+                    
+                    {/* PENERIMAAN / DONASI MASUK */}
+                    <tr className="bg-slate-100 font-black text-slate-900 text-xs">
+                      <td colSpan={7} className="p-3 uppercase tracking-wider text-lime-800">1. PENERIMAAN & AKTIVITAS MASUK PERIODE BERJALAN</td>
+                    </tr>
+                    <tr className="hover:bg-slate-50">
+                      <td className="p-3 pl-6 text-slate-700">Penerimaan Zakat (Maal & Fitrah)</td>
+                      <td className="p-3 text-right font-mono font-bold text-emerald-700">{formatRp(zakatMetrics.pendapatan)}</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono font-bold">{formatRp(zakatMetrics.pendapatan)}</td>
+                    </tr>
+                    <tr className="hover:bg-slate-50">
+                      <td className="p-3 pl-6 text-slate-700">Penerimaan Infak (Jumat & Harian)</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono font-bold text-blue-700">{formatRp(infaqMetrics.pendapatan)}</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono font-bold">{formatRp(infaqMetrics.pendapatan)}</td>
+                    </tr>
+                    <tr className="hover:bg-slate-50">
+                      <td className="p-3 pl-6 text-slate-700">Wakaf Uang & Donasi Pembangunan</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono font-bold text-purple-700">{formatRp(wakafMetrics.pendapatan)}</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono font-bold">{formatRp(wakafMetrics.pendapatan)}</td>
+                    </tr>
+                    <tr className="hover:bg-slate-50">
+                      <td className="p-3 pl-6 text-slate-700">Sedekah Jamaah & Donasi Sosial</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono font-bold text-amber-700">{formatRp(sodaqohMetrics.pendapatan)}</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono font-bold">{formatRp(sodaqohMetrics.pendapatan)}</td>
+                    </tr>
+                    <tr className="hover:bg-slate-50">
+                      <td className="p-3 pl-6 text-slate-700">Penerimaan Operasional / Hibah / BUMM</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono font-bold text-slate-700">{formatRp(operasionalMetrics.pendapatan)}</td>
+                      <td className="p-3 text-right font-mono font-bold">{formatRp(operasionalMetrics.pendapatan)}</td>
+                    </tr>
+                    <tr className="bg-lime-50/80 font-black text-lime-900">
+                      <td className="p-3 pl-4">TOTAL PENERIMAAN DANA AKTIVITAS</td>
+                      <td className="p-3 text-right font-mono">{formatRp(zakatMetrics.pendapatan)}</td>
+                      <td className="p-3 text-right font-mono">{formatRp(infaqMetrics.pendapatan)}</td>
+                      <td className="p-3 text-right font-mono">{formatRp(wakafMetrics.pendapatan)}</td>
+                      <td className="p-3 text-right font-mono">{formatRp(sodaqohMetrics.pendapatan)}</td>
+                      <td className="p-3 text-right font-mono">{formatRp(operasionalMetrics.pendapatan)}</td>
+                      <td className="p-3 text-right font-mono text-lime-800 font-extrabold">{formatRp(totalPendapatan)}</td>
+                    </tr>
+
+                    {/* PENYALURAN & BEBAN AKTIVITAS */}
+                    <tr className="bg-slate-100 font-black text-slate-900 text-xs">
+                      <td colSpan={7} className="p-3 uppercase tracking-wider text-rose-800">2. PENYALURAN & BEBAN AKTIVITAS KELUAR</td>
+                    </tr>
+                    <tr className="hover:bg-slate-50">
+                      <td className="p-3 pl-6 text-slate-700">Penyaluran Zakat ke Mustahik (8 Asnaf)</td>
+                      <td className="p-3 text-right font-mono font-bold text-rose-600">{formatRp(zakatMetrics.beban)}</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono font-bold text-rose-600">{formatRp(zakatMetrics.beban)}</td>
+                    </tr>
+                    <tr className="hover:bg-slate-50">
+                      <td className="p-3 pl-6 text-slate-700">Program Penyaluran Infak Sosial & Dakwah</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono font-bold text-rose-600">{formatRp(infaqMetrics.beban)}</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono font-bold text-rose-600">{formatRp(infaqMetrics.beban)}</td>
+                    </tr>
+                    <tr className="hover:bg-slate-50">
+                      <td className="p-3 pl-6 text-slate-700">Pemeliharaan & Penyusutan Wakaf</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono font-bold text-rose-600">{formatRp(wakafMetrics.beban)}</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono font-bold text-rose-600">{formatRp(wakafMetrics.beban)}</td>
+                    </tr>
+                    <tr className="hover:bg-slate-50">
+                      <td className="p-3 pl-6 text-slate-700">Santunan Yatim & Paket Sembako (Sodaqoh)</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono font-bold text-rose-600">{formatRp(sodaqohMetrics.beban)}</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono font-bold text-rose-600">{formatRp(sodaqohMetrics.beban)}</td>
+                    </tr>
+                    <tr className="hover:bg-slate-50">
+                      <td className="p-3 pl-6 text-slate-700">Beban Operasional Masjid (Honor, Utility, ATK)</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono text-slate-400">Rp 0</td>
+                      <td className="p-3 text-right font-mono font-bold text-rose-600">{formatRp(operasionalMetrics.beban)}</td>
+                      <td className="p-3 text-right font-mono font-bold text-rose-600">{formatRp(operasionalMetrics.beban)}</td>
+                    </tr>
+                    <tr className="bg-rose-50/80 font-black text-rose-900">
+                      <td className="p-3 pl-4">TOTAL PENYALURAN & BEBAN AKTIVITAS</td>
+                      <td className="p-3 text-right font-mono">{formatRp(zakatMetrics.beban)}</td>
+                      <td className="p-3 text-right font-mono">{formatRp(infaqMetrics.beban)}</td>
+                      <td className="p-3 text-right font-mono">{formatRp(wakafMetrics.beban)}</td>
+                      <td className="p-3 text-right font-mono">{formatRp(sodaqohMetrics.beban)}</td>
+                      <td className="p-3 text-right font-mono">{formatRp(operasionalMetrics.beban)}</td>
+                      <td className="p-3 text-right font-mono text-rose-800 font-extrabold">{formatRp(totalBeban)}</td>
+                    </tr>
+
+                    {/* HASIL SURPLUS DEFISIT PERIODE INI */}
+                    <tr className="bg-slate-900 text-white font-black text-xs">
+                      <td className="p-3.5 pl-4 uppercase tracking-wider">3. SURPLUS / (DEFISIT) AKTIVITAS PERIODE BERJALAN</td>
+                      <td className="p-3.5 text-right font-mono text-emerald-300 font-extrabold">{formatRp(zakatMetrics.surplus)}</td>
+                      <td className="p-3.5 text-right font-mono text-blue-300 font-extrabold">{formatRp(infaqMetrics.surplus)}</td>
+                      <td className="p-3.5 text-right font-mono text-purple-300 font-extrabold">{formatRp(wakafMetrics.surplus)}</td>
+                      <td className="p-3.5 text-right font-mono text-amber-300 font-extrabold">{formatRp(sodaqohMetrics.surplus)}</td>
+                      <td className="p-3.5 text-right font-mono text-slate-300 font-extrabold">{formatRp(operasionalMetrics.surplus)}</td>
+                      <td className="p-3.5 text-right font-mono text-lime-300 font-extrabold text-sm">{formatRp(surplusDefisit)}</td>
+                    </tr>
+
+                    {/* POSISI ASET & SALDO DANA AKHIR */}
+                    <tr className="bg-slate-100 font-black text-slate-900 text-xs">
+                      <td colSpan={7} className="p-3 uppercase tracking-wider text-slate-900">4. REKAPITULASI POSISI AKTIVA NETO & SALDO DANA AKHIR (NERACA)</td>
+                    </tr>
+                    <tr className="hover:bg-slate-50 font-bold">
+                      <td className="p-3 pl-6 text-slate-800">Total Aktiva (Aset Allocated)</td>
+                      <td className="p-3 text-right font-mono text-emerald-800">{formatRp(zakatMetrics.aktiva)}</td>
+                      <td className="p-3 text-right font-mono text-blue-800">{formatRp(infaqMetrics.aktiva)}</td>
+                      <td className="p-3 text-right font-mono text-purple-800">{formatRp(wakafMetrics.aktiva)}</td>
+                      <td className="p-3 text-right font-mono text-amber-800">{formatRp(sodaqohMetrics.aktiva)}</td>
+                      <td className="p-3 text-right font-mono text-slate-800">{formatRp(operasionalMetrics.aktiva)}</td>
+                      <td className="p-3 text-right font-mono font-black text-slate-900">{formatRp(totalAktiva)}</td>
+                    </tr>
+                    <tr className="hover:bg-slate-50 font-bold">
+                      <td className="p-3 pl-6 text-slate-800">Total Kewajiban (Liabilities)</td>
+                      <td className="p-3 text-right font-mono text-rose-700">{formatRp(zakatMetrics.kewajiban)}</td>
+                      <td className="p-3 text-right font-mono text-rose-700">{formatRp(infaqMetrics.kewajiban)}</td>
+                      <td className="p-3 text-right font-mono text-rose-700">{formatRp(wakafMetrics.kewajiban)}</td>
+                      <td className="p-3 text-right font-mono text-rose-700">{formatRp(sodaqohMetrics.kewajiban)}</td>
+                      <td className="p-3 text-right font-mono text-rose-700">{formatRp(operasionalMetrics.kewajiban)}</td>
+                      <td className="p-3 text-right font-mono text-rose-700">{formatRp(totalKewajiban)}</td>
+                    </tr>
+                    <tr className="bg-lime-600 text-white font-black text-xs">
+                      <td className="p-3.5 pl-4 uppercase tracking-wider">TOTAL SALDO DANA & AKTIVA NETO AKHIR</td>
+                      <td className="p-3.5 text-right font-mono font-extrabold">{formatRp(zakatMetrics.totalSaldoNeto)}</td>
+                      <td className="p-3.5 text-right font-mono font-extrabold">{formatRp(infaqMetrics.totalSaldoNeto)}</td>
+                      <td className="p-3.5 text-right font-mono font-extrabold">{formatRp(wakafMetrics.totalSaldoNeto)}</td>
+                      <td className="p-3.5 text-right font-mono font-extrabold">{formatRp(sodaqohMetrics.totalSaldoNeto)}</td>
+                      <td className="p-3.5 text-right font-mono font-extrabold">{formatRp(operasionalMetrics.totalSaldoNeto)}</td>
+                      <td className="p-3.5 text-right font-mono text-sm font-black">{formatRp(totalEkuitas + surplusDefisit)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* VIEW MODE 2: SINGLE FUND OR CONSOLIDATED BALANCE SHEET */}
+            {selectedFundFilter !== 'Komparatif' && selectedFundFilter !== 'Multi' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-200 text-xs sm:text-sm">
+                
+                {/* LEFT COLUMN: AKTIVA */}
+                <div className="p-6 space-y-5">
+                  <div className="flex items-center justify-between border-b-2 border-lime-600 pb-2">
+                    <h4 className="font-black text-lime-700 uppercase tracking-wider text-xs flex items-center gap-1.5">
+                      AKTIVA / ASET (ASSETS)
+                    </h4>
+                    {selectedFundFilter !== 'Semua' && (
+                      <span className="text-[10px] font-bold bg-lime-100 text-lime-800 px-2 py-0.5 rounded-full uppercase">
+                        Dana {selectedFundFilter}
+                      </span>
+                    )}
+                  </div>
+
+                  {aktivaList.length === 0 ? (
+                    <p className="text-slate-400 italic text-xs py-4 text-center">Tidak ada akun Aktiva tercatat untuk kategori dana ini.</p>
+                  ) : (
+                    aktivaGroups.map(grp => (
+                      <div key={grp} className="space-y-2">
+                        <p className="font-bold text-slate-400 text-xs uppercase tracking-wider">{grp}</p>
+                        {aktivaList.filter(a => a.kelompok === grp).map(a => {
+                          const b = getLiveBalance(a.kode);
+                          const fund = getAccountFundCategory(a);
+                          return (
+                            <div key={a.kode} className="flex justify-between py-1.5 border-b border-slate-100">
+                              <span className="text-slate-700 font-medium flex items-center gap-1.5">
+                                <span>{a.kode} – {a.nama}</span>
+                                {selectedFundFilter === 'Semua' && (
+                                  <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold uppercase ${
+                                    fund === 'Zakat' ? 'bg-emerald-100 text-emerald-700' :
+                                    fund === 'Infaq' ? 'bg-blue-100 text-blue-700' :
+                                    fund === 'Wakaf' ? 'bg-purple-100 text-purple-700' :
+                                    fund === 'Sodaqoh' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'
+                                  }`}>
+                                    {fund}
+                                  </span>
+                                )}
+                              </span>
+                              <span className="font-mono font-bold text-slate-900">{formatRp(b)}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))
+                  )}
+
+                  <div className="border-t-2 border-lime-700 pt-4 flex justify-between font-black text-base text-lime-800 bg-lime-50/50 p-3 rounded-xl">
+                    <span>TOTAL AKTIVA ({selectedFundFilter.toUpperCase()})</span>
+                    <span className="font-mono">{formatRp(totalAktiva)}</span>
+                  </div>
+                </div>
+
+                {/* RIGHT COLUMN: KEWAJIBAN & EKUITAS / SALDO DANA */}
+                <div className="p-6 space-y-5">
+                  
+                  {/* Kewajiban */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between border-b-2 border-rose-600 pb-2">
+                      <h4 className="font-black text-rose-700 uppercase tracking-wider text-xs">
+                        KEWAJIBAN (LIABILITIES)
+                      </h4>
+                    </div>
+                    {kewajibanList.length === 0 ? (
+                      <p className="text-slate-400 italic text-xs py-2">Tidak ada kewajiban tercatat.</p>
+                    ) : (
+                      kewajibanList.map(a => (
+                        <div key={a.kode} className="flex justify-between py-1.5 border-b border-slate-100">
+                          <span className="text-slate-700 font-medium">{a.kode} – {a.nama}</span>
+                          <span className="font-mono font-bold text-slate-900">{formatRp(getLiveBalance(a.kode))}</span>
+                        </div>
+                      ))
+                    )}
+                    <div className="flex justify-between font-bold text-rose-700 pt-1">
+                      <span>Total Kewajiban</span>
+                      <span className="font-mono">{formatRp(totalKewajiban)}</span>
+                    </div>
+                  </div>
+
+                  {/* Ekuitas / Saldo Dana */}
+                  <div className="space-y-3 pt-4">
+                    <div className="flex items-center justify-between border-b-2 border-lime-600 pb-2">
+                      <h4 className="font-black text-lime-700 uppercase tracking-wider text-xs">
+                        SALDO DANA & AKTIVA NETO
+                      </h4>
+                    </div>
+                    {ekuitasList.map(a => (
                       <div key={a.kode} className="flex justify-between py-1.5 border-b border-slate-100">
                         <span className="text-slate-700 font-medium">{a.kode} – {a.nama}</span>
-                        <span className="font-mono font-bold text-slate-900">{formatRp(b)}</span>
+                        <span className="font-mono font-bold text-slate-900">{formatRp(getLiveBalance(a.kode))}</span>
                       </div>
-                    );
-                  })}
-                </div>
-              ))}
-
-              <div className="border-t-2 border-lime-700 pt-4 flex justify-between font-black text-base text-lime-800 bg-lime-50/50 p-3 rounded-xl">
-                <span>TOTAL AKTIVA</span>
-                <span className="font-mono">{formatRp(totalAktiva)}</span>
-              </div>
-            </div>
-
-            {/* RIGHT COLUMN: KEWAJIBAN & EKUITAS */}
-            <div className="p-6 space-y-5">
-              
-              {/* Kewajiban */}
-              <div className="space-y-3">
-                <h4 className="font-black text-rose-700 uppercase tracking-wider text-xs border-b-2 border-rose-600 pb-2">
-                  KEWAJIBAN (LIABILITIES)
-                </h4>
-                {kewajibanList.map(a => (
-                  <div key={a.kode} className="flex justify-between py-1.5 border-b border-slate-100">
-                    <span className="text-slate-700 font-medium">{a.kode} – {a.nama}</span>
-                    <span className="font-mono font-bold text-slate-900">{formatRp(getLiveBalance(a.kode))}</span>
+                    ))}
+                    <div className="flex justify-between py-1.5 border-b border-slate-100 font-semibold text-lime-700">
+                      <span>Surplus / Defisit Aktivitas Periode Berjalan</span>
+                      <span className="font-mono font-bold">{formatRp(surplusDefisit)}</span>
+                    </div>
+                    <div className="flex justify-between font-bold text-lime-700 pt-1">
+                      <span>Total Saldo Dana & Surplus</span>
+                      <span className="font-mono">{formatRp(totalEkuitas + surplusDefisit)}</span>
+                    </div>
                   </div>
-                ))}
-                <div className="flex justify-between font-bold text-rose-700 pt-1">
-                  <span>Total Kewajiban</span>
-                  <span className="font-mono">{formatRp(totalKewajiban)}</span>
-                </div>
-              </div>
 
-              {/* Ekuitas / Saldo Dana */}
-              <div className="space-y-3 pt-4">
-                <h4 className="font-black text-lime-700 uppercase tracking-wider text-xs border-b-2 border-lime-600 pb-2">
-                  SALDO DANA & EKUITAS
-                </h4>
-                {ekuitasList.map(a => (
-                  <div key={a.kode} className="flex justify-between py-1.5 border-b border-slate-100">
-                    <span className="text-slate-700 font-medium">{a.kode} – {a.nama}</span>
-                    <span className="font-mono font-bold text-slate-900">{formatRp(getLiveBalance(a.kode))}</span>
+                  <div className="border-t-2 border-lime-700 pt-4 flex justify-between font-black text-base text-lime-800 bg-lime-50/50 p-3 rounded-xl">
+                    <span>TOTAL KEWAJIBAN + SALDO DANA</span>
+                    <span className="font-mono">{formatRp(totalKewajiban + totalEkuitas + surplusDefisit)}</span>
                   </div>
-                ))}
-                <div className="flex justify-between py-1.5 border-b border-slate-100 font-semibold text-lime-700">
-                  <span>Surplus / Defisit Periode Berjalan</span>
-                  <span className="font-mono font-bold">{formatRp(surplusDefisit)}</span>
-                </div>
-                <div className="flex justify-between font-bold text-lime-700 pt-1">
-                  <span>Total Ekuitas & Surplus</span>
-                  <span className="font-mono">{formatRp(totalEkuitas + surplusDefisit)}</span>
                 </div>
               </div>
+            )}
 
-              <div className="border-t-2 border-lime-700 pt-4 flex justify-between font-black text-base text-lime-800 bg-lime-50/50 p-3 rounded-xl">
-                <span>TOTAL KEWAJIBAN + SALDO DANA</span>
-                <span className="font-mono">{formatRp(totalKewajiban + totalEkuitas + surplusDefisit)}</span>
+            {/* Balance Check Footer for Single / Consolidated Mode */}
+            {selectedFundFilter !== 'Komparatif' && selectedFundFilter !== 'Multi' && (
+              <div className={`p-4 text-center font-bold text-xs sm:text-sm border-t flex items-center justify-center gap-2 ${
+                isBalanced ? 'bg-lime-50 text-lime-800 border-lime-200' : 'bg-rose-50 text-rose-800 border-rose-200'
+              }`}>
+                {isBalanced ? (
+                  <>
+                    <CheckCircle className="w-4 h-4 text-lime-600" />
+                    <span>✅ Keseimbangan Neraca Aktivitas Sempurna (Total Aktiva = Total Kewajiban + Saldo Dana & Surplus Aktivitas)</span>
+                  </>
+                ) : (
+                  <>
+                    <AlertTriangle className="w-4 h-4 text-rose-600" />
+                    <span>⚠️ Neraca Aktivitas Tidak Seimbang! Periksa kembali posting jurnal.</span>
+                  </>
+                )}
               </div>
-            </div>
+            )}
           </div>
 
-          {/* Balance Check Footer */}
-          <div className={`p-4 text-center font-bold text-xs sm:text-sm border-t ${
-            isBalanced ? 'bg-lime-50 text-lime-800 border-lime-200' : 'bg-rose-50 text-rose-800 border-rose-200'
-          }`}>
-            {isBalanced 
-              ? '✅ Keseimbangan Neraca Sempurna (Total Aktiva = Total Kewajiban + Saldo Dana & Surplus)' 
-              : '⚠️ Neraca Tidak Seimbang! Periksa kembali jurnal yang diposting.'}
-          </div>
+          {/* VIEW MODE 3: MULTI-NERACA STACKED VIEW (INDIVIDUAL SEPARATED DOCUMENT FOR EACH FUND) */}
+          {selectedFundFilter === 'Multi' && (
+            <div className="space-y-6 pt-2">
+              <div className="bg-lime-800 text-white p-4 rounded-2xl flex items-center justify-between text-xs font-bold shadow-sm">
+                <span className="flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-lime-300" /> Kumpulan 4 Dokumen Laporan Neraca Aktivitas Terpisah Berdasarkan Standar ISAK 35
+                </span>
+                <span className="text-lime-200 font-mono">Zakat • Infaq • Wakaf • Sodaqoh</span>
+              </div>
+
+              {/* 1. DANA ZAKAT */}
+              {renderFundBalanceSheetDoc('Zakat', 'bg-emerald-600', 'border-emerald-300', zakatMetrics)}
+
+              {/* 2. DANA INFAQ */}
+              {renderFundBalanceSheetDoc('Infaq', 'bg-blue-600', 'border-blue-300', infaqMetrics)}
+
+              {/* 3. DANA WAKAF */}
+              {renderFundBalanceSheetDoc('Wakaf', 'bg-purple-600', 'border-purple-300', wakafMetrics)}
+
+              {/* 4. DANA SODAQOH */}
+              {renderFundBalanceSheetDoc('Sodaqoh', 'bg-amber-600', 'border-amber-300', sodaqohMetrics)}
+            </div>
+          )}
         </div>
       )}
 
@@ -287,7 +870,7 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
           
           <div className="p-6 text-center border-b border-slate-200 bg-slate-50">
             <span className="text-xs font-black text-lime-700 uppercase tracking-widest">DKM MASJID CITRA SENTUL RAYA</span>
-            <h3 className="text-xl font-black text-slate-900 mt-1">LAPORAN SURPLUS & DEFISIT (LABA RUGI)</h3>
+            <h3 className="text-xl font-black text-slate-900 mt-1">LAPORAN SURPLUS & DEFISIT AKTIVITAS (LABA RUGI)</h3>
             <p className="text-xs text-slate-500 font-medium">Periode 1 Juli 2026 s/d 31 Juli 2026</p>
           </div>
 
@@ -296,7 +879,7 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
             {/* Section 1: Pendapatan */}
             <div className="space-y-3">
               <h4 className="font-black text-lime-700 uppercase tracking-wider text-xs border-b-2 border-lime-600 pb-2">
-                1. PENDAPATAN & PENERIMAAN DONASI
+                1. PENDAPATAN & PENERIMAAN DONASI ZISWAF
               </h4>
               
               {pendapatanGroups.map(grp => (
@@ -304,9 +887,20 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
                   <p className="font-bold text-slate-400 text-xs uppercase tracking-wider">{grp}</p>
                   {pendapatanList.filter(a => a.kelompok === grp).map(a => {
                     const bal = getLiveBalance(a.kode);
+                    const fund = getAccountFundCategory(a);
                     return (
                       <div key={a.kode} className="flex justify-between py-1.5 border-b border-slate-100 pl-4">
-                        <span className="text-slate-700 font-medium">{a.nama}</span>
+                        <span className="text-slate-700 font-medium flex items-center gap-2">
+                          <span>{a.nama}</span>
+                          <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold uppercase ${
+                            fund === 'Zakat' ? 'bg-emerald-100 text-emerald-700' :
+                            fund === 'Infaq' ? 'bg-blue-100 text-blue-700' :
+                            fund === 'Wakaf' ? 'bg-purple-100 text-purple-700' :
+                            fund === 'Sodaqoh' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'
+                          }`}>
+                            {fund}
+                          </span>
+                        </span>
                         <span className="font-mono font-bold text-lime-700">{formatRp(bal)}</span>
                       </div>
                     );
@@ -323,7 +917,7 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
             {/* Section 2: Beban */}
             <div className="space-y-3 pt-2">
               <h4 className="font-black text-rose-700 uppercase tracking-wider text-xs border-b-2 border-rose-600 pb-2">
-                2. BEBAN & PENGELUARAN OPERASIONAL / PROGRAM
+                2. BEBAN & PENGELUARAN PENYALURAN PROGRAM / OPERASIONAL
               </h4>
 
               {bebanGroups.map(grp => (
@@ -331,9 +925,20 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
                   <p className="font-bold text-slate-400 text-xs uppercase tracking-wider">{grp}</p>
                   {bebanList.filter(a => a.kelompok === grp).map(a => {
                     const bal = getLiveBalance(a.kode);
+                    const fund = getAccountFundCategory(a);
                     return (
                       <div key={a.kode} className="flex justify-between py-1.5 border-b border-slate-100 pl-4">
-                        <span className="text-slate-700 font-medium">{a.nama}</span>
+                        <span className="text-slate-700 font-medium flex items-center gap-2">
+                          <span>{a.nama}</span>
+                          <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold uppercase ${
+                            fund === 'Zakat' ? 'bg-emerald-100 text-emerald-700' :
+                            fund === 'Infaq' ? 'bg-blue-100 text-blue-700' :
+                            fund === 'Wakaf' ? 'bg-purple-100 text-purple-700' :
+                            fund === 'Sodaqoh' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'
+                          }`}>
+                            {fund}
+                          </span>
+                        </span>
                         <span className="font-mono font-bold text-rose-700">{formatRp(bal)}</span>
                       </div>
                     );
@@ -342,7 +947,7 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
               ))}
 
               <div className="flex justify-between font-black text-base text-rose-800 bg-rose-50 p-3.5 rounded-2xl border border-rose-200 mt-2">
-                <span>TOTAL BEBAN & PENGELUARAN</span>
+                <span>TOTAL BEBAN & PENYALURAN PROGRAM</span>
                 <span className="font-mono">{formatRp(totalBeban)}</span>
               </div>
             </div>
@@ -350,13 +955,13 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
             {/* Section 3: Net Surplus / Defisit */}
             <div className={`p-6 rounded-3xl border-2 flex flex-col sm:flex-row items-center justify-between gap-4 ${
               surplusDefisit >= 0 
-                ? 'bg-lime-500 text-white border-lime-600 shadow-md' 
+                ? 'bg-lime-600 text-white border-lime-700 shadow-md' 
                 : 'bg-rose-600 text-white border-rose-700 shadow-md'
             }`}>
               <div>
-                <p className="text-xs uppercase tracking-widest font-black text-white/80">HASIL OPERASIONAL BERSIH</p>
-                <h4 className="text-2xl font-black">{surplusDefisit >= 0 ? 'SURPLUS PERIODE INI' : 'DEFISIT PERIODE INI'}</h4>
-                <p className="text-xs text-white/80 mt-0.5">Pendapatan Bersih dikurangi Total Pengeluaran Operasional</p>
+                <p className="text-xs uppercase tracking-widest font-black text-white/80">HASIL AKTIVITAS KEUANGAN BERSIH</p>
+                <h4 className="text-2xl font-black">{surplusDefisit >= 0 ? 'SURPLUS AKTIVITAS PERIODE INI' : 'DEFISIT AKTIVITAS PERIODE INI'}</h4>
+                <p className="text-xs text-white/80 mt-0.5">Total Penerimaan ZISWAF dikurangi Total Penyaluran Program & Operasional</p>
               </div>
 
               <p className="text-3xl font-black font-mono tracking-tight bg-white/10 backdrop-blur px-6 py-3 rounded-2xl border border-white/20">

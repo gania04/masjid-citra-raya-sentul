@@ -20,6 +20,7 @@ import { Sun, Moon, BookOpen, LayoutDashboard } from 'lucide-react';
 
 export default function App() {
   const [isAdmin, setIsAdmin] = useState(false);
+  const [adminRole, setAdminRole] = useState('direktur');
   const [isJamaahLoggedIn, setIsJamaahLoggedIn] = useState(false);
   const [showPortal, setShowPortal] = useState(false);
   const [namaJamaah, setNamaJamaah] = useState('Hamba Allah');
@@ -279,8 +280,9 @@ export default function App() {
         {(isAdmin && showPortal) ? (
           <div className="flex-1">
             <AdminDashboard 
+              adminRole={adminRole}
               onBack={() => {
-                logAudit('Pengurus DKM', 'ADMIN', 'admin@masjid.id', 'LOGOUT', 'User berhasil keluar (logout) dari sistem Admin', 'bg-red-900/50 text-red-600');
+                logAudit('Pengurus DKM', adminRole.toUpperCase(), 'admin@masjid.id', 'LOGOUT', 'User berhasil keluar (logout) dari sistem Admin', 'bg-red-900/50 text-red-600');
                 setIsAdmin(false);
                 setShowPortal(false);
               }} 
@@ -405,10 +407,11 @@ export default function App() {
       <LoginModal 
         isOpen={isLoginModalOpen} 
         onClose={() => setIsLoginModalOpen(false)} 
-        onAdminLogin={() => {
+        onAdminLogin={(role) => {
           setIsAdmin(true);
+          setAdminRole(role || 'direktur');
           setShowPortal(true);
-          logAudit('Pengurus DKM', 'ADMIN', 'admin@masjid.id', 'LOGIN', 'Admin berhasil login ke sistem', 'bg-lime-900/50 text-lime-600');
+          logAudit('Pengurus DKM', (role || 'direktur').toUpperCase(), 'admin@masjid.id', 'LOGIN', `Admin (${role || 'direktur'}) berhasil login ke sistem`, 'bg-lime-900/50 text-lime-600');
         }}
         onJamaahLogin={(nama, kontak) => {
           setIsJamaahLoggedIn(true);

@@ -393,80 +393,88 @@ export const WakafForm: React.FC<WakafFormProps> = ({ onAddMuwakif, onShowCertif
                     </div>
                   </div>
                 ) : (
-                  /* QRIS Card */
-                  <div className="flex flex-col sm:flex-row items-center gap-6">
-                    <div className="bg-white p-3 rounded-2xl border-2 border-lime-400 shadow-md text-center group relative overflow-hidden">
-                      <div 
-                        onClick={() => setShowQrisModal(true)}
-                        className="relative cursor-pointer overflow-hidden rounded-xl bg-slate-50 border border-slate-200"
-                      >
-                        <img 
-                          src="/images/qris-masjid.jpg" 
-                          alt="QRIS Official Masjid Citra Sentul Raya" 
-                          className="w-44 h-auto object-contain mx-auto transition-transform duration-300 group-hover:scale-105"
-                        />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 text-white text-xs font-bold">
-                          <ZoomIn className="w-4 h-4" />
-                          <span>Klik Perbesar</span>
-                        </div>
-                      </div>
-                      <div className="mt-2 space-y-1">
-                        <span className="text-[10px] font-extrabold text-slate-800 block font-mono">
-                          NMID : ID1023304558381
-                        </span>
-                        <div className="flex items-center justify-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIsQrisZoomed(false);
-                              setShowQrisModal(true);
-                            }}
-                            className="text-[10px] text-emerald-700 font-bold hover:underline flex items-center gap-1 cursor-pointer"
-                          >
-                            <ZoomIn className="w-3 h-3" />
-                            Perbesar
-                          </button>
-                          <span className="text-slate-300">•</span>
-                          <button
-                            type="button"
-                            onClick={handleDownloadQris}
-                            className="text-[10px] text-emerald-700 font-bold hover:underline flex items-center gap-1 cursor-pointer"
-                          >
-                            <Download className="w-3 h-3" />
-                            Unduh QR
-                          </button>
-                        </div>
-                      </div>
+                  /* QRIS Card — Premium Redesign */
+                  <div className="flex flex-col gap-4">
+                    {/* Top: Badge Row */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-[11px] bg-lime-400/20 text-lime-300 px-2.5 py-1 rounded-full font-bold border border-lime-400/30 flex items-center gap-1">
+                        <QrCode className="w-3 h-3" /> QRIS Standar Nasional (GPN)
+                      </span>
+                      <span className="text-[11px] bg-emerald-800/70 text-emerald-200 px-2.5 py-1 rounded-full font-semibold border border-emerald-700/50">
+                        ✓ Terverifikasi BI
+                      </span>
                     </div>
 
-                    <div className="space-y-2.5 text-center sm:text-left flex-1">
-                      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                        <span className="text-xs bg-lime-400/20 text-lime-300 px-2.5 py-1 rounded-md font-bold inline-block border border-lime-400/30">
-                          QRIS Standar Nasional (GPN)
-                        </span>
-                        <span className="text-xs bg-emerald-800 text-emerald-200 px-2.5 py-1 rounded-md font-semibold inline-block border border-emerald-700">
-                          Verifikasi Otomatis
-                        </span>
-                      </div>
-                      
-                      <h4 className="text-lg font-bold text-white">Scan & Bayar Sekarang</h4>
-                      <p className="text-xs text-emerald-200 leading-relaxed max-w-md">
-                        Mendukung semua aplikasi e-Wallet & Mobile Banking: BCA Mobile, Livin Mandiri, BRImo, BSI Mobile, GoPay, OVO, Dana, ShopeePay, LinkAja, dll.
-                      </p>
-
-                      <div className="pt-2 border-t border-emerald-900/80 flex items-center justify-between">
-                        <div>
-                          <span className="text-[11px] text-emerald-300 block font-medium">Nominal Wakaf:</span>
-                          <span className="text-2xl font-black text-lime-300">{formatRupiah(totalTransfer)}</span>
+                    {/* Middle: QR + Info Side by Side */}
+                    <div className="flex flex-col sm:flex-row items-center gap-5">
+                      {/* QR Code Frame */}
+                      <div
+                        onClick={() => { setIsQrisZoomed(false); setShowQrisModal(true); }}
+                        className="group relative cursor-pointer flex-shrink-0"
+                        title="Klik untuk perbesar QRIS"
+                      >
+                        {/* Glow ring */}
+                        <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-lime-400 via-emerald-500 to-teal-500 opacity-40 blur-sm group-hover:opacity-70 transition-opacity duration-300" />
+                        <div className="relative bg-white p-3 rounded-2xl shadow-xl border border-lime-300/40">
+                          <img
+                            src="/images/qris-masjid.jpg"
+                            alt="QRIS Official Masjid Citra Sentul Raya"
+                            className="w-40 h-auto object-contain rounded-xl block transition-transform duration-300 group-hover:scale-105"
+                          />
+                          {/* Hover overlay */}
+                          <div className="absolute inset-0 bg-emerald-950/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex flex-col items-center justify-center gap-1">
+                            <ZoomIn className="w-6 h-6 text-lime-300" />
+                            <span className="text-[11px] text-lime-200 font-bold">Perbesar</span>
+                          </div>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => handleCopy(totalTransfer.toString(), 'nominal')}
-                          className="px-3 py-1.5 bg-emerald-800 hover:bg-emerald-700 text-lime-300 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 border border-emerald-600 cursor-pointer"
-                        >
-                          {copiedNominal ? <Check className="w-3.5 h-3.5 text-lime-300" /> : <Copy className="w-3.5 h-3.5" />}
-                          <span>{copiedNominal ? 'Tersalin' : 'Salin Nominal'}</span>
-                        </button>
+                        {/* NMID badge below QR */}
+                        <div className="mt-2 text-center">
+                          <span className="text-[10px] font-mono font-bold text-emerald-300 bg-emerald-950/50 px-2 py-0.5 rounded-md border border-emerald-800">
+                            NMID: ID1023304558381
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Right: Info */}
+                      <div className="flex-1 space-y-3 text-center sm:text-left">
+                        <div>
+                          <h4 className="text-base font-extrabold text-white leading-tight">Scan & Bayar Sekarang</h4>
+                          <p className="text-[11px] text-emerald-300 mt-0.5">a.n. Masjid Citra Sentul Raya</p>
+                        </div>
+
+                        {/* E-wallet chips */}
+                        <div className="flex flex-wrap gap-1.5 justify-center sm:justify-start">
+                          {['GoPay','OVO','Dana','ShopeePay','BCA','Mandiri','BRI','BSI'].map(w => (
+                            <span key={w} className="text-[10px] bg-emerald-900 border border-emerald-700/60 text-emerald-200 px-2 py-0.5 rounded-md font-semibold">{w}</span>
+                          ))}
+                          <span className="text-[10px] bg-emerald-900 border border-emerald-700/60 text-emerald-300 px-2 py-0.5 rounded-md font-semibold">+lainnya</span>
+                        </div>
+
+                        {/* Nominal + Action Row */}
+                        <div className="pt-2.5 border-t border-emerald-800/60 flex items-center justify-between gap-3">
+                          <div>
+                            <span className="text-[10px] text-emerald-400 uppercase tracking-wide font-semibold block">Nominal Wakaf</span>
+                            <span className="text-xl font-black text-lime-300">{formatRupiah(totalTransfer)}</span>
+                          </div>
+                          <div className="flex flex-col gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleCopy(totalTransfer.toString(), 'nominal')}
+                              className="px-3 py-1.5 bg-lime-400 hover:bg-lime-300 text-emerald-950 text-[11px] font-extrabold rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+                            >
+                              {copiedNominal ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                              <span>{copiedNominal ? 'Tersalin!' : 'Salin Nominal'}</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleDownloadQris}
+                              className="px-3 py-1.5 bg-emerald-800 hover:bg-emerald-700 text-emerald-100 text-[11px] font-bold rounded-lg transition-colors flex items-center gap-1 border border-emerald-600 cursor-pointer"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                              <span>Unduh QR</span>
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -560,90 +568,101 @@ export const WakafForm: React.FC<WakafFormProps> = ({ onAddMuwakif, onShowCertif
         )}
       </div>
 
-      {/* FULLSCREEN / INTERACTIVE ZOOM QRIS MODAL */}
+      {/* FULLSCREEN / INTERACTIVE ZOOM QRIS MODAL — Premium */}
       {showQrisModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-in fade-in overflow-y-auto">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full text-center relative shadow-2xl space-y-4 border border-slate-200 my-auto">
-            <button
-              onClick={() => {
-                setShowQrisModal(false);
-                setIsQrisZoomed(false);
-              }}
-              className="absolute top-4 right-4 p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
-              title="Tutup Modal"
-            >
-              <X className="w-5 h-5" />
-            </button>
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in overflow-y-auto">
+          <div className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-sm sm:max-w-md relative shadow-2xl overflow-hidden my-auto">
 
-            <div className="pt-2">
-              <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full uppercase tracking-wider">
-                QRIS Resmi DKM
-              </span>
-              <h3 className="text-lg font-black text-slate-900 mt-2">
-                MASJID CITRA SENTUL RAYA
-              </h3>
-              <p className="text-xs text-slate-500 font-mono">NMID: ID1023304558381</p>
+            {/* Gradient Header */}
+            <div className="bg-gradient-to-br from-emerald-800 via-emerald-700 to-teal-700 px-6 pt-6 pb-8 text-center relative">
+              <button
+                onClick={() => { setShowQrisModal(false); setIsQrisZoomed(false); }}
+                className="absolute top-4 right-4 p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors cursor-pointer"
+                title="Tutup"
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              <div className="inline-flex items-center gap-1.5 bg-white/10 border border-white/20 text-lime-300 text-[11px] font-bold px-3 py-1 rounded-full mb-3">
+                <ShieldAlert className="w-3 h-3" />
+                QRIS Resmi & Terverifikasi BI
+              </div>
+              <h3 className="text-lg font-black text-white tracking-tight">MASJID CITRA SENTUL RAYA</h3>
+              <p className="text-emerald-200 text-[11px] mt-0.5">Dewan Kemakmuran Masjid (DKM)</p>
+
+              {/* Floating QR Frame — overlaps into white section */}
+              <div className="mt-5 flex justify-center">
+                <div
+                  onClick={() => setIsQrisZoomed(!isQrisZoomed)}
+                  className={`relative cursor-pointer group transition-all duration-300 ${
+                    isQrisZoomed ? 'scale-[1.18]' : ''
+                  }`}
+                  title="Klik untuk zoom"
+                >
+                  {/* Glow */}
+                  <div className="absolute -inset-2 rounded-2xl bg-lime-400/30 blur-md group-hover:bg-lime-400/50 transition-all" />
+                  <div className="relative bg-white p-3.5 rounded-2xl shadow-2xl border-2 border-lime-300/60">
+                    <img
+                      src="/images/qris-masjid.jpg"
+                      alt="QRIS Masjid Citra Sentul Raya Full"
+                      className="w-52 h-auto rounded-xl mx-auto block select-none"
+                    />
+                    <div className="absolute inset-0 bg-emerald-900/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center gap-1.5">
+                      {isQrisZoomed
+                        ? <><ZoomOut className="w-6 h-6 text-lime-300" /><span className="text-lime-200 text-xs font-bold">Kecilkan</span></>
+                        : <><ZoomIn className="w-6 h-6 text-lime-300" /><span className="text-lime-200 text-xs font-bold">Zoom In</span></>
+                      }
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            {/* QR Image Container with Click-to-Zoom */}
-            <div className="relative group">
-              <div 
-                onClick={() => setIsQrisZoomed(!isQrisZoomed)}
-                className={`bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner inline-block overflow-hidden cursor-pointer transition-all duration-300 ${
-                  isQrisZoomed ? 'scale-125 z-10 shadow-2xl ring-4 ring-emerald-500/30' : 'hover:border-emerald-400'
-                }`}
-              >
-                <img
-                  src="/images/qris-masjid.jpg"
-                  alt="QRIS Masjid Citra Sentul Raya Full"
-                  className="w-full max-w-[280px] h-auto rounded-xl mx-auto shadow-sm select-none"
-                />
+            {/* White Body */}
+            <div className="px-6 pt-5 pb-6 space-y-4">
+              {/* NMID + GPN badge */}
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-[11px] font-mono font-bold text-slate-600 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-lg">
+                  NMID: ID1023304558381
+                </span>
+                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-lg">
+                  GPN Verified
+                </span>
               </div>
 
-              <div className="mt-2 flex items-center justify-center gap-2">
+              {/* Zoom hint */}
+              <p className="text-center text-[11px] text-slate-400">
+                {isQrisZoomed ? 'Klik gambar lagi untuk kecilkan' : 'Klik gambar QR untuk memperbesar'}
+              </p>
+
+              {/* Supported apps */}
+              <div>
+                <p className="text-[10px] text-center text-slate-400 uppercase tracking-wider font-semibold mb-2">Didukung oleh</p>
+                <div className="flex flex-wrap gap-1.5 justify-center">
+                  {['GoPay','OVO','Dana','ShopeePay','LinkAja','BCA','Mandiri','BRI','BSI','BNI'].map(w => (
+                    <span key={w} className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md font-semibold border border-slate-200">{w}</span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2 pt-1">
                 <button
                   type="button"
-                  onClick={() => setIsQrisZoomed(!isQrisZoomed)}
-                  className="text-xs text-emerald-700 font-bold bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg border border-emerald-200 flex items-center gap-1.5 transition-colors cursor-pointer"
+                  onClick={handleDownloadQris}
+                  className="flex-1 py-3 px-4 bg-gradient-to-r from-emerald-700 to-teal-700 hover:from-emerald-800 hover:to-teal-800 text-white font-bold text-xs rounded-xl shadow-md flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
                 >
-                  {isQrisZoomed ? (
-                    <>
-                      <ZoomOut className="w-3.5 h-3.5" />
-                      <span>Kecilkan (Reset Zoom)</span>
-                    </>
-                  ) : (
-                    <>
-                      <ZoomIn className="w-3.5 h-3.5" />
-                      <span>Klik Gambar / Tombol Untuk Zoom</span>
-                    </>
-                  )}
+                  <Download className="w-4 h-4 text-lime-300" />
+                  <span>Unduh QRIS</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShowQrisModal(false); setIsQrisZoomed(false); }}
+                  className="py-3 px-5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-colors cursor-pointer border border-slate-200"
+                >
+                  Tutup
                 </button>
               </div>
-            </div>
-
-            <p className="text-xs text-slate-600 leading-relaxed px-2">
-              Arahkan kamera scanner aplikasi m-banking atau e-wallet (BSI, BCA, Mandiri, BRI, GoPay, OVO, Dana, ShopeePay) untuk melakukan pembayaran.
-            </p>
-
-            <div className="flex gap-2 pt-2">
-              <button
-                type="button"
-                onClick={handleDownloadQris}
-                className="flex-1 py-3 px-4 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-md flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
-              >
-                <Download className="w-4 h-4 text-lime-300" />
-                <span>Unduh Gambar QRIS</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowQrisModal(false);
-                  setIsQrisZoomed(false);
-                }}
-                className="py-3 px-4 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs rounded-xl transition-colors cursor-pointer"
-              >
-                Tutup
-              </button>
             </div>
           </div>
         </div>

@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAdminLogin: () => void;
+  onAdminLogin: (role?: string) => void;
   onJamaahLogin: (nama: string, kontak: string) => void;
   registeredJamaahList?: any[];
   onRegisterJamaah?: (jamaah: any) => void;
@@ -133,11 +133,25 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         lowerId === 'petugas' ||
         lowerId === 'admin@masjid.com' ||
         lowerId === 'admin@citrasentul.id' ||
-        targetClean === 'admin';
+        targetClean === 'admin' ||
+        lowerId === 'direktur' ||
+        lowerId === 'ketua' ||
+        lowerId === 'bendahara' ||
+        lowerId === 'keuangan' ||
+        lowerId === 'staff';
 
       if (isAdminIdentifier) {
         if (pass === 'admin123' || pass === 'admin') {
-          onAdminLogin();
+          let role = 'direktur'; // Default role
+          if (lowerId === 'bendahara' || lowerId === 'keuangan') {
+            role = 'bendahara';
+          } else if (lowerId === 'staff' || lowerId === 'admin' || lowerId === 'petugas') {
+            role = 'staff';
+          } else if (lowerId === 'direktur' || lowerId === 'ketua' || lowerId === 'dkm') {
+            role = 'direktur';
+          }
+          
+          onAdminLogin(role);
           onClose();
           return;
         } else {

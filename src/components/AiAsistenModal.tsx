@@ -65,7 +65,7 @@ export const AiAsistenModal: React.FC<AiAsistenModalProps> = ({
     }
 
     if (q.includes('keuangan') || q.includes('laporan') || q.includes('kas') || q.includes('coa') || q.includes('jurnal') || q.includes('neraca') || q.includes('laba rugi')) {
-      return `Assalamu'alaikum Warahmatullahi Wabarakatuh.\n\nSistem Keuangan Masjid Citra Sentul Raya dikelola secara transparan dan akuntabel berbasis standar Akuntansi Syariah DKM:\n• **Riwayat Transaksi & COA**: Terhubung dengan Jurnal Umum & Buku Besar.\n• **Laporan Keuangan**: Menyajikan Laporan Laba Rugi (Surplus/Defisit) dan Neraca Posisi Keuangan secara real-time.\n• **Approval Anggaran**: Menggunakan persetujuan multi-level (Bendahara → Ketua DKM → Pembina).`;
+      return `Assalamu'alaikum Warahmatullahi Wabarakatuh.\n\nSistem Keuangan Masjid Citra Sentul Raya dikelola secara transparan dan akuntabel berbasis standar Akuntansi Syariah DKM (ISAK 35):\n• **Riwayat Transaksi & COA**: Terhubung dengan Jurnal Umum & Buku Besar.\n• **Laporan Keuangan**: Menyajikan Laporan Surplus/Defisit dan Laporan Neraca Aktivitas Terpisah (Dana Zakat, Infaq, Wakaf, Sodaqoh & Operasional) secara real-time.\n• **Approval Anggaran**: Menggunakan persetujuan multi-level (Bendahara → Ketua DKM → Pembina).`;
     }
 
     if (q.includes('zakat') || q.includes('infaq') || q.includes('sedekah')) {
