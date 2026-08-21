@@ -126,7 +126,7 @@ export default function App() {
       terkumpulRp: 0,
       targetRp: 750000000,
       donatur: 0,
-      gambar: 'https://images.unsplash.com/photo-1593113589914-075990190da5?auto=format&fit=crop&w=800&q=80'
+      gambar: 'https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=800&q=80'
     }
   ];
 
