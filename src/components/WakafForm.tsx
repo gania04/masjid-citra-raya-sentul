@@ -394,81 +394,133 @@ export const WakafForm: React.FC<WakafFormProps> = ({ onAddMuwakif, onShowCertif
                   </div>
                 ) : (
                   /* QRIS Card — Premium Redesign */
-                  <div className="flex flex-col gap-4">
-                    {/* Top: Badge Row */}
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-[11px] bg-lime-400/20 text-lime-300 px-2.5 py-1 rounded-full font-bold border border-lime-400/30 flex items-center gap-1">
-                        <QrCode className="w-3 h-3" /> QRIS Standar Nasional (GPN)
-                      </span>
-                      <span className="text-[11px] bg-emerald-800/70 text-emerald-200 px-2.5 py-1 rounded-full font-semibold border border-emerald-700/50">
-                        ✓ Terverifikasi BI
-                      </span>
+                  <div className="flex flex-col gap-5">
+                    {/* Scanner laser animation */}
+                    <style>{`
+                      @keyframes scan {
+                        0%, 100% { transform: translateY(0); }
+                        50% { transform: translateY(148px); }
+                      }
+                      .scanner-laser {
+                        animation: scan 2.5s ease-in-out infinite;
+                      }
+                    `}</style>
+
+                    {/* Top: Header Badges */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-emerald-800/80">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-lime-400 animate-pulse"></span>
+                        <span className="text-[10px] font-black tracking-wider text-lime-300 uppercase">QRIS INSTAN</span>
+                      </div>
+                      <div className="flex gap-1.5">
+                        <span className="text-[9px] bg-lime-400/20 text-lime-300 px-2 py-0.5 rounded-md font-bold border border-lime-400/30">
+                          GPN STANDAR
+                        </span>
+                        <span className="text-[9px] bg-emerald-850 text-emerald-200 px-2 py-0.5 rounded-md font-semibold border border-emerald-700/50">
+                          BI VERIFIED
+                        </span>
+                      </div>
                     </div>
 
-                    {/* Middle: QR + Info Side by Side */}
-                    <div className="flex flex-col sm:flex-row items-center gap-5">
-                      {/* QR Code Frame */}
-                      <div
-                        onClick={() => { setIsQrisZoomed(false); setShowQrisModal(true); }}
-                        className="group relative cursor-pointer flex-shrink-0"
-                        title="Klik untuk perbesar QRIS"
-                      >
-                        {/* Glow ring */}
-                        <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-lime-400 via-emerald-500 to-teal-500 opacity-40 blur-sm group-hover:opacity-70 transition-opacity duration-300" />
-                        <div className="relative bg-white p-3 rounded-2xl shadow-xl border border-lime-300/40">
-                          <img
-                            src="/images/qris-masjid.jpg"
-                            alt="QRIS Official Masjid Citra Sentul Raya"
-                            className="w-40 h-auto object-contain rounded-xl block transition-transform duration-300 group-hover:scale-105"
-                          />
-                          {/* Hover overlay */}
-                          <div className="absolute inset-0 bg-emerald-950/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex flex-col items-center justify-center gap-1">
-                            <ZoomIn className="w-6 h-6 text-lime-300" />
-                            <span className="text-[11px] text-lime-200 font-bold">Perbesar</span>
+                    {/* Middle: QR + Instructions Side-by-Side */}
+                    <div className="flex flex-col sm:flex-row gap-5 items-center sm:items-start">
+                      {/* Left: QR Frame with laser scanner */}
+                      <div className="flex-shrink-0 flex flex-col items-center">
+                        <div
+                          onClick={() => { setIsQrisZoomed(false); setShowQrisModal(true); }}
+                          className="group relative cursor-pointer"
+                          title="Klik untuk memperbesar QRIS"
+                        >
+                          {/* Outer glow aura */}
+                          <div className="absolute -inset-1.5 rounded-2xl bg-gradient-to-tr from-lime-400 via-emerald-500 to-teal-400 opacity-40 blur-md group-hover:opacity-75 transition duration-300" />
+                          
+                          {/* Inner white container */}
+                          <div className="relative bg-white p-2.5 rounded-2xl shadow-2xl border border-lime-300/40 w-40 h-40 overflow-hidden flex items-center justify-center">
+                            <img
+                              src="/images/qris-masjid.jpg"
+                              alt="QRIS Masjid Citra Sentul Raya"
+                              className="w-full h-full object-contain rounded-lg select-none block transition-transform duration-300 group-hover:scale-102"
+                            />
+                            {/* Scanning laser line overlay */}
+                            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-lime-400 to-transparent shadow-[0_0_8px_2px_#a3e635] scanner-laser pointer-events-none" />
+                            
+                            {/* Hover overlay with zoom icon */}
+                            <div className="absolute inset-0 bg-emerald-950/70 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg flex flex-col items-center justify-center gap-1">
+                              <ZoomIn className="w-5 h-5 text-lime-300" />
+                              <span className="text-[9px] text-lime-200 font-black tracking-wider uppercase">PERBESAR</span>
+                            </div>
                           </div>
                         </div>
-                        {/* NMID badge below QR */}
-                        <div className="mt-2 text-center">
-                          <span className="text-[10px] font-mono font-bold text-emerald-300 bg-emerald-950/50 px-2 py-0.5 rounded-md border border-emerald-800">
+
+                        {/* NMID Badge */}
+                        <div className="mt-2.5">
+                          <span className="text-[9px] font-mono font-bold text-emerald-300 bg-emerald-900/60 px-2 py-0.5 rounded-md border border-emerald-800">
                             NMID: ID1023304558381
                           </span>
                         </div>
                       </div>
 
-                      {/* Right: Info */}
-                      <div className="flex-1 space-y-3 text-center sm:text-left">
+                      {/* Right: Instructions & Supported Brands */}
+                      <div className="flex-grow space-y-3.5 text-center sm:text-left w-full">
                         <div>
-                          <h4 className="text-base font-extrabold text-white leading-tight">Scan & Bayar Sekarang</h4>
-                          <p className="text-[11px] text-emerald-300 mt-0.5">a.n. Masjid Citra Sentul Raya</p>
+                          <h4 className="text-sm font-extrabold text-white flex items-center justify-center sm:justify-start gap-1.5 leading-tight">
+                            <span>Scan QRIS untuk Wakaf</span>
+                            <span className="text-[9px] font-normal text-emerald-300 bg-emerald-900/60 px-2 py-0.5 rounded border border-emerald-800">DKM Resmi</span>
+                          </h4>
+                          <p className="text-[10px] text-emerald-300 mt-1 max-w-sm mx-auto sm:mx-0">
+                            Pindai kode QR menggunakan aplikasi e-wallet atau mobile banking Anda untuk melakukan transfer instan.
+                          </p>
                         </div>
 
-                        {/* E-wallet chips */}
-                        <div className="flex flex-wrap gap-1.5 justify-center sm:justify-start">
-                          {['GoPay','OVO','Dana','ShopeePay','BCA','Mandiri','BRI','BSI'].map(w => (
-                            <span key={w} className="text-[10px] bg-emerald-900 border border-emerald-700/60 text-emerald-200 px-2 py-0.5 rounded-md font-semibold">{w}</span>
-                          ))}
-                          <span className="text-[10px] bg-emerald-900 border border-emerald-700/60 text-emerald-300 px-2 py-0.5 rounded-md font-semibold">+lainnya</span>
-                        </div>
-
-                        {/* Nominal + Action Row */}
-                        <div className="pt-2.5 border-t border-emerald-800/60 flex items-center justify-between gap-3">
-                          <div>
-                            <span className="text-[10px] text-emerald-400 uppercase tracking-wide font-semibold block">Nominal Wakaf</span>
-                            <span className="text-xl font-black text-lime-300">{formatRupiah(totalTransfer)}</span>
+                        {/* Step Guidelines */}
+                        <div className="space-y-1.5 text-[11px] text-emerald-100 text-left max-w-sm mx-auto sm:mx-0">
+                          <div className="flex items-start gap-2 bg-emerald-900/30 p-2 rounded-xl border border-emerald-800/40">
+                            <span className="flex-shrink-0 w-4 h-4 rounded-full bg-lime-500/20 text-lime-300 flex items-center justify-center font-bold text-[9px]">1</span>
+                            <p className="leading-tight">Klik gambar QR untuk memperbesar atau mengunduhnya.</p>
                           </div>
-                          <div className="flex flex-col gap-1.5">
+                          <div className="flex items-start gap-2 bg-emerald-900/30 p-2 rounded-xl border border-emerald-800/40">
+                            <span className="flex-shrink-0 w-4 h-4 rounded-full bg-lime-500/20 text-lime-300 flex items-center justify-center font-bold text-[9px]">2</span>
+                            <p className="leading-tight">Buka menu <strong>Scan / Bayar</strong> di E-Wallet atau M-Banking.</p>
+                          </div>
+                          <div className="flex items-start gap-2 bg-emerald-900/30 p-2 rounded-xl border border-emerald-800/40">
+                            <span className="flex-shrink-0 w-4 h-4 rounded-full bg-lime-500/20 text-lime-300 flex items-center justify-center font-bold text-[9px]">3</span>
+                            <p className="leading-tight">Masukkan nominal transfer tepat sebesar: <strong className="text-lime-300">{formatRupiah(totalTransfer)}</strong>.</p>
+                          </div>
+                        </div>
+
+                        {/* E-wallet brand chips with colored pill designs */}
+                        <div className="space-y-1">
+                          <span className="text-[9px] text-emerald-400 font-bold uppercase tracking-wider block">Mendukung Pembayaran:</span>
+                          <div className="flex flex-wrap gap-1 justify-center sm:justify-start">
+                            <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md bg-sky-500/10 text-sky-400 border border-sky-500/20">GoPay</span>
+                            <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md bg-purple-500/10 text-purple-400 border border-purple-500/20">OVO</span>
+                            <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md bg-blue-500/10 text-blue-400 border border-blue-500/20">Dana</span>
+                            <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md bg-orange-500/10 text-orange-400 border border-orange-500/20">ShopeePay</span>
+                            <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md bg-red-500/10 text-red-400 border border-red-500/20">LinkAja</span>
+                            <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">BSI Mobile</span>
+                            <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md bg-blue-600/10 text-blue-300 border border-blue-600/20">BCA</span>
+                          </div>
+                        </div>
+
+                        {/* Nominal + Action buttons */}
+                        <div className="pt-2.5 border-t border-emerald-800/80 flex flex-wrap items-center justify-between gap-3 bg-emerald-900/30 p-2.5 rounded-xl border border-emerald-800/40">
+                          <div className="text-left">
+                            <span className="text-[9px] text-emerald-400 uppercase font-semibold block">Total Nominal:</span>
+                            <span className="text-lg font-black text-lime-300 tracking-wide">{formatRupiah(totalTransfer)}</span>
+                          </div>
+                          <div className="flex gap-1.5 ml-auto">
                             <button
                               type="button"
                               onClick={() => handleCopy(totalTransfer.toString(), 'nominal')}
-                              className="px-3 py-1.5 bg-lime-400 hover:bg-lime-300 text-emerald-950 text-[11px] font-extrabold rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+                              className="px-2.5 py-1.5 bg-lime-400 hover:bg-lime-300 text-emerald-950 text-[11px] font-black rounded-lg transition-all flex items-center gap-1 active:scale-95 cursor-pointer shadow-md"
                             >
                               {copiedNominal ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                              <span>{copiedNominal ? 'Tersalin!' : 'Salin Nominal'}</span>
+                              <span>{copiedNominal ? 'Tersalin' : 'Salin Nominal'}</span>
                             </button>
                             <button
                               type="button"
                               onClick={handleDownloadQris}
-                              className="px-3 py-1.5 bg-emerald-800 hover:bg-emerald-700 text-emerald-100 text-[11px] font-bold rounded-lg transition-colors flex items-center gap-1 border border-emerald-600 cursor-pointer"
+                              className="px-2.5 py-1.5 bg-emerald-850 hover:bg-emerald-700 text-emerald-100 text-[11px] font-bold rounded-lg transition-all flex items-center gap-1 border border-emerald-600 active:scale-95 cursor-pointer"
                             >
                               <Download className="w-3.5 h-3.5" />
                               <span>Unduh QR</span>

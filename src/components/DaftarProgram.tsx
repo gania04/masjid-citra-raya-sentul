@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Wallet, Upload, X, CheckCircle, ZoomIn, ZoomOut, Download } from 'lucide-react';
+import { Wallet, Upload, X, CheckCircle, ZoomIn, ZoomOut, Download, Copy, Check, QrCode } from 'lucide-react';
 
 interface Program {
   id: number;
@@ -28,6 +28,13 @@ export const DaftarProgram: React.FC<DaftarProgramProps> = ({ programs, onDonate
   const [step, setStep] = useState<'form' | 'success'>('form');
   const [showQrisZoom, setShowQrisZoom] = useState(false);
   const [isQrisZoomed, setIsQrisZoomed] = useState(false);
+  const [copiedNominal, setCopiedNominal] = useState(false);
+
+  const handleCopyNominal = () => {
+    navigator.clipboard.writeText(nominal);
+    setCopiedNominal(true);
+    setTimeout(() => setCopiedNominal(false), 2000);
+  };
 
   const handleDownloadQris = async () => {
     try {
@@ -191,34 +198,55 @@ export const DaftarProgram: React.FC<DaftarProgramProps> = ({ programs, onDonate
                     </select>
                     
                     {metode === 'QRIS' && (
-                      <div className="bg-emerald-950 border border-emerald-700/60 rounded-2xl p-4 animate-in fade-in space-y-3">
-                        {/* Header badges */}
-                        <div className="flex flex-wrap gap-2">
-                          <span className="text-[10px] bg-lime-400/20 text-lime-300 px-2 py-0.5 rounded-full font-bold border border-lime-400/30 flex items-center gap-1">
-                            QRIS Standar Nasional (GPN)
-                          </span>
-                          <span className="text-[10px] bg-emerald-800/70 text-emerald-200 px-2 py-0.5 rounded-full font-semibold border border-emerald-700/50">
-                            ✓ Terverifikasi BI
-                          </span>
+                      <div className="bg-emerald-950 border border-emerald-700/60 rounded-2xl p-4 animate-in fade-in space-y-4">
+                        {/* Scanner laser animation */}
+                        <style>{`
+                          @keyframes scanSmall {
+                            0%, 100% { transform: translateY(0); }
+                            50% { transform: translateY(96px); }
+                          }
+                          .scanner-laser-small {
+                            animation: scanSmall 2.5s ease-in-out infinite;
+                          }
+                        `}</style>
+
+                        {/* Header Badges */}
+                        <div className="flex flex-wrap items-center justify-between gap-1 pb-2 border-b border-emerald-800/80">
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-lime-400 animate-pulse"></span>
+                            <span className="text-[9px] font-black tracking-wider text-lime-300 uppercase">QRIS INSTAN</span>
+                          </div>
+                          <div className="flex gap-1">
+                            <span className="text-[8px] bg-lime-400/20 text-lime-300 px-1.5 py-0.5 rounded-md font-bold border border-lime-400/30">
+                              GPN
+                            </span>
+                            <span className="text-[8px] bg-emerald-850 text-emerald-200 px-1.5 py-0.5 rounded-md font-semibold border border-emerald-700/50">
+                              BI VERIFIED
+                            </span>
+                          </div>
                         </div>
 
-                        <div className="flex items-center gap-4">
-                          {/* QR Frame with glow */}
+                        {/* Middle: QR + Info Side by Side */}
+                        <div className="flex items-start gap-4">
+                          {/* QR Frame with glow & laser scanner */}
                           <div
                             onClick={() => { setIsQrisZoomed(false); setShowQrisZoom(true); }}
                             className="group relative cursor-pointer flex-shrink-0"
                             title="Klik perbesar"
                           >
-                            <div className="absolute -inset-1 rounded-xl bg-gradient-to-br from-lime-400 via-emerald-500 to-teal-500 opacity-30 blur-sm group-hover:opacity-60 transition-opacity duration-300" />
-                            <div className="relative bg-white p-2 rounded-xl shadow-lg border border-lime-300/30">
+                            <div className="absolute -inset-1 rounded-xl bg-gradient-to-br from-lime-400 via-emerald-500 to-teal-500 opacity-40 blur-xs group-hover:opacity-75 transition duration-300" />
+                            <div className="relative bg-white p-2 rounded-xl shadow-lg border border-lime-300/30 w-28 h-28 overflow-hidden flex items-center justify-center">
                               <img
                                 src="/images/qris-masjid.jpg"
                                 alt="QRIS Masjid Citra Sentul Raya"
-                                className="w-24 h-auto rounded-lg block transition-transform duration-300 group-hover:scale-105"
+                                className="w-full h-full object-contain rounded-lg block transition-transform duration-300 group-hover:scale-102 select-none"
                               />
-                              <div className="absolute inset-0 bg-emerald-950/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex flex-col items-center justify-center gap-0.5">
+                              {/* Laser overlay */}
+                              <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-lime-400 to-transparent shadow-[0_0_6px_1.5px_#a3e635] scanner-laser-small pointer-events-none" />
+                              
+                              <div className="absolute inset-0 bg-emerald-950/70 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex flex-col items-center justify-center gap-0.5">
                                 <ZoomIn className="w-4 h-4 text-lime-300" />
-                                <span className="text-[9px] text-lime-200 font-bold">Perbesar</span>
+                                <span className="text-[8px] text-lime-200 font-bold uppercase tracking-wider">ZOOM</span>
                               </div>
                             </div>
                           </div>
@@ -226,38 +254,62 @@ export const DaftarProgram: React.FC<DaftarProgramProps> = ({ programs, onDonate
                           {/* Right info */}
                           <div className="flex-1 space-y-2">
                             <div>
-                              <p className="text-xs font-extrabold text-white">Scan & Bayar Sekarang</p>
-                              <p className="text-[10px] text-emerald-300">a.n. Masjid Citra Sentul Raya</p>
+                              <p className="text-xs font-black text-white leading-tight">Scan & Bayar Sekarang</p>
+                              <p className="text-[10px] text-emerald-300 mt-0.5">a.n. Masjid Citra Sentul Raya</p>
                             </div>
-                            <p className="text-[9px] font-mono text-emerald-400 bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-800 inline-block">
-                              NMID: ID1023304558381
-                            </p>
-                            {/* E-wallet chips */}
+                            <div>
+                              <span className="text-[8px] font-mono font-bold text-emerald-300 bg-emerald-900/60 px-2 py-0.5 rounded border border-emerald-800 inline-block">
+                                NMID: ID1023304558381
+                              </span>
+                            </div>
+                            {/* Branded E-wallet chips */}
                             <div className="flex flex-wrap gap-1">
-                              {['GoPay','OVO','Dana','ShopeePay','BCA','BSI'].map(w => (
-                                <span key={w} className="text-[9px] bg-emerald-900 border border-emerald-700/60 text-emerald-200 px-1.5 py-0.5 rounded font-semibold">{w}</span>
-                              ))}
+                              <span className="text-[8px] font-black px-1 py-0.2 rounded-md bg-sky-500/10 text-sky-400 border border-sky-500/20">GoPay</span>
+                              <span className="text-[8px] font-black px-1 py-0.2 rounded-md bg-purple-500/10 text-purple-400 border border-purple-500/20">OVO</span>
+                              <span className="text-[8px] font-black px-1 py-0.2 rounded-md bg-blue-500/10 text-blue-400 border border-blue-500/20">Dana</span>
+                              <span className="text-[8px] font-black px-1 py-0.2 rounded-md bg-orange-500/10 text-orange-400 border border-orange-500/20">SPay</span>
+                              <span className="text-[8px] font-black px-1 py-0.2 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">BSI</span>
                             </div>
                           </div>
                         </div>
 
+                        {/* Nominal summary box if nominal entered */}
+                        {nominal && parseInt(nominal) > 0 && (
+                          <div className="bg-emerald-900/30 border border-emerald-800/40 p-2 rounded-xl flex items-center justify-between text-xs">
+                            <div>
+                              <span className="text-[8px] text-emerald-400 uppercase font-semibold block">Nominal Donasi:</span>
+                              <span className="text-sm font-black text-lime-300">
+                                {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(parseInt(nominal))}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={handleCopyNominal}
+                              className="px-2 py-1 bg-lime-400 hover:bg-lime-300 text-emerald-950 text-[10px] font-black rounded-md flex items-center gap-1 active:scale-95 transition-all shadow-xs cursor-pointer"
+                            >
+                              {copiedNominal ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                              <span>{copiedNominal ? 'Tersalin' : 'Salin'}</span>
+                            </button>
+                          </div>
+                        )}
+
                         {/* Action buttons */}
-                        <div className="flex gap-2 pt-1 border-t border-emerald-800/60">
+                        <div className="flex gap-2 pt-2 border-t border-emerald-800/60">
                           <button
                             type="button"
                             onClick={() => { setIsQrisZoomed(false); setShowQrisZoom(true); }}
-                            className="flex-1 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-600 px-3 py-1.5 rounded-lg border border-emerald-600 flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                            className="flex-1 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-600 px-3 py-1.5 rounded-lg border border-emerald-600 flex items-center justify-center gap-1 transition-all active:scale-95 cursor-pointer"
                           >
                             <ZoomIn className="w-3.5 h-3.5" />
-                            <span>Perbesar</span>
+                            <span>Perbesar QR</span>
                           </button>
                           <button
                             type="button"
                             onClick={handleDownloadQris}
-                            className="flex-1 text-xs font-bold text-emerald-100 bg-emerald-800 hover:bg-emerald-700 px-3 py-1.5 rounded-lg border border-emerald-700 flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                            className="flex-1 text-xs font-bold text-emerald-100 bg-emerald-800 hover:bg-emerald-700 px-3 py-1.5 rounded-lg border border-emerald-700 flex items-center justify-center gap-1 transition-all active:scale-95 cursor-pointer"
                           >
                             <Download className="w-3.5 h-3.5" />
-                            <span>Unduh QR</span>
+                            <span>Unduh QR Code</span>
                           </button>
                         </div>
                       </div>

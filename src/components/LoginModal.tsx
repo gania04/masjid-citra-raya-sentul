@@ -145,9 +145,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           let role = 'direktur'; // Default role
           if (lowerId === 'bendahara' || lowerId === 'keuangan') {
             role = 'bendahara';
-          } else if (lowerId === 'staff' || lowerId === 'admin' || lowerId === 'petugas') {
+          } else if (lowerId === 'staff' || lowerId === 'petugas') {
             role = 'staff';
-          } else if (lowerId === 'direktur' || lowerId === 'ketua' || lowerId === 'dkm') {
+          } else if (lowerId === 'direktur' || lowerId === 'ketua' || lowerId === 'dkm' || lowerId === 'admin') {
             role = 'direktur';
           }
           
