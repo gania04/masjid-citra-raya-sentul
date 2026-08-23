@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, User, Calculator, Clock, Calendar, ChevronRight, LogOut, Download, Activity, Image as ImageIcon, LayoutDashboard, Settings, Bell, Camera, Wallet, BookOpen, Volume2, VolumeX, BookMarked, Sparkles, Play, Award, Heart, RefreshCw, Send, Smartphone, CheckCircle2, ShieldCheck, Zap } from 'lucide-react';
+import { ArrowLeft, User, Calculator, Clock, Calendar, ChevronRight, LogOut, Download, Activity, Image as ImageIcon, LayoutDashboard, Settings, Bell, Camera, Wallet, BookOpen, Volume2, VolumeX, BookMarked, Sparkles, Play, Award, Heart, RefreshCw, Send, Smartphone, CheckCircle2, ShieldCheck, Zap, MessageSquare } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { AlQuranDigital, BookmarkData } from './AlQuranDigital';
 import { BukuPanduanModal } from './BukuPanduanModal';
@@ -13,7 +13,7 @@ interface JamaahDashboardProps {
 }
 
 export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, kontak, donasiHistory = [] }) => {
-  const [activeTab, setActiveTab] = useState<'ringkasan' | 'donasi' | 'laporan' | 'histori' | 'profil' | 'jadwal' | 'quran'>('ringkasan');
+  const [activeTab, setActiveTab] = useState<'ringkasan' | 'donasi' | 'laporan' | 'histori' | 'profil' | 'jadwal' | 'quran' | 'tanya'>('ringkasan');
   const [penghasilan, setPenghasilan] = useState('');
   const [bonus, setBonus] = useState('');
   const [showKalkulator, setShowKalkulator] = useState(false);
@@ -30,6 +30,78 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
   const [initialQuranTab, setInitialQuranTab] = useState<'surah' | 'dzikir'>('surah');
   const [bookmark, setBookmark] = useState<BookmarkData | null>(null);
   const [khatamCount, setKhatamCount] = useState<number>(0);
+
+  // Aspirasi & Tanya DKM State
+  const [formKategori, setFormKategori] = useState('Fiqih & Ibadah');
+  const [formJudul, setFormJudul] = useState('');
+  const [formPesan, setFormPesan] = useState('');
+  const [isAnonim, setIsAnonim] = useState(false);
+
+  const [aspirasiList, setAspirasiList] = useState<any[]>(() => {
+    const saved = localStorage.getItem('masjid_tanya_dkm_list');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Error parsing tanya dkm list', e);
+      }
+    }
+    return [
+      {
+        id: 'tanya-1',
+        kategori: 'Fiqih & Ibadah',
+        judul: 'Bagaimana Ketentuan Zakat Mal untuk Saham & Reksadana?',
+        pesan: 'Assalamu\'alaikum Ustadz, mohon penjelasan mengenai perhitungan zakat mal untuk instrumen investasi saham syariah dan reksadana.',
+        namaPenanya: 'Ahmad Fauzi',
+        tanggal: '22 Agt 2026',
+        status: 'Dijawab',
+        jawabanDkm: 'Wa\'alaikumsalam Wr. Wb. Zakat saham & reksadana dihitung dari nilai pasar portofolio ditambah dividen pada saat mencapai haul 1 tahun dan nisab setara 85 gram emas. Besaran zakatnya adalah 2,5%. Anda dapat menggunakan Kalkulator Zakat pada portal ini.',
+        penjawabDkm: 'Ust. H. Ahmad Farhan, M.A. (Bidang Syariah DKM)',
+        tanggalJawaban: '22 Agt 2026'
+      },
+      {
+        id: 'tanya-2',
+        kategori: 'Fasilitas & Kebersihan',
+        judul: 'Saran Tambahan Karpet Shalat & Penyejuk Udara di Mezzanine Wanita',
+        pesan: 'Bismillah, mohon dipertimbangkan untuk penambahan kipas angin atau AC di lantai 2 (area shalat wanita) agar jamaah lebih khusyuk saat shalat Jumat.',
+        namaPenanya: 'Hamba Allah',
+        tanggal: '20 Agt 2026',
+        status: 'Dijawab',
+        jawabanDkm: 'Jazakallahu khairan atas masukannya. Tim Sarpras DKM telah menyetujui pengadaan 2 unit AC standing di lantai mezzanine pada anggaran bulan ini.',
+        penjawabDkm: 'Pak Leo (Divisi Sarpras & Pembangunan)',
+        tanggalJawaban: '21 Agt 2026'
+      }
+    ];
+  });
+
+  const handleTambahAspirasi = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formJudul.trim() || !formPesan.trim()) {
+      alert('Mohon lengkapi judul dan isi pertanyaan!');
+      return;
+    }
+
+    const newItem = {
+      id: `tanya-${Date.now()}`,
+      kategori: formKategori,
+      judul: formJudul.trim(),
+      pesan: formPesan.trim(),
+      namaPenanya: isAnonim ? 'Hamba Allah (Anonim)' : profilName,
+      tanggal: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
+      status: 'Menunggu',
+      jawabanDkm: null,
+      penjawabDkm: null,
+      tanggalJawaban: null
+    };
+
+    const updated = [newItem, ...aspirasiList];
+    setAspirasiList(updated);
+    localStorage.setItem('masjid_tanya_dkm_list', JSON.stringify(updated));
+
+    setFormJudul('');
+    setFormPesan('');
+    alert('✅ Pertanyaan / Aspirasi Anda berhasil terkirim ke pengurus DKM! Tim kami akan meninjau dan memberikan jawaban segera.');
+  };
 
   // Adzan Alarms State
   const [adzanAlarms, setAdzanAlarms] = useState<{ [key: string]: boolean }>({
@@ -338,6 +410,7 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
       <div className="max-w-7xl mx-auto px-4 mt-6 hidden md:block">
         <div className="bg-white/90 backdrop-blur-md rounded-2xl p-1.5 shadow-xs border border-slate-200/80 flex overflow-x-auto justify-between gap-1">
           <TabButton id="ringkasan" icon={Activity} label="Ringkasan Utama" />
+          <TabButton id="tanya" icon={MessageSquare} label="Tanya DKM" />
           <TabButton id="donasi" icon={Wallet} label="Keuangan & Pengingat" />
           <TabButton id="laporan" icon={LayoutDashboard} label="Progress ZISWAF" />
           <TabButton id="quran" icon={BookOpen} label="Al-Quran Digital" />
@@ -350,6 +423,7 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
       {/* Mobile Bottom Nav */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-between px-2 py-1 z-50 overflow-x-auto gap-1 shadow-lg">
         <MobileNavButton id="ringkasan" icon={LayoutDashboard} label="Utama" />
+        <MobileNavButton id="tanya" icon={MessageSquare} label="Tanya DKM" />
         <MobileNavButton id="donasi" icon={Wallet} label="Pengingat" />
         <MobileNavButton id="quran" icon={BookOpen} label="Quran" />
         <MobileNavButton id="jadwal" icon={Clock} label="Jadwal" />
@@ -455,7 +529,7 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
             </div>
 
             {/* Quick Feature Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Al-Quran Quick Access Card */}
               <div className="bg-gradient-to-br from-emerald-900 to-teal-900 text-white rounded-3xl p-6 shadow-md relative overflow-hidden flex flex-col justify-between">
                 <div>
@@ -482,6 +556,26 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
                     Dzikir & Doa
                   </button>
                 </div>
+              </div>
+
+              {/* Tanya DKM Access Card */}
+              <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <MessageSquare className="w-5 h-5 text-emerald-600" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Layanan Aspirasi</span>
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-800 mb-1">Tanya DKM & Konsultasi</h3>
+                  <p className="text-xs text-slate-500 leading-relaxed mb-4">
+                    Sampaikan pertanyaan fiqih, saran kegiatan, atau aspirasi perbaikan ke pengurus DKM.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setActiveTab('tanya')}
+                  className="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-2.5 rounded-xl text-xs transition-all shadow-sm cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <MessageSquare className="w-3.5 h-3.5" /> Buat Pertanyaan Baru
+                </button>
               </div>
 
               {/* Zakat Calculator Access Card */}
@@ -533,6 +627,168 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
               </div>
             </div>
 
+          </div>
+        )}
+
+        {/* TAB: TANYA & ASPIRASI DKM */}
+        {activeTab === 'tanya' && (
+          <div className="space-y-6 animate-in fade-in duration-300">
+            {/* Header Banner */}
+            <div className="bg-gradient-to-r from-emerald-900 via-teal-900 to-emerald-950 rounded-3xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden border border-emerald-800/40">
+              <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1">
+                      <Sparkles className="w-3 h-3 text-lime-300" /> Layanan Aspirasi & Tanya Jawab
+                    </span>
+                  </div>
+                  <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-2">Layanan Tanya DKM Masjid</h2>
+                  <p className="text-emerald-100/90 text-xs md:text-sm max-w-2xl leading-relaxed">
+                    Sampaikan pertanyaan fiqih, konsultasi ibadah, saran kegiatan, maupun aspirasi perbaikan fasilitas masjid. Pengurus DKM siap melayani jamaah dengan ikhlas & cepat.
+                  </p>
+                </div>
+                <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20 shrink-0 text-center w-full md:w-auto">
+                  <p className="text-[10px] font-bold text-lime-300 uppercase tracking-wider">Hotline WA DKM</p>
+                  <p className="text-base font-extrabold text-white mt-0.5">0815-1704-5406</p>
+                  <a
+                    href="https://wa.me/6281517045406?text=Assalamu'alaikum%20Pengurus%20DKM%20Masjid%20Citra%20Sentul%20Raya,%20saya%20ingin%20bertanya:"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-2.5 inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-[#25D366] hover:bg-[#20ba5a] text-white text-xs font-bold rounded-xl transition-all shadow-sm w-full cursor-pointer"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" /> Chat WA DKM Direct
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Form Kirim Pertanyaan / Aspirasi (1 Col) */}
+              <div className="lg:col-span-1 bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+                <div>
+                  <h3 className="text-base font-bold text-slate-800 mb-1 flex items-center gap-2">
+                    <Send className="w-4 h-4 text-emerald-600" /> Kirim Pertanyaan / Aspirasi Baru
+                  </h3>
+                  <p className="text-xs text-slate-500 mb-4">Isi formulir di bawah ini untuk mengirimkan pertanyaan Anda ke pengurus DKM.</p>
+
+                  <form onSubmit={handleTambahAspirasi} className="space-y-3.5">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Kategori Layanan <span className="text-red-500">*</span></label>
+                      <select
+                        value={formKategori}
+                        onChange={(e) => setFormKategori(e.target.value)}
+                        className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                      >
+                        <option value="Fiqih & Ibadah">🕌 Fiqih & Tata Cara Ibadah</option>
+                        <option value="Keuangan & ZISWAF">💰 Keuangan & Wakaf Digital</option>
+                        <option value="Kegiatan & Kajian">📢 Saran Kegiatan / Pengajian</option>
+                        <option value="Fasilitas & Kebersihan">🔧 Kebersihan & Fasilitas Masjid</option>
+                        <option value="Umum & Aspirasi">💬 Aspirasi Umum Jamaah</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Judul / Subjek <span className="text-red-500">*</span></label>
+                      <input
+                        type="text"
+                        value={formJudul}
+                        onChange={(e) => setFormJudul(e.target.value)}
+                        placeholder="Contoh: Hukum Masbuk dalam Shalat Jumat"
+                        className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Isi Pertanyaan / Aspirasi <span className="text-red-500">*</span></label>
+                      <textarea
+                        rows={4}
+                        value={formPesan}
+                        onChange={(e) => setFormPesan(e.target.value)}
+                        placeholder="Tuliskan pertanyaan atau masukan Anda secara jelas..."
+                        className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-none resize-none"
+                        required
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between pt-1">
+                      <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-600">
+                        <input
+                          type="checkbox"
+                          checked={isAnonim}
+                          onChange={(e) => setIsAnonim(e.target.checked)}
+                          className="w-4 h-4 text-emerald-600 rounded cursor-pointer"
+                        />
+                        <span>Kirim sebagai Hamba Allah (Anonim)</span>
+                      </label>
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="w-full py-3 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-md transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <Send className="w-4 h-4" /> Kirim Pertanyaan ke DKM
+                    </button>
+                  </form>
+                </div>
+              </div>
+
+              {/* List Pertanyaan & Respon DKM (2 Cols) */}
+              <div className="lg:col-span-2 bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
+                    <div>
+                      <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                        <MessageSquare className="w-4 h-4 text-emerald-600" /> Daftar Pertanyaan & Respon DKM
+                      </h3>
+                      <p className="text-xs text-slate-500">Riwayat aspirasi jamaah beserta jawaban resmi dari pengurus & ustadz DKM.</p>
+                    </div>
+                    <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold px-3 py-1 rounded-full">
+                      {aspirasiList.length} Diskusi
+                    </span>
+                  </div>
+
+                  <div className="space-y-4 max-h-[550px] overflow-y-auto pr-1">
+                    {aspirasiList.map((item) => (
+                      <div key={item.id} className="bg-slate-50/80 rounded-2xl p-4 border border-slate-200/80 space-y-3 hover:border-emerald-200 transition-all">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase">
+                              {item.kategori}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-medium">{item.tanggal}</span>
+                          </div>
+                          <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full shrink-0 ${
+                            item.status === 'Dijawab' ? 'bg-emerald-600 text-white' : 'bg-amber-100 text-amber-800 border border-amber-300'
+                          }`}>
+                            {item.status === 'Dijawab' ? '✓ Telah Dijawab DKM' : '⏳ Menunggu Jawaban'}
+                          </span>
+                        </div>
+
+                        <div>
+                          <h4 className="font-bold text-sm text-slate-800">{item.judul}</h4>
+                          <p className="text-xs text-slate-600 mt-1 leading-relaxed">{item.pesan}</p>
+                          <p className="text-[10px] text-slate-400 mt-1 font-semibold">Oleh: {item.namaPenanya}</p>
+                        </div>
+
+                        {/* Jawaban DKM Box */}
+                        {item.jawabanDkm && (
+                          <div className="mt-3 p-3.5 bg-emerald-50/90 rounded-xl border border-emerald-200 text-xs space-y-1">
+                            <div className="flex items-center justify-between text-emerald-900 font-bold text-[11px] flex-wrap gap-1">
+                              <span className="flex items-center gap-1.5">
+                                <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" /> Respon Resmi DKM ({item.penjawabDkm || 'Tim Syariah DKM'})
+                              </span>
+                              <span className="text-[10px] text-emerald-700 font-normal">{item.tanggalJawaban}</span>
+                            </div>
+                            <p className="text-slate-700 text-xs leading-relaxed pt-1">{item.jawabanDkm}</p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
