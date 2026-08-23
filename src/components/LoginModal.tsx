@@ -58,9 +58,17 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     const pass = password.trim();
     const targetClean = normalizeContact(identifier);
 
-    // Get freshest list from localStorage
-    const savedJamaah = localStorage.getItem('registered_jamaah');
-    const allUsers: any[] = savedJamaah ? JSON.parse(savedJamaah) : registeredJamaahList;
+    // Get freshest list from localStorage and props merged
+    const savedJamaahRaw = localStorage.getItem('registered_jamaah');
+    const savedUsers: any[] = savedJamaahRaw ? JSON.parse(savedJamaahRaw) : [];
+    const userMap = new Map();
+    [...registeredJamaahList, ...savedUsers].forEach((u: any) => {
+      if (u) {
+        const key = (u.c || u.e || u.n || '').toLowerCase();
+        if (key) userMap.set(key, u);
+      }
+    });
+    const allUsers: any[] = Array.from(userMap.values());
 
     if (mode === 'register') {
       const nama = namaJamaah.trim();

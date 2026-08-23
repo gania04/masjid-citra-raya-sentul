@@ -37,6 +37,22 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
   const [formPesan, setFormPesan] = useState('');
   const [isAnonim, setIsAnonim] = useState(false);
 
+  // Grouped Menu Category State
+  const [activeCategory, setActiveCategory] = useState<'ibadah' | 'layanan' | 'keuangan' | 'akun'>('ibadah');
+
+  // Sync activeCategory when activeTab changes
+  useEffect(() => {
+    if (activeTab === 'ringkasan' || activeTab === 'quran' || activeTab === 'jadwal') {
+      setActiveCategory('ibadah');
+    } else if (activeTab === 'tanya') {
+      setActiveCategory('layanan');
+    } else if (activeTab === 'donasi' || activeTab === 'laporan' || activeTab === 'histori') {
+      setActiveCategory('keuangan');
+    } else if (activeTab === 'profil') {
+      setActiveCategory('akun');
+    }
+  }, [activeTab]);
+
   const [aspirasiList, setAspirasiList] = useState<any[]>(() => {
     const saved = localStorage.getItem('masjid_tanya_dkm_list');
     if (saved) {
@@ -160,14 +176,24 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
   });
 
   useEffect(() => {
+    if (nama && nama !== 'Hamba Allah') {
+      setProfilName(nama);
+      localStorage.setItem('masjid_user_name', nama);
+    } else {
+      const savedName = localStorage.getItem('masjid_user_name');
+      if (savedName) setProfilName(savedName);
+    }
+
+    if (kontak) {
+      setProfilContact(kontak);
+      localStorage.setItem('masjid_user_phone', kontak);
+    } else {
+      const savedPhone = localStorage.getItem('masjid_user_phone');
+      if (savedPhone) setProfilContact(savedPhone);
+    }
+
     const savedPic = localStorage.getItem('masjid_user_pic');
     if (savedPic) setProfilePic(savedPic);
-
-    const savedName = localStorage.getItem('masjid_user_name');
-    if (savedName) setProfilName(savedName);
-
-    const savedPhone = localStorage.getItem('masjid_user_phone');
-    if (savedPhone) setProfilContact(savedPhone);
 
     const savedKhatam = localStorage.getItem('masjid_quran_khatam');
     if (savedKhatam) setKhatamCount(parseInt(savedKhatam, 10));
@@ -180,7 +206,7 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
         console.error('Error parsing bookmark', e);
       }
     }
-  }, []);
+  }, [nama, kontak]);
 
   // Safe string values to prevent uncaught TypeError during render
   const safeName = (profilName || nama || 'Hamba Allah').toString().toLowerCase();
@@ -406,27 +432,112 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
         </div>
       </div>
 
-      {/* Horizontal Nav Tabs */}
+      {/* Grouped Category Navigation - Desktop & Tablet */}
       <div className="max-w-7xl mx-auto px-4 mt-6 hidden md:block">
-        <div className="bg-white/90 backdrop-blur-md rounded-2xl p-1.5 shadow-xs border border-slate-200/80 flex overflow-x-auto justify-between gap-1">
-          <TabButton id="ringkasan" icon={Activity} label="Ringkasan Utama" />
-          <TabButton id="tanya" icon={MessageSquare} label="Tanya DKM" />
-          <TabButton id="donasi" icon={Wallet} label="Keuangan & Pengingat" />
-          <TabButton id="laporan" icon={LayoutDashboard} label="Progress ZISWAF" />
-          <TabButton id="quran" icon={BookOpen} label="Al-Quran Digital" />
-          <TabButton id="jadwal" icon={Clock} label="Jadwal Shalat" />
-          <TabButton id="histori" icon={Calendar} label="Histori Donasi" />
-          <TabButton id="profil" icon={Settings} label="Pengaturan Profil" />
+        <div className="bg-white rounded-3xl p-3 shadow-sm border border-slate-200/80 space-y-2.5">
+          {/* Main Category Header Tabs */}
+          <div className="grid grid-cols-4 gap-2 border-b border-slate-100 pb-2.5">
+            <button
+              onClick={() => {
+                setActiveCategory('ibadah');
+                if (activeTab !== 'ringkasan' && activeTab !== 'quran' && activeTab !== 'jadwal') {
+                  setActiveTab('ringkasan');
+                }
+              }}
+              className={`p-3 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                activeCategory === 'ibadah'
+                  ? 'bg-gradient-to-r from-emerald-800 to-teal-800 text-white shadow-md'
+                  : 'bg-slate-50 text-slate-600 hover:bg-emerald-50 hover:text-emerald-900 border border-slate-200/60'
+              }`}
+            >
+              <BookOpen className={`w-4 h-4 ${activeCategory === 'ibadah' ? 'text-lime-300' : 'text-emerald-600'}`} />
+              <span>🕌 Utama & Ibadah</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveCategory('layanan');
+                setActiveTab('tanya');
+              }}
+              className={`p-3 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                activeCategory === 'layanan'
+                  ? 'bg-gradient-to-r from-emerald-800 to-teal-800 text-white shadow-md'
+                  : 'bg-slate-50 text-slate-600 hover:bg-emerald-50 hover:text-emerald-900 border border-slate-200/60'
+              }`}
+            >
+              <MessageSquare className={`w-4 h-4 ${activeCategory === 'layanan' ? 'text-lime-300' : 'text-emerald-600'}`} />
+              <span>💬 Layanan & Aspirasi</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveCategory('keuangan');
+                if (activeTab !== 'donasi' && activeTab !== 'laporan' && activeTab !== 'histori') {
+                  setActiveTab('donasi');
+                }
+              }}
+              className={`p-3 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                activeCategory === 'keuangan'
+                  ? 'bg-gradient-to-r from-emerald-800 to-teal-800 text-white shadow-md'
+                  : 'bg-slate-50 text-slate-600 hover:bg-emerald-50 hover:text-emerald-900 border border-slate-200/60'
+              }`}
+            >
+              <Wallet className={`w-4 h-4 ${activeCategory === 'keuangan' ? 'text-lime-300' : 'text-amber-600'}`} />
+              <span>💰 ZISWAF & Donasi</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveCategory('akun');
+                setActiveTab('profil');
+              }}
+              className={`p-3 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                activeCategory === 'akun'
+                  ? 'bg-gradient-to-r from-emerald-800 to-teal-800 text-white shadow-md'
+                  : 'bg-slate-50 text-slate-600 hover:bg-emerald-50 hover:text-emerald-900 border border-slate-200/60'
+              }`}
+            >
+              <Settings className={`w-4 h-4 ${activeCategory === 'akun' ? 'text-lime-300' : 'text-blue-600'}`} />
+              <span>⚙️ Akun Saya</span>
+            </button>
+          </div>
+
+          {/* Sub-Items for Active Category */}
+          <div className="flex items-center gap-2 pt-1 overflow-x-auto">
+            {activeCategory === 'ibadah' && (
+              <>
+                <TabButton id="ringkasan" icon={Activity} label="Ringkasan Utama" />
+                <TabButton id="quran" icon={BookOpen} label="Al-Quran Digital" />
+                <TabButton id="jadwal" icon={Clock} label="Jadwal Shalat Presisi" />
+              </>
+            )}
+            {activeCategory === 'layanan' && (
+              <>
+                <TabButton id="tanya" icon={MessageSquare} label="Tanya DKM & Consultation" />
+              </>
+            )}
+            {activeCategory === 'keuangan' && (
+              <>
+                <TabButton id="donasi" icon={Wallet} label="Pengingat Donasi & E-Wallet" />
+                <TabButton id="laporan" icon={LayoutDashboard} label="Progress ZISWAF" />
+                <TabButton id="histori" icon={Calendar} label="Histori Donasi" />
+              </>
+            )}
+            {activeCategory === 'akun' && (
+              <>
+                <TabButton id="profil" icon={Settings} label="Pengaturan Profil" />
+              </>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Mobile Bottom Nav */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-between px-2 py-1 z-50 overflow-x-auto gap-1 shadow-lg">
         <MobileNavButton id="ringkasan" icon={LayoutDashboard} label="Utama" />
-        <MobileNavButton id="tanya" icon={MessageSquare} label="Tanya DKM" />
-        <MobileNavButton id="donasi" icon={Wallet} label="Pengingat" />
         <MobileNavButton id="quran" icon={BookOpen} label="Quran" />
-        <MobileNavButton id="jadwal" icon={Clock} label="Jadwal" />
+        <MobileNavButton id="tanya" icon={MessageSquare} label="Tanya DKM" />
+        <MobileNavButton id="donasi" icon={Wallet} label="Donasi" />
         <MobileNavButton id="histori" icon={Calendar} label="Histori" />
         <MobileNavButton id="profil" icon={Settings} label="Profil" />
       </div>

@@ -418,6 +418,8 @@ export default function App() {
           setShowPortal(true);
           setNamaJamaah(nama);
           setKontakJamaah(kontak);
+          localStorage.setItem('masjid_user_name', nama);
+          localStorage.setItem('masjid_user_phone', kontak);
           logAudit(nama, 'JAMAAH', kontak, 'LOGIN', 'Jamaah berhasil login ke portal', 'bg-blue-900/50 text-blue-600');
         }}
         registeredJamaahList={registeredJamaahList}
