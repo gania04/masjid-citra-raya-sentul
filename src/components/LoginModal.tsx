@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Mail, Lock, Eye, EyeOff, UserCheck, ArrowRight, Sparkles, CheckCircle2, KeyRound } from 'lucide-react';
+import { X, Mail, Lock, Eye, EyeOff, UserCheck, ArrowRight, Sparkles, CheckCircle2, KeyRound, HelpCircle, ChevronDown, ChevronUp, HeartHandshake, BookOpen, Bell, FileText } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface LoginModalProps {
@@ -32,6 +32,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 }) => {
   const [mode, setMode] = useState<'login' | 'register' | 'forgot' | 'reset_step'>('login');
   const [showPassword, setShowPassword] = useState(false);
+  const [showJamaahGuide, setShowJamaahGuide] = useState(false);
   const [loginIdentifier, setLoginIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -536,7 +537,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
           {/* Bottom Footer - Small Link for "Daftar / Masuk" */}
           {(mode === 'login' || mode === 'register') && (
-            <div className="mt-5 pt-3 border-t border-slate-100 dark:border-slate-800/80 text-center">
+            <div className="mt-5 pt-3 border-t border-slate-100 dark:border-slate-800/80 text-center space-y-3">
               {mode === 'login' ? (
                 <p className="text-[11px] text-slate-500 dark:text-slate-400">
                   Belum punya akun jamaah?{' '}
@@ -566,6 +567,67 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   </button>
                 </p>
               )}
+
+              {/* Section Panduan Akun & Fitur Portal Jamaah */}
+              <div className="pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowJamaahGuide(!showJamaahGuide)}
+                  className="w-full flex items-center justify-between p-2.5 rounded-xl bg-lime-50/80 dark:bg-lime-950/40 border border-lime-200/80 dark:border-lime-900/60 text-lime-800 dark:text-lime-300 hover:bg-lime-100/80 dark:hover:bg-lime-900/40 transition-all text-xs font-bold cursor-pointer"
+                >
+                  <span className="flex items-center gap-2 text-left">
+                    <HelpCircle className="w-4 h-4 text-lime-600 dark:text-lime-400 shrink-0" />
+                    <span>Panduan Akun & Fitur Portal Jamaah</span>
+                  </span>
+                  {showJamaahGuide ? (
+                    <ChevronUp className="w-4 h-4 text-lime-600 dark:text-lime-400 shrink-0" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 text-lime-600 dark:text-lime-400 shrink-0" />
+                  )}
+                </button>
+
+                {showJamaahGuide && (
+                  <div className="mt-2.5 p-3.5 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 text-left text-xs space-y-3.5 animate-in fade-in duration-200 shadow-inner">
+                    {/* 1. Cara Pembuatan Akun */}
+                    <div>
+                      <h4 className="font-bold text-slate-800 dark:text-slate-200 mb-1.5 flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-lime-700 dark:text-lime-400">
+                        <UserCheck className="w-3.5 h-3.5" /> Cara Pembuatan Akun Jamaah
+                      </h4>
+                      <ol className="space-y-1 text-[11px] text-slate-600 dark:text-slate-300 list-decimal list-inside pl-0.5 leading-relaxed">
+                        <li>Klik link <strong className="text-lime-700 dark:text-lime-400">Daftar sekarang</strong> pada modal ini.</li>
+                        <li>Isi <strong>Nama Lengkap</strong>, <strong>Email / No. HP (WhatsApp)</strong>, & <strong>Password</strong>.</li>
+                        <li>Klik <strong>Daftar Akun Baru</strong>. Akun Anda langsung aktif tanpa perlu verifikasi manual.</li>
+                        <li>Gunakan Email / No. HP & Password tersebut untuk masuk kapan saja.</li>
+                      </ol>
+                    </div>
+
+                    {/* 2. Fitur Portal Jamaah */}
+                    <div className="pt-2.5 border-t border-slate-200/80 dark:border-slate-700/80">
+                      <h4 className="font-bold text-slate-800 dark:text-slate-200 mb-1.5 flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                        <Sparkles className="w-3.5 h-3.5 text-emerald-500" /> Isi & Fitur Portal Jamaah
+                      </h4>
+                      <ul className="space-y-1.5 text-[11px] text-slate-600 dark:text-slate-300">
+                        <li className="flex items-start gap-2">
+                          <HeartHandshake className="w-3.5 h-3.5 text-lime-600 dark:text-lime-400 shrink-0 mt-0.5" />
+                          <span><strong>Infak & Wakaf Digital:</strong> Berdonasi instan via QRIS/BSI & unduh <em>E-Sertifikat Wakaf</em> resmi.</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Bell className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
+                          <span><strong>Pengingat Sedekah Bulanan:</strong> Notifikasi istiqomah rutin otomatis via WhatsApp/Portal.</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <BookOpen className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                          <span><strong>Al-Qur'an Digital 30 Juz:</strong> 114 Surah, terjemahan Indonesia, & audio murottal MP3.</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <FileText className="w-3.5 h-3.5 text-blue-500 shrink-0 mt-0.5" />
+                          <span><strong>Histori & Laporan Transparan:</strong> Cek riwayat donasi pribadi & transparansi kas masjid real-time.</span>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
