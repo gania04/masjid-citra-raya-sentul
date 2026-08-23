@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, User, Calculator, Clock, Calendar, ChevronRight, LogOut, Download, Activity, Image as ImageIcon, LayoutDashboard, Settings, Bell, Camera, Wallet, BookOpen, Volume2, VolumeX, BookMarked, Sparkles, Play, Award, Heart, RefreshCw, Send, Smartphone, CheckCircle2, ShieldCheck, Zap, MessageSquare } from 'lucide-react';
+import { ArrowLeft, User, Calculator, Clock, Calendar, ChevronRight, ChevronDown, LogOut, Download, Activity, Image as ImageIcon, LayoutDashboard, Settings, Bell, Camera, Wallet, BookOpen, Volume2, VolumeX, BookMarked, Sparkles, Play, Award, Heart, RefreshCw, Send, Smartphone, CheckCircle2, ShieldCheck, Zap, MessageSquare } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { AlQuranDigital, BookmarkData } from './AlQuranDigital';
 import { BukuPanduanModal } from './BukuPanduanModal';
@@ -37,21 +37,34 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
   const [formPesan, setFormPesan] = useState('');
   const [isAnonim, setIsAnonim] = useState(false);
 
-  // Grouped Menu Category State
-  const [activeCategory, setActiveCategory] = useState<'ibadah' | 'layanan' | 'keuangan' | 'akun'>('ibadah');
+  // Dropdown Category Navigation State (1-word categories: Utama, Layanan, Keuangan, Akun)
+  const [openDropdown, setOpenDropdown] = useState<'utama' | 'layanan' | 'keuangan' | 'akun' | null>(null);
 
-  // Sync activeCategory when activeTab changes
+  // Close dropdown on click outside
   useEffect(() => {
-    if (activeTab === 'ringkasan' || activeTab === 'quran' || activeTab === 'jadwal') {
-      setActiveCategory('ibadah');
-    } else if (activeTab === 'tanya') {
-      setActiveCategory('layanan');
-    } else if (activeTab === 'donasi' || activeTab === 'laporan' || activeTab === 'histori') {
-      setActiveCategory('keuangan');
-    } else if (activeTab === 'profil') {
-      setActiveCategory('akun');
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.jamaah-dropdown-container')) {
+        setOpenDropdown(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const getTabLabel = (tab: string) => {
+    switch (tab) {
+      case 'ringkasan': return 'Ringkasan Utama';
+      case 'quran': return 'Al-Qur\'an Digital';
+      case 'jadwal': return 'Jadwal Shalat Presisi';
+      case 'tanya': return 'Tanya DKM & Aspirasi';
+      case 'donasi': return 'Pengingat Donasi & E-Wallet';
+      case 'laporan': return 'Progress ZISWAF';
+      case 'histori': return 'Histori Transaksi';
+      case 'profil': return 'Pengaturan Profil';
+      default: return tab;
     }
-  }, [activeTab]);
+  };
 
   const [aspirasiList, setAspirasiList] = useState<any[]>(() => {
     const saved = localStorage.getItem('masjid_tanya_dkm_list');
@@ -432,102 +445,187 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
         </div>
       </div>
 
-      {/* Grouped Category Navigation - Desktop & Tablet */}
-      <div className="max-w-7xl mx-auto px-4 mt-6 hidden md:block">
-        <div className="bg-white rounded-3xl p-3 shadow-sm border border-slate-200/80 space-y-2.5">
-          {/* Main Category Header Tabs */}
-          <div className="grid grid-cols-4 gap-2 border-b border-slate-100 pb-2.5">
-            <button
-              onClick={() => {
-                setActiveCategory('ibadah');
-                if (activeTab !== 'ringkasan' && activeTab !== 'quran' && activeTab !== 'jadwal') {
-                  setActiveTab('ringkasan');
-                }
-              }}
-              className={`p-3 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                activeCategory === 'ibadah'
-                  ? 'bg-gradient-to-r from-emerald-800 to-teal-800 text-white shadow-md'
-                  : 'bg-slate-50 text-slate-600 hover:bg-emerald-50 hover:text-emerald-900 border border-slate-200/60'
-              }`}
-            >
-              <BookOpen className={`w-4 h-4 ${activeCategory === 'ibadah' ? 'text-lime-300' : 'text-emerald-600'}`} />
-              <span>🕌 Utama & Ibadah</span>
-            </button>
+      {/* 1-Word Dropdown Category Navigation */}
+      <div className="max-w-7xl mx-auto px-4 mt-6 jamaah-dropdown-container relative z-40">
+        <div className="bg-white rounded-3xl p-3 shadow-md border border-slate-200/80">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            
+            {/* 1. Category: UTAMA */}
+            <div className="relative">
+              <button
+                onClick={() => setOpenDropdown(openDropdown === 'utama' ? null : 'utama')}
+                className={`w-full p-3 rounded-2xl font-bold text-xs flex items-center justify-between transition-all cursor-pointer border ${
+                  activeTab === 'ringkasan' || activeTab === 'quran' || activeTab === 'jadwal'
+                    ? 'bg-emerald-800 text-white border-emerald-700 shadow-md'
+                    : 'bg-slate-50 text-slate-700 hover:bg-emerald-50 hover:text-emerald-900 border-slate-200'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <LayoutDashboard className="w-4 h-4 text-emerald-400" />
+                  <span>Utama</span>
+                </div>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${openDropdown === 'utama' ? 'rotate-180' : ''}`} />
+              </button>
 
-            <button
-              onClick={() => {
-                setActiveCategory('layanan');
-                setActiveTab('tanya');
-              }}
-              className={`p-3 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                activeCategory === 'layanan'
-                  ? 'bg-gradient-to-r from-emerald-800 to-teal-800 text-white shadow-md'
-                  : 'bg-slate-50 text-slate-600 hover:bg-emerald-50 hover:text-emerald-900 border border-slate-200/60'
-              }`}
-            >
-              <MessageSquare className={`w-4 h-4 ${activeCategory === 'layanan' ? 'text-lime-300' : 'text-emerald-600'}`} />
-              <span>💬 Layanan & Aspirasi</span>
-            </button>
+              {/* Dropdown Options */}
+              {openDropdown === 'utama' && (
+                <div className="absolute left-0 top-full mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <p className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1">Pilihan Menu Utama</p>
+                  <button
+                    onClick={() => { setActiveTab('ringkasan'); setOpenDropdown(null); }}
+                    className={`w-full px-3.5 py-2.5 text-left text-xs font-semibold flex items-center gap-2.5 hover:bg-emerald-50 transition-colors cursor-pointer ${
+                      activeTab === 'ringkasan' ? 'text-emerald-800 bg-emerald-50/80 font-bold' : 'text-slate-700'
+                    }`}
+                  >
+                    <Activity className="w-4 h-4 text-emerald-600" /> Ringkasan Utama
+                  </button>
+                  <button
+                    onClick={() => { setActiveTab('quran'); setOpenDropdown(null); }}
+                    className={`w-full px-3.5 py-2.5 text-left text-xs font-semibold flex items-center gap-2.5 hover:bg-emerald-50 transition-colors cursor-pointer ${
+                      activeTab === 'quran' ? 'text-emerald-800 bg-emerald-50/80 font-bold' : 'text-slate-700'
+                    }`}
+                  >
+                    <BookOpen className="w-4 h-4 text-teal-600" /> Al-Qur'an Digital 30 Juz
+                  </button>
+                  <button
+                    onClick={() => { setActiveTab('jadwal'); setOpenDropdown(null); }}
+                    className={`w-full px-3.5 py-2.5 text-left text-xs font-semibold flex items-center gap-2.5 hover:bg-emerald-50 transition-colors cursor-pointer ${
+                      activeTab === 'jadwal' ? 'text-emerald-800 bg-emerald-50/80 font-bold' : 'text-slate-700'
+                    }`}
+                  >
+                    <Clock className="w-4 h-4 text-indigo-600" /> Jadwal Shalat Presisi
+                  </button>
+                </div>
+              )}
+            </div>
 
-            <button
-              onClick={() => {
-                setActiveCategory('keuangan');
-                if (activeTab !== 'donasi' && activeTab !== 'laporan' && activeTab !== 'histori') {
-                  setActiveTab('donasi');
-                }
-              }}
-              className={`p-3 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                activeCategory === 'keuangan'
-                  ? 'bg-gradient-to-r from-emerald-800 to-teal-800 text-white shadow-md'
-                  : 'bg-slate-50 text-slate-600 hover:bg-emerald-50 hover:text-emerald-900 border border-slate-200/60'
-              }`}
-            >
-              <Wallet className={`w-4 h-4 ${activeCategory === 'keuangan' ? 'text-lime-300' : 'text-amber-600'}`} />
-              <span>💰 ZISWAF & Donasi</span>
-            </button>
+            {/* 2. Category: LAYANAN */}
+            <div className="relative">
+              <button
+                onClick={() => setOpenDropdown(openDropdown === 'layanan' ? null : 'layanan')}
+                className={`w-full p-3 rounded-2xl font-bold text-xs flex items-center justify-between transition-all cursor-pointer border ${
+                  activeTab === 'tanya'
+                    ? 'bg-emerald-800 text-white border-emerald-700 shadow-md'
+                    : 'bg-slate-50 text-slate-700 hover:bg-emerald-50 hover:text-emerald-900 border-slate-200'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-lime-300" />
+                  <span>Layanan</span>
+                </div>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${openDropdown === 'layanan' ? 'rotate-180' : ''}`} />
+              </button>
 
-            <button
-              onClick={() => {
-                setActiveCategory('akun');
-                setActiveTab('profil');
-              }}
-              className={`p-3 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                activeCategory === 'akun'
-                  ? 'bg-gradient-to-r from-emerald-800 to-teal-800 text-white shadow-md'
-                  : 'bg-slate-50 text-slate-600 hover:bg-emerald-50 hover:text-emerald-900 border border-slate-200/60'
-              }`}
-            >
-              <Settings className={`w-4 h-4 ${activeCategory === 'akun' ? 'text-lime-300' : 'text-blue-600'}`} />
-              <span>⚙️ Akun Saya</span>
-            </button>
+              {/* Dropdown Options */}
+              {openDropdown === 'layanan' && (
+                <div className="absolute left-0 top-full mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <p className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1">Pilihan Layanan</p>
+                  <button
+                    onClick={() => { setActiveTab('tanya'); setOpenDropdown(null); }}
+                    className={`w-full px-3.5 py-2.5 text-left text-xs font-semibold flex items-center gap-2.5 hover:bg-emerald-50 transition-colors cursor-pointer ${
+                      activeTab === 'tanya' ? 'text-emerald-800 bg-emerald-50/80 font-bold' : 'text-slate-700'
+                    }`}
+                  >
+                    <MessageSquare className="w-4 h-4 text-emerald-600" /> Tanya DKM & Aspirasi
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* 3. Category: KEUANGAN */}
+            <div className="relative">
+              <button
+                onClick={() => setOpenDropdown(openDropdown === 'keuangan' ? null : 'keuangan')}
+                className={`w-full p-3 rounded-2xl font-bold text-xs flex items-center justify-between transition-all cursor-pointer border ${
+                  activeTab === 'donasi' || activeTab === 'laporan' || activeTab === 'histori'
+                    ? 'bg-emerald-800 text-white border-emerald-700 shadow-md'
+                    : 'bg-slate-50 text-slate-700 hover:bg-emerald-50 hover:text-emerald-900 border-slate-200'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Wallet className="w-4 h-4 text-amber-300" />
+                  <span>Keuangan</span>
+                </div>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${openDropdown === 'keuangan' ? 'rotate-180' : ''}`} />
+              </button>
+
+              {/* Dropdown Options */}
+              {openDropdown === 'keuangan' && (
+                <div className="absolute left-0 top-full mt-2 w-60 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <p className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1">Pilihan Menu Keuangan</p>
+                  <button
+                    onClick={() => { setActiveTab('donasi'); setOpenDropdown(null); }}
+                    className={`w-full px-3.5 py-2.5 text-left text-xs font-semibold flex items-center gap-2.5 hover:bg-emerald-50 transition-colors cursor-pointer ${
+                      activeTab === 'donasi' ? 'text-emerald-800 bg-emerald-50/80 font-bold' : 'text-slate-700'
+                    }`}
+                  >
+                    <Bell className="w-4 h-4 text-amber-600" /> Pengingat Donasi & E-Wallet
+                  </button>
+                  <button
+                    onClick={() => { setActiveTab('laporan'); setOpenDropdown(null); }}
+                    className={`w-full px-3.5 py-2.5 text-left text-xs font-semibold flex items-center gap-2.5 hover:bg-emerald-50 transition-colors cursor-pointer ${
+                      activeTab === 'laporan' ? 'text-emerald-800 bg-emerald-50/80 font-bold' : 'text-slate-700'
+                    }`}
+                  >
+                    <LayoutDashboard className="w-4 h-4 text-emerald-600" /> Progress ZISWAF Masjid
+                  </button>
+                  <button
+                    onClick={() => { setActiveTab('histori'); setOpenDropdown(null); }}
+                    className={`w-full px-3.5 py-2.5 text-left text-xs font-semibold flex items-center gap-2.5 hover:bg-emerald-50 transition-colors cursor-pointer ${
+                      activeTab === 'histori' ? 'text-emerald-800 bg-emerald-50/80 font-bold' : 'text-slate-700'
+                    }`}
+                  >
+                    <Calendar className="w-4 h-4 text-blue-600" /> Histori Donasi Anda
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* 4. Category: AKUN */}
+            <div className="relative">
+              <button
+                onClick={() => setOpenDropdown(openDropdown === 'akun' ? null : 'akun')}
+                className={`w-full p-3 rounded-2xl font-bold text-xs flex items-center justify-between transition-all cursor-pointer border ${
+                  activeTab === 'profil'
+                    ? 'bg-emerald-800 text-white border-emerald-700 shadow-md'
+                    : 'bg-slate-50 text-slate-700 hover:bg-emerald-50 hover:text-emerald-900 border-slate-200'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Settings className="w-4 h-4 text-blue-300" />
+                  <span>Akun</span>
+                </div>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${openDropdown === 'akun' ? 'rotate-180' : ''}`} />
+              </button>
+
+              {/* Dropdown Options */}
+              {openDropdown === 'akun' && (
+                <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <p className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1">Pilihan Menu Akun</p>
+                  <button
+                    onClick={() => { setActiveTab('profil'); setOpenDropdown(null); }}
+                    className={`w-full px-3.5 py-2.5 text-left text-xs font-semibold flex items-center gap-2.5 hover:bg-emerald-50 transition-colors cursor-pointer ${
+                      activeTab === 'profil' ? 'text-emerald-800 bg-emerald-50/80 font-bold' : 'text-slate-700'
+                    }`}
+                  >
+                    <Settings className="w-4 h-4 text-slate-600" /> Pengaturan Profil Saya
+                  </button>
+                </div>
+              )}
+            </div>
+
           </div>
 
-          {/* Sub-Items for Active Category */}
-          <div className="flex items-center gap-2 pt-1 overflow-x-auto">
-            {activeCategory === 'ibadah' && (
-              <>
-                <TabButton id="ringkasan" icon={Activity} label="Ringkasan Utama" />
-                <TabButton id="quran" icon={BookOpen} label="Al-Quran Digital" />
-                <TabButton id="jadwal" icon={Clock} label="Jadwal Shalat Presisi" />
-              </>
-            )}
-            {activeCategory === 'layanan' && (
-              <>
-                <TabButton id="tanya" icon={MessageSquare} label="Tanya DKM & Consultation" />
-              </>
-            )}
-            {activeCategory === 'keuangan' && (
-              <>
-                <TabButton id="donasi" icon={Wallet} label="Pengingat Donasi & E-Wallet" />
-                <TabButton id="laporan" icon={LayoutDashboard} label="Progress ZISWAF" />
-                <TabButton id="histori" icon={Calendar} label="Histori Donasi" />
-              </>
-            )}
-            {activeCategory === 'akun' && (
-              <>
-                <TabButton id="profil" icon={Settings} label="Pengaturan Profil" />
-              </>
-            )}
+          {/* Active Sub-Menu Pill Breadcrumb */}
+          <div className="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-1.5 border border-slate-200/60 mt-2">
+            <span className="text-[11px] text-slate-600 font-medium flex items-center gap-1.5">
+              Tampilan Aktif: <strong className="text-emerald-800 font-bold">{getTabLabel(activeTab)}</strong>
+            </span>
+            <span className="text-[10px] bg-emerald-100 text-emerald-800 font-extrabold px-2.5 py-0.5 rounded-full uppercase">
+              {activeTab === 'ringkasan' || activeTab === 'quran' || activeTab === 'jadwal' ? 'Kelompok: UTAMA' :
+               activeTab === 'tanya' ? 'Kelompok: LAYANAN' :
+               activeTab === 'donasi' || activeTab === 'laporan' || activeTab === 'histori' ? 'Kelompok: KEUANGAN' : 'Kelompok: AKUN'}
+            </span>
           </div>
         </div>
       </div>
