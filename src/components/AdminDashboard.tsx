@@ -479,6 +479,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
     setJournals(prev => [entry, ...prev]);
   };
 
+  const [namaDonaturStr, setNamaDonaturStr] = useState('');
+  const [kontakDonaturStr, setKontakDonaturStr] = useState('');
+
   const handleZiswafSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const nominal = parseInt(nominalStr.replace(/\D/g, ''), 10);
@@ -489,14 +492,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
       const progTitle = progObj ? progObj.judul : 'Program ZISWAF';
       const isZakat = progTitle.toLowerCase().includes('zakat');
       const isWakaf = progTitle.toLowerCase().includes('wakaf');
+      const namaDonatur = namaDonaturStr.trim() || 'Hamba Allah';
       const noBukti = `BKM-DON-${Date.now().toString().slice(-5)}`;
       const tanggal = new Date().toISOString().split('T')[0];
+      const tanggalFormatted = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
 
       const newJournal: JurnalEntry = {
         id: `JU-ZIS-${Date.now()}`,
         tanggal: tanggal,
         noBukti: noBukti,
-        keterangan: `Penerimaan Donasi ZISWAF: ${progTitle}`,
+        keterangan: `Penerimaan Donasi ZISWAF: ${progTitle} dari ${namaDonatur}`,
         sumber: 'Donasi Umum',
         baris: [
           { kodeAkun: isZakat ? '1104' : (isWakaf ? '1105' : '1106'), namaAkun: `Bank (Debit)`, debit: nominal, kredit: 0 },
@@ -532,9 +537,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
             user_input: newJournal.dibuatOleh
           }
         ]);
-      } catch (err) { console.error('Error insert jurnal_umum:', err); }
+        
+        // Simpan ke tabel donations (Riwayat Transaksi) dengan status Berhasil
+        const donasiId = 'INV-' + Math.floor(Math.random() * 10000);
+        await supabase.from('donations').insert([{
+          id: donasiId,
+          tanggal: tanggalFormatted,
+          program_id: selectedProgram,
+          program_name: progTitle,
+          nominal,
+          metode: 'Tunai / Admin',
+          status: 'Berhasil',
+          bukti: null,
+          nama_donatur: namaDonatur,
+          kontak_donatur: kontakDonaturStr || '-'
+        }]);
+
+      } catch (err) { console.error('Error insert jurnal_umum/donations:', err); }
       
       setNominalStr('');
+      setNamaDonaturStr('');
+      setKontakDonaturStr('');
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
     }
@@ -1413,6 +1436,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                       ))}
                     </select>
                   </div>
+                  </div>
                   <div>
                     <label className="block text-sm font-bold text-slate-500 mb-2">Nominal Donasi (Rp)</label>
                     <input 
@@ -1423,6 +1447,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                       className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-lime-600 font-mono text-lg"
                       required
                     />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-bold text-slate-500 mb-2">Nama Donatur (Opsional)</label>
+                      <input 
+                        type="text"
+                        placeholder="Contoh: Hamba Allah"
+                        value={namaDonaturStr}
+                        onChange={(e) => setNamaDonaturStr(e.target.value)}
+                        className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-lime-600"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-slate-500 mb-2">No. HP / Email (Opsional)</label>
+                      <input 
+                        type="text"
+                        placeholder="Contoh: 08123456789"
+                        value={kontakDonaturStr}
+                        onChange={(e) => setKontakDonaturStr(e.target.value)}
+                        className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-lime-600"
+                      />
+                    </div>
                   </div>
                   <button type="submit" className="w-full flex items-center justify-center gap-2 bg-lime-600 hover:bg-lime-700 text-white font-bold py-3.5 px-4 rounded-xl transition-colors shadow-lg shadow-lime-900/20">
                     <Save className="w-5 h-5" /> Simpan ke Database
