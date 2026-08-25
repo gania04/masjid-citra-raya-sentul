@@ -30,34 +30,44 @@ export default function App() {
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [isQuranModalOpen, setIsQuranModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
 
   // Helper for Audit Logging
-  const logAudit = (name: string, role: string, kontak: string, action: string, desc: string, colorClass: string) => {
+  const logAudit = async (name: string, role: string, kontak: string, action: string, desc: string, colorClass: string) => {
     const w = new Date().toLocaleString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    const newLog = { w, n: name, r: role, a: kontak, ac: action, d: desc, c: colorClass };
-    const existingLogs = JSON.parse(localStorage.getItem('audit_logs') || '[]');
-    localStorage.setItem('audit_logs', JSON.stringify([newLog, ...existingLogs]));
+    try {
+      await supabase.from('audit_logs').insert([{
+        waktu: w,
+        nama: name,
+        peran: role,
+        kontak: kontak,
+        aksi: action,
+        deskripsi: desc,
+        warna_class: colorClass
+      }]);
+    } catch (err) {
+      console.error('Failed to log audit to Supabase', err);
+    }
   };
 
-  // Jamaah Registration State
-  const [registeredJamaahList, setRegisteredJamaahList] = useState<any[]>(() => {
-    const saved = localStorage.getItem('registered_jamaah');
-    if (saved) return JSON.parse(saved);
-    return [
-      { n: 'Yudi Haryono', c: '0878-1234-1234', s: 'Aktif', p: '123456' },
-      { n: 'Rizky Maulana', c: '0812-9988-7766', s: 'Aktif', p: '123456' },
-      { n: 'Budi Santoso', c: 'budisan@yahoo.com', s: 'Aktif', p: '123456' },
-      { n: 'Annisa Fitri', c: 'annisa.f@outlook.com', s: 'Aktif', p: '123456' },
-      { n: 'Keluarga Bpk. Herman', c: 'herman.fam@gmail.com', s: 'Aktif', p: '123456' },
-    ];
-  });
+  // Jamaah Registration State (Fetched from Supabase in useEffect)
+  const [registeredJamaahList, setRegisteredJamaahList] = useState<any[]>([]);
 
-  const handleRegisterJamaah = (jamaah: any) => {
-    setRegisteredJamaahList(prev => {
-      const newList = [...prev, jamaah];
-      localStorage.setItem('registered_jamaah', JSON.stringify(newList));
-      return newList;
-    });
+  const handleRegisterJamaah = async (jamaah: any) => {
+    setRegisteredJamaahList(prev => [...prev, jamaah]);
+
+    try {
+      await supabase.from('registered_jamaah').insert([{
+        nama: jamaah.n,
+        kontak: jamaah.c || jamaah.e,
+        email: jamaah.e || null,
+        password: jamaah.p,
+        status: jamaah.s || 'Aktif',
+        joined_at: new Date().toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })
+      }]);
+    } catch (err) {
+      console.error('Failed to register jamaah to Supabase', err);
+    }
   };
 
   // Day & Night Dark Mode State Logic
@@ -149,13 +159,16 @@ export default function App() {
     }
   ]);
 
-  const handleDonateSubmit = (programId: number, nominal: number, metode: string, bukti: string | null, namaDonatur: string, kontakDonatur: string) => {
+  const handleDonateSubmit = async (programId: number, nominal: number, metode: string, bukti: string | null, namaDonatur: string, kontakDonatur: string) => {
     const program = programs.find(p => p.id === programId);
     if (!program) return;
     
+    const donasiId = 'INV-' + Math.floor(Math.random() * 10000);
+    const tanggal = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+    
     const newDonasi = {
-      id: 'INV-' + Math.floor(Math.random() * 10000),
-      tanggal: new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }),
+      id: donasiId,
+      tanggal,
       programId,
       programName: program.judul,
       nominal,
@@ -168,9 +181,26 @@ export default function App() {
     
     setDonasiHistory(prev => [newDonasi, ...prev]);
     logAudit(namaDonatur || 'Hamba Allah', isJamaahLoggedIn ? 'JAMAAH' : 'GUEST', kontakDonatur || '-', 'DONASI', `Input donasi sejumlah Rp ${nominal} via ${metode}`, 'bg-blue-900/50 text-blue-600');
+
+    try {
+      await supabase.from('donations').insert([{
+        id: donasiId,
+        tanggal,
+        program_id: programId,
+        program_name: program.judul,
+        nominal,
+        metode,
+        status: 'Menunggu Verifikasi',
+        bukti: null,
+        nama_donatur: namaDonatur || 'Hamba Allah',
+        kontak_donatur: kontakDonatur || '-'
+      }]);
+    } catch (err) {
+      console.error('Failed to insert donation to Supabase', err);
+    }
   };
 
-  const handleVerifyDonasi = (id: string, status: 'Berhasil' | 'Ditolak') => {
+  const handleVerifyDonasi = async (id: string, status: 'Berhasil' | 'Ditolak') => {
     setDonasiHistory(prev => prev.map(d => {
       if (d.id === id) {
         if (status === 'Berhasil' && d.status !== 'Berhasil') {
@@ -184,6 +214,12 @@ export default function App() {
       }
       return d;
     }));
+
+    try {
+      await supabase.from('donations').update({ status }).eq('id', id);
+    } catch (err) {
+      console.error('Failed to update donation status in Supabase', err);
+    }
   };
   
   // Home Visibility State managed by Admin
@@ -196,21 +232,70 @@ export default function App() {
   });
 
   useEffect(() => {
-    const fetchPrograms = async () => {
+    const fetchData = async () => {
       try {
-        const { data, error } = await supabase.from('programs').select('*').order('id');
-        if (error) throw error;
-        if (data && data.length > 0) {
-          setPrograms(data);
+        // Fetch Programs
+        const { data: programsData, error: progErr } = await supabase.from('programs').select('*').order('id');
+        if (!progErr && programsData && programsData.length > 0) {
+          const formattedPrograms = programsData.map((p: any) => ({
+            id: p.id,
+            kategori: p.kategori,
+            judul: p.judul,
+            deskripsi: p.deskripsi,
+            terkumpulPersen: p.terkumpul_persen || 0,
+            terkumpulRp: p.terkumpul_rp || 0,
+            targetRp: p.target_rp || 0,
+            donatur: p.donatur || 0,
+            gambar: p.gambar
+          }));
+          setPrograms(formattedPrograms);
+        }
+
+        // Fetch Donations
+        const { data: donasiData, error: donasiErr } = await supabase.from('donations').select('*').order('created_at', { ascending: false });
+        if (!donasiErr && donasiData) {
+          const formattedDonasi = donasiData.map((d: any) => ({
+            id: d.id,
+            tanggal: d.tanggal,
+            programId: d.program_id,
+            programName: d.program_name,
+            nominal: d.nominal,
+            metode: d.metode,
+            status: d.status,
+            bukti: d.bukti,
+            namaDonatur: d.nama_donatur,
+            kontakDonatur: d.kontak_donatur
+          }));
+          if (formattedDonasi.length > 0) {
+             setDonasiHistory(formattedDonasi);
+          }
+        }
+
+        // Fetch Jamaah
+        const { data: jamaahData, error: jamaahErr } = await supabase.from('registered_jamaah').select('*').order('created_at', { ascending: false });
+        if (!jamaahErr && jamaahData && jamaahData.length > 0) {
+          const formattedJamaah = jamaahData.map((j: any) => ({
+            n: j.nama, c: j.kontak, e: j.email || '', s: j.status, p: j.password
+          }));
+          setRegisteredJamaahList(formattedJamaah);
+        }
+
+        // Fetch Audit Logs
+        const { data: auditData, error: auditErr } = await supabase.from('audit_logs').select('*').order('created_at', { ascending: false });
+        if (!auditErr && auditData && auditData.length > 0) {
+          const formattedAudit = auditData.map((a: any) => ({
+            w: a.waktu, n: a.nama, r: a.peran, a: a.kontak, ac: a.aksi, d: a.deskripsi, c: a.warna_class
+          }));
+          setAuditLogs(formattedAudit);
         }
       } catch (err) {
-        console.error('Error fetching programs from Supabase:', err);
+        console.error('Error fetching data from Supabase:', err);
       } finally {
         setLoading(false);
       }
     };
     
-    fetchPrograms();
+    fetchData();
   }, []);
 
   const handleAddDonation = async (programId: number, nominal: number) => {
@@ -235,8 +320,8 @@ export default function App() {
       const { error } = await supabase
         .from('programs')
         .update({
-          terkumpulRp: programToUpdate.terkumpulRp,
-          terkumpulPersen: programToUpdate.terkumpulPersen,
+          terkumpul_rp: programToUpdate.terkumpulRp,
+          terkumpul_persen: programToUpdate.terkumpulPersen,
           donatur: programToUpdate.donatur
         })
         .eq('id', programId);
@@ -293,6 +378,7 @@ export default function App() {
               registeredJamaahList={registeredJamaahList}
               donasiHistory={donasiHistory}
               onVerifyDonasi={handleVerifyDonasi}
+              auditLogs={auditLogs}
             />
           </div>
         ) : (isJamaahLoggedIn && showPortal) ? (

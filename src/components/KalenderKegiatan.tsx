@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Calendar, Clock, MapPin, X, CheckCircle } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 export const KalenderKegiatan = () => {
   const events = [
@@ -36,28 +37,31 @@ export const KalenderKegiatan = () => {
   const [formData, setFormData] = useState({ nama: '', noHp: '' });
   const [showSuccess, setShowSuccess] = useState(false);
 
-  const handleDaftar = (e: React.FormEvent) => {
+  const handleDaftar = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.nama || !formData.noHp) return;
     
-    const newReg = {
-      id: Date.now(),
-      eventId: selectedEvent.id,
-      eventTitle: selectedEvent.title,
-      nama: formData.nama,
-      noHp: formData.noHp,
-      tanggal: new Date().toISOString()
-    };
-    
-    const existing = JSON.parse(localStorage.getItem('kegiatan_registrations') || '[]');
-    localStorage.setItem('kegiatan_registrations', JSON.stringify([newReg, ...existing]));
-    
-    setShowSuccess(true);
-    setTimeout(() => {
-      setShowSuccess(false);
-      setSelectedEvent(null);
-      setFormData({ nama: '', noHp: '' });
-    }, 2000);
+    try {
+      const { error } = await supabase.from('kegiatan_registrations').insert([{
+        id: `REG-${Date.now()}`,
+        kegiatan_id: selectedEvent.id,
+        nama: formData.nama,
+        kontak: formData.noHp,
+        kategori: selectedEvent.type
+      }]);
+      
+      if (error) throw error;
+      
+      setShowSuccess(true);
+      setTimeout(() => {
+        setShowSuccess(false);
+        setSelectedEvent(null);
+        setFormData({ nama: '', noHp: '' });
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to register for event', err);
+      alert('Gagal mendaftar kegiatan. Silakan coba lagi.');
+    }
   };
 
   return (

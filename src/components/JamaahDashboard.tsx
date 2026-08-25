@@ -4,6 +4,7 @@ import jsPDF from 'jspdf';
 import { AlQuranDigital, BookmarkData } from './AlQuranDigital';
 import { BukuPanduanModal } from './BukuPanduanModal';
 import { triggerWaApp, sendWaViaGateway, generateWaReminderMessage, formatWaPhone, triggerDeviceNotification, requestDeviceNotificationPermission } from '../utils/whatsappReminder';
+import { supabase } from '../lib/supabase';
 
 interface JamaahDashboardProps {
   onBack: () => void;
@@ -66,44 +67,41 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
     }
   };
 
-  const [aspirasiList, setAspirasiList] = useState<any[]>(() => {
-    const saved = localStorage.getItem('masjid_tanya_dkm_list');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error('Error parsing tanya dkm list', e);
-      }
-    }
-    return [
-      {
-        id: 'tanya-1',
-        kategori: 'Fiqih & Ibadah',
-        judul: 'Bagaimana Ketentuan Zakat Mal untuk Saham & Reksadana?',
-        pesan: 'Assalamu\'alaikum Ustadz, mohon penjelasan mengenai perhitungan zakat mal untuk instrumen investasi saham syariah dan reksadana.',
-        namaPenanya: 'Ahmad Fauzi',
-        tanggal: '22 Agt 2026',
-        status: 'Dijawab',
-        jawabanDkm: 'Wa\'alaikumsalam Wr. Wb. Zakat saham & reksadana dihitung dari nilai pasar portofolio ditambah dividen pada saat mencapai haul 1 tahun dan nisab setara 85 gram emas. Besaran zakatnya adalah 2,5%. Anda dapat menggunakan Kalkulator Zakat pada portal ini.',
-        penjawabDkm: 'Ust. H. Ahmad Farhan, M.A. (Bidang Syariah DKM)',
-        tanggalJawaban: '22 Agt 2026'
-      },
-      {
-        id: 'tanya-2',
-        kategori: 'Fasilitas & Kebersihan',
-        judul: 'Saran Tambahan Karpet Shalat & Penyejuk Udara di Mezzanine Wanita',
-        pesan: 'Bismillah, mohon dipertimbangkan untuk penambahan kipas angin atau AC di lantai 2 (area shalat wanita) agar jamaah lebih khusyuk saat shalat Jumat.',
-        namaPenanya: 'Hamba Allah',
-        tanggal: '20 Agt 2026',
-        status: 'Dijawab',
-        jawabanDkm: 'Jazakallahu khairan atas masukannya. Tim Sarpras DKM telah menyetujui pengadaan 2 unit AC standing di lantai mezzanine pada anggaran bulan ini.',
-        penjawabDkm: 'Pak Leo (Divisi Sarpras & Pembangunan)',
-        tanggalJawaban: '21 Agt 2026'
-      }
-    ];
-  });
+  const [aspirasiList, setAspirasiList] = useState<any[]>([]);
 
-  const handleTambahAspirasi = (e: React.FormEvent) => {
+  useEffect(() => {
+    const fetchAspirasi = async () => {
+      try {
+        const { data, error } = await supabase.from('tanya_dkm').select('*').order('created_at', { ascending: false });
+        if (!error && data && data.length > 0) {
+          const formatted = data.map((d: any) => ({
+            id: d.id,
+            kategori: d.kategori,
+            judul: d.judul,
+            pesan: d.pesan,
+            namaPenanya: d.nama_penanya,
+            tanggal: d.tanggal,
+            status: d.status,
+            jawabanDkm: d.jawaban_dkm,
+            penjawabDkm: d.penjawab_dkm,
+            tanggalJawaban: d.tanggal_jawaban
+          }));
+          setAspirasiList(formatted);
+          localStorage.setItem('masjid_tanya_dkm_list', JSON.stringify(formatted));
+        } else {
+          const saved = localStorage.getItem('masjid_tanya_dkm_list');
+          if (saved) {
+             setAspirasiList(JSON.parse(saved));
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching aspirasi:', err);
+      }
+    };
+    fetchAspirasi();
+  }, []);
+
+  const handleTambahAspirasi = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formJudul.trim() || !formPesan.trim()) {
       alert('Mohon lengkapi judul dan isi pertanyaan!');
@@ -126,6 +124,23 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
     const updated = [newItem, ...aspirasiList];
     setAspirasiList(updated);
     localStorage.setItem('masjid_tanya_dkm_list', JSON.stringify(updated));
+
+    try {
+      await supabase.from('tanya_dkm').insert([{
+        id: newItem.id,
+        kategori: newItem.kategori,
+        judul: newItem.judul,
+        pesan: newItem.pesan,
+        nama_penanya: newItem.namaPenanya,
+        tanggal: newItem.tanggal,
+        status: newItem.status,
+        jawaban_dkm: null,
+        penjawab_dkm: null,
+        tanggal_jawaban: null
+      }]);
+    } catch (err) {
+      console.error('Failed to insert aspirasi to Supabase', err);
+    }
 
     setFormJudul('');
     setFormPesan('');
@@ -1602,11 +1617,16 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
                 <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
                   <button 
                     type="button"
-                    onClick={(e) => { 
+                    onClick={async (e) => { 
                       e.preventDefault();
-                      localStorage.setItem('masjid_user_name', profilName);
-                      localStorage.setItem('masjid_user_phone', profilContact);
-                      alert(`Profil berhasil diperbarui!\n\nNama: ${profilName}\nKontak: ${profilContact}`);
+                      try {
+                        const { error } = await supabase.from('registered_jamaah').update({ nama: profilName, kontak: profilContact }).eq('kontak', kontak);
+                        if (error) throw error;
+                        alert(`Profil berhasil diperbarui di database!\n\nNama: ${profilName}\nKontak: ${profilContact}`);
+                      } catch (err) {
+                        console.error('Failed to update profile in Supabase', err);
+                        alert('Gagal memperbarui profil.');
+                      }
                     }} 
                     className="px-6 py-2.5 bg-emerald-700 text-white font-bold rounded-xl hover:bg-emerald-800 transition-colors shadow-sm text-xs cursor-pointer"
                   >

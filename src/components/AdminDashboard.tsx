@@ -36,9 +36,10 @@ interface AdminDashboardProps {
   donasiHistory?: any[];
   onVerifyDonasi?: (id: string, status: 'Berhasil' | 'Ditolak') => void;
   adminRole?: string;
+  auditLogs?: any[];
 }
 
-export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs, onAddDonation, homeVisibility, setHomeVisibility, registeredJamaahList, donasiHistory = [], onVerifyDonasi, adminRole = 'direktur' }) => {
+export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs, onAddDonation, homeVisibility, setHomeVisibility, registeredJamaahList, donasiHistory = [], onVerifyDonasi, adminRole = 'direktur', auditLogs = [] }) => {
   const [activeMenu, setActiveMenu] = useState('utama');
   const [activeCategory, setActiveCategory] = useState('utama');
   const [kasTab, setKasTab] = useState('ringkasan');
@@ -233,9 +234,34 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
   ]);
 
   // Inventaris State
-  const [inventarisList, setInventarisList] = useState([
-    { id: 1, foto: 'https://images.unsplash.com/photo-1545127398-14699f92334b?auto=format&fit=crop&w=50&q=80', kode: 'SND-01', nama: 'Sistem Line Array Sound Speaker TOA Professional', kategori: 'Elektronik & Audio', jumlahTotal: 8, satuan: 'Unit', lokasi: 'Ruang Shalat Utama Lt 1' }
-  ]);
+  const [inventarisList, setInventarisList] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchInventaris = async () => {
+      try {
+        const { data, error } = await supabase.from('masjid_inventaris').select('*').order('created_at', { ascending: false });
+        if (!error && data) {
+          const formatted = data.map((d: any) => ({
+            id: d.id,
+            foto: 'https://images.unsplash.com/photo-1545127398-14699f92334b?auto=format&fit=crop&w=50&q=80', // Default placeholder
+            kode: d.id,
+            nama: d.nama,
+            kategori: d.kategori,
+            jumlahTotal: d.jumlah,
+            kondisi: d.kondisi,
+            satuan: 'Unit',
+            lokasi: 'Masjid'
+          }));
+          setInventarisList(formatted);
+        }
+      } catch (err) {
+        console.error('Failed to fetch inventaris:', err);
+      }
+    };
+    if (activeMenu === 'operasional') {
+      fetchInventaris();
+    }
+  }, [activeMenu]);
   const [laporanRusakList, setLaporanRusakList] = useState<any[]>([
     { id: 1, inventarisId: 1, jumlah: 2, alasan: 'Suara pecah dan kabel putus digigit tikus', tanggal: new Date().toLocaleDateString('id-ID') }
   ]);
@@ -390,13 +416,50 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
   const totalOut = kasEntries.filter(e => e.type === 'out').reduce((acc, curr) => acc + curr.amount, 0);
   const saldoAkhir = totalIn - totalOut;
 
-  const [journals, setJournals] = useState<JurnalEntry[]>(INITIAL_JURNAL_ENTRIES);
+  const [journals, setJournals] = useState<JurnalEntry[]>([]);
+
+  useEffect(() => {
+    const fetchJournals = async () => {
+      try {
+        const { data, error } = await supabase.from('jurnal_umum').select('*, chart_of_accounts(nama)').order('created_at', { ascending: false });
+        if (!error && data) {
+          const grouped = new Map<string, JurnalEntry>();
+          data.forEach((row: any) => {
+             const key = row.no_bukti;
+             if (!grouped.has(key)) {
+                grouped.set(key, {
+                  id: key,
+                  tanggal: row.tanggal,
+                  noBukti: row.no_bukti,
+                  keterangan: row.keterangan,
+                  sumber: 'Kas Masjid',
+                  status: 'Posted',
+                  dibuatOleh: row.user_input,
+                  tanggalBuat: row.tanggal,
+                  baris: []
+                });
+             }
+             grouped.get(key)!.baris.push({
+               kodeAkun: row.kode_akun,
+               namaAkun: row.chart_of_accounts?.nama || row.kode_akun,
+               debit: Number(row.debit),
+               kredit: Number(row.kredit)
+             });
+          });
+          setJournals(Array.from(grouped.values()));
+        }
+      } catch (err) {
+        console.error('Error fetching jurnal_umum:', err);
+      }
+    };
+    fetchJournals();
+  }, []);
 
   const handleAutoPostJournal = (entry: JurnalEntry) => {
     setJournals(prev => [entry, ...prev]);
   };
 
-  const handleZiswafSubmit = (e: React.FormEvent) => {
+  const handleZiswafSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const nominal = parseInt(nominalStr.replace(/\D/g, ''), 10);
     if (nominal && nominal > 0) {
@@ -404,31 +467,60 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
       
       const progObj = programs.find(p => p.id === selectedProgram);
       const progTitle = progObj ? progObj.judul : 'Program ZISWAF';
+      const isZakat = progTitle.toLowerCase().includes('zakat');
+      const isWakaf = progTitle.toLowerCase().includes('wakaf');
+      const noBukti = `BKM-DON-${Date.now().toString().slice(-5)}`;
+      const tanggal = new Date().toISOString().split('T')[0];
 
-      // Auto create double-entry journal entry for accounting integration
       const newJournal: JurnalEntry = {
         id: `JU-ZIS-${Date.now()}`,
-        tanggal: new Date().toISOString().split('T')[0],
-        noBukti: `BKM-DON-${Date.now().toString().slice(-5)}`,
+        tanggal: tanggal,
+        noBukti: noBukti,
         keterangan: `Penerimaan Donasi ZISWAF: ${progTitle}`,
         sumber: 'Donasi Umum',
         baris: [
-          { kodeAkun: '1-1300', namaAkun: 'Bank BSI - Rekening Donasi/Wakaf (Debit)', debit: nominal, kredit: 0 },
-          { kodeAkun: '4-1300', namaAkun: 'Pendapatan Donasi Portal Jamaah (Kredit - Jurnal Lawan)', debit: 0, kredit: nominal },
+          { kodeAkun: isZakat ? '1104' : (isWakaf ? '1105' : '1106'), namaAkun: `Bank (Debit)`, debit: nominal, kredit: 0 },
+          { kodeAkun: isZakat ? '4106' : (isWakaf ? '4105' : '4103'), namaAkun: `Pendapatan Donasi (Kredit)`, debit: 0, kredit: nominal },
         ],
         status: 'Posted',
         dibuatOleh: 'Admin Masjid (Form ZISWAF)',
-        tanggalBuat: new Date().toISOString().split('T')[0],
+        tanggalBuat: tanggal,
       };
 
       setJournals(prev => [newJournal, ...prev]);
+      
+      try {
+        await supabase.from('jurnal_umum').insert([
+          {
+            id: `JU-${Date.now()}-1`,
+            tanggal: tanggal,
+            no_bukti: noBukti,
+            keterangan: newJournal.keterangan,
+            kode_akun: newJournal.baris[0].kodeAkun,
+            debit: nominal,
+            kredit: 0,
+            user_input: newJournal.dibuatOleh
+          },
+          {
+            id: `JU-${Date.now()}-2`,
+            tanggal: tanggal,
+            no_bukti: noBukti,
+            keterangan: newJournal.keterangan,
+            kode_akun: newJournal.baris[1].kodeAkun,
+            debit: 0,
+            kredit: nominal,
+            user_input: newJournal.dibuatOleh
+          }
+        ]);
+      } catch (err) { console.error('Error insert jurnal_umum:', err); }
+      
       setNominalStr('');
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
     }
   };
 
-  const handleKasPemasukanSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleKasPemasukanSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
     const dateInput = (form.elements.namedItem('tgl') as HTMLInputElement).value;
@@ -440,29 +532,58 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
       const newKas = { id: Date.now(), date: dateFormatted, desc: descInput, type: 'in' as const, amount: amountInput };
       setKasEntries(prev => [newKas, ...prev]);
 
+      const noBukti = `BKM-RT-${Date.now().toString().slice(-5)}`;
+      const tanggal = dateInput || new Date().toISOString().split('T')[0];
+
       const newJournal: JurnalEntry = {
         id: `JU-RT-${Date.now()}`,
-        tanggal: dateInput || new Date().toISOString().split('T')[0],
-        noBukti: `BKM-RT-${Date.now().toString().slice(-5)}`,
-        keterangan: `Riwayat Transaksi Pemasukan: ${descInput}`,
+        tanggal: tanggal,
+        noBukti: noBukti,
+        keterangan: `Pemasukan: ${descInput}`,
         sumber: 'Kas Masjid',
         baris: [
-          { kodeAkun: '1-1100', namaAkun: 'Kas Operasional Masjid (Debit)', debit: amountInput, kredit: 0 },
-          { kodeAkun: '4-1100', namaAkun: 'Pendapatan Donasi Operasional (Kredit)', debit: 0, kredit: amountInput },
+          { kodeAkun: '1101', namaAkun: 'Kas Operasional Masjid (Debit)', debit: amountInput, kredit: 0 },
+          { kodeAkun: '4101', namaAkun: 'Pendapatan Donasi Operasional (Kredit)', debit: 0, kredit: amountInput },
         ],
         status: 'Posted',
-        dibuatOleh: 'Admin Masjid (Riwayat Transaksi)',
-        tanggalBuat: new Date().toISOString().split('T')[0],
+        dibuatOleh: 'Admin Masjid',
+        tanggalBuat: tanggal,
       };
 
       setJournals(prev => [newJournal, ...prev]);
+      
+      try {
+        await supabase.from('jurnal_umum').insert([
+          {
+            id: `JU-${Date.now()}-1`,
+            tanggal: tanggal,
+            no_bukti: noBukti,
+            keterangan: newJournal.keterangan,
+            kode_akun: '1101',
+            debit: amountInput,
+            kredit: 0,
+            user_input: 'Admin Masjid'
+          },
+          {
+            id: `JU-${Date.now()}-2`,
+            tanggal: tanggal,
+            no_bukti: noBukti,
+            keterangan: newJournal.keterangan,
+            kode_akun: '4101',
+            debit: 0,
+            kredit: amountInput,
+            user_input: 'Admin Masjid'
+          }
+        ]);
+      } catch (err) { console.error('Error insert jurnal_umum:', err); }
+
       alert('Data Pemasukan berhasil disimpan & terposting otomatis ke Jurnal Umum, Buku Besar, CoA, & Laporan Keuangan!');
       setKasTab('ringkasan');
       form.reset();
     }
   };
 
-  const handleKasPengeluaranSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleKasPengeluaranSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
     const dateInput = (form.elements.namedItem('tgl') as HTMLInputElement).value;
@@ -474,22 +595,51 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
       const newKas = { id: Date.now(), date: dateFormatted, desc: descInput, type: 'out' as const, amount: amountInput };
       setKasEntries(prev => [newKas, ...prev]);
 
+      const noBukti = `BKK-RT-${Date.now().toString().slice(-5)}`;
+      const tanggal = dateInput || new Date().toISOString().split('T')[0];
+
       const newJournal: JurnalEntry = {
         id: `JU-RT-${Date.now()}`,
-        tanggal: dateInput || new Date().toISOString().split('T')[0],
-        noBukti: `BKK-RT-${Date.now().toString().slice(-5)}`,
-        keterangan: `Riwayat Transaksi Pengeluaran: ${descInput}`,
+        tanggal: tanggal,
+        noBukti: noBukti,
+        keterangan: `Pengeluaran: ${descInput}`,
         sumber: 'Kas Masjid',
         baris: [
-          { kodeAkun: '5-1100', namaAkun: 'Beban Daya & Jasa Listrik/Air (Debit)', debit: amountInput, kredit: 0 },
-          { kodeAkun: '1-1100', namaAkun: 'Kas Operasional Masjid (Kredit)', debit: 0, kredit: amountInput },
+          { kodeAkun: '5104', namaAkun: 'Beban Daya & Jasa Listrik/Air (Debit)', debit: amountInput, kredit: 0 },
+          { kodeAkun: '1101', namaAkun: 'Kas Operasional Masjid (Kredit)', debit: 0, kredit: amountInput },
         ],
         status: 'Posted',
-        dibuatOleh: 'Admin Masjid (Riwayat Transaksi)',
-        tanggalBuat: new Date().toISOString().split('T')[0],
+        dibuatOleh: 'Admin Masjid',
+        tanggalBuat: tanggal,
       };
 
       setJournals(prev => [newJournal, ...prev]);
+      
+      try {
+        await supabase.from('jurnal_umum').insert([
+          {
+            id: `JU-${Date.now()}-1`,
+            tanggal: tanggal,
+            no_bukti: noBukti,
+            keterangan: newJournal.keterangan,
+            kode_akun: '5104',
+            debit: amountInput,
+            kredit: 0,
+            user_input: 'Admin Masjid'
+          },
+          {
+            id: `JU-${Date.now()}-2`,
+            tanggal: tanggal,
+            no_bukti: noBukti,
+            keterangan: newJournal.keterangan,
+            kode_akun: '1101',
+            debit: 0,
+            kredit: amountInput,
+            user_input: 'Admin Masjid'
+          }
+        ]);
+      } catch (err) { console.error('Error insert jurnal_umum:', err); }
+
       alert('Data Pengeluaran berhasil disimpan & terposting otomatis ke Jurnal Umum, Buku Besar, CoA, & Laporan Keuangan!');
       setKasTab('ringkasan');
       form.reset();
@@ -1338,7 +1488,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                     <button onClick={() => {
                       const donors = (donasiHistory || []).filter((d: any) => d.status === 'Berhasil' && d.programId === p.id);
                       if (donors.length > 0) {
-                        const list = donors.map((d: any) => `- ${d.nama} (${formatRp(d.nominal)})`).join('\n');
+                        const list = donors.map((d: any) => `- ${d.namaDonatur || 'Hamba Allah'} (${formatRp(d.nominal)})`).join('\n');
                         alert(`Daftar Donatur untuk ${p.judul}:\n\n${list}`);
                       } else {
                         alert(`Belum ada donasi terverifikasi untuk program ini.`);
@@ -1348,9 +1498,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                       <button onClick={() => {
                         setEditCampaignModalData({ id: p.id, judul: p.judul, target: p.targetRp.toString(), kategori: p.kategori });
                       }} className="flex-1 bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold py-2 rounded-lg text-xs transition-colors cursor-pointer">Edit</button>
-                      <button onClick={() => {
+                      <button onClick={async () => {
                         if(window.confirm(`Yakin ingin menutup program "${p.judul}"? Program ini tidak akan ditampilkan lagi.`)) {
                           setDeletedPrograms(prev => [...prev, p.id]);
+                          try {
+                            await supabase.from('programs').delete().eq('id', p.id);
+                          } catch (err) { console.error('Error delete program:', err); }
                         }
                       }} className="flex-1 bg-red-50 text-red-600 hover:bg-red-100 font-bold py-2 rounded-lg text-xs transition-colors cursor-pointer">Tutup</button>
                     </div>
@@ -1443,25 +1596,53 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                                   setKasEntries(prev => [newKas, ...prev]);
 
                                   // Auto Posting ke Jurnal Umum
+                                  const isZakat = d.programName.toLowerCase().includes('zakat');
+                                  const isWakaf = d.programName.toLowerCase().includes('wakaf');
+                                  const noBukti = `BKM-DON-${Date.now().toString().slice(-5)}`;
+                                  const tanggal = new Date().toISOString().split('T')[0];
+
                                   const newJournal: JurnalEntry = {
                                     id: `JU-ZIS-${Date.now()}`,
-                                    tanggal: new Date().toISOString().split('T')[0],
-                                    noBukti: `BKM-DON-${Date.now().toString().slice(-5)}`,
+                                    tanggal: tanggal,
+                                    noBukti: noBukti,
                                     keterangan: `Penerimaan Donasi Jamaah: ${d.programName}`,
                                     sumber: 'Donasi Umum',
                                     baris: [
-                                      { kodeAkun: '1-1300', namaAkun: 'Bank BSI - Rekening Donasi/Wakaf (Debit)', debit: d.nominal, kredit: 0 },
+                                      { kodeAkun: isZakat ? '1104' : (isWakaf ? '1105' : '1106'), namaAkun: 'Bank (Debit)', debit: d.nominal, kredit: 0 },
                                       { 
-                                        kodeAkun: d.programName.toLowerCase().includes('zakat') ? '4-1100' : (d.programName.toLowerCase().includes('wakaf') ? '4-1300' : '4-1200'), 
-                                        namaAkun: d.programName.toLowerCase().includes('zakat') ? 'Pendapatan Zakat' : (d.programName.toLowerCase().includes('wakaf') ? 'Pendapatan Wakaf' : 'Pendapatan Infaq/Sedekah'), 
+                                        kodeAkun: isZakat ? '4106' : (isWakaf ? '4105' : '4103'), 
+                                        namaAkun: isZakat ? 'Pendapatan Zakat' : (isWakaf ? 'Pendapatan Wakaf' : 'Pendapatan Infaq/Sedekah'), 
                                         debit: 0, kredit: d.nominal 
                                       },
                                     ],
                                     status: 'Posted',
-                                    dibuatOleh: 'Admin (Verifikasi Otomatis)',
-                                    tanggalBuat: new Date().toISOString().split('T')[0],
+                                    dibuatOleh: 'Admin Masjid',
+                                    tanggalBuat: tanggal,
                                   };
                                   setJournals(prev => [newJournal, ...prev]);
+                                  
+                                  supabase.from('jurnal_umum').insert([
+                                    {
+                                      id: `JU-${Date.now()}-1`,
+                                      tanggal: tanggal,
+                                      no_bukti: noBukti,
+                                      keterangan: newJournal.keterangan,
+                                      kode_akun: newJournal.baris[0].kodeAkun,
+                                      debit: d.nominal,
+                                      kredit: 0,
+                                      user_input: 'Admin Masjid'
+                                    },
+                                    {
+                                      id: `JU-${Date.now()}-2`,
+                                      tanggal: tanggal,
+                                      no_bukti: noBukti,
+                                      keterangan: newJournal.keterangan,
+                                      kode_akun: newJournal.baris[1].kodeAkun,
+                                      debit: 0,
+                                      kredit: d.nominal,
+                                      user_input: 'Admin Masjid'
+                                    }
+                                  ]).then(() => {});
                                   alert(`Donasi berhasil diverifikasi. Dana masuk ke Kas Pemasukan & Jurnal Akuntansi otomatis tercatat.`);
                                 }} 
                                 className="px-3 py-1.5 bg-lime-100 text-lime-700 hover:bg-lime-200 rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-1 font-bold text-xs" title="Terima"
@@ -2055,10 +2236,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                                 }} className="p-1.5 text-lime-600 hover:text-lime-800 cursor-pointer" title="Edit">
                                   <Edit className="w-4 h-4 inline" />
                                 </button>
-                                <button onClick={() => {
+                                <button onClick={async () => {
                                   if(window.confirm(`Yakin ingin menghapus aset "${item.nama}"? Semua riwayat kerusakan juga akan terhapus.`)) {
-                                    setInventarisList(prev => prev.filter(i => i.id !== item.id));
-                                    setLaporanRusakList(prev => prev.filter(r => r.inventarisId !== item.id));
+                                    try {
+                                      const { error } = await supabase.from('masjid_inventaris').delete().eq('id', item.id);
+                                      if (error) throw error;
+                                      setInventarisList(prev => prev.filter(i => i.id !== item.id));
+                                      setLaporanRusakList(prev => prev.filter(r => r.inventarisId !== item.id));
+                                    } catch (err) {
+                                      console.error('Failed to delete inventaris:', err);
+                                      alert('Gagal menghapus inventaris dari database.');
+                                    }
                                   }
                                 }} className="p-1.5 text-red-600 hover:text-red-300 cursor-pointer" title="Hapus">
                                   <Trash2 className="w-4 h-4 inline" />
@@ -2503,8 +2691,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
-                    {(JSON.parse(localStorage.getItem('audit_logs') || '[]').length > 0 
-                      ? JSON.parse(localStorage.getItem('audit_logs') || '[]')
+                   {(auditLogs.length > 0 
+                     ? auditLogs
                       : [
                           { w: '29/7/2026, 19.06.26', n: 'Petugas Masjid Citra Sentul Raya', a: 'admin', r: 'ADMIN MASJID', ac: 'LOGIN', c: 'bg-lime-900/50 text-lime-600', d: 'User logged in successfully' },
                           { w: '29/7/2026, 19.06.14', n: 'Gania', a: '081517045406', r: 'JAMAAH', ac: 'LOGOUT', c: 'bg-red-900/50 text-red-600', d: 'User logged out successfully' },
@@ -2592,18 +2780,47 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
 
               <div className="mt-8 flex gap-3">
                 <button onClick={() => setShowCampaignModal(false)} className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl transition-colors cursor-pointer">Batal</button>
-                <button onClick={() => {
+                <button onClick={async () => {
                   if(!newCampaignData.judul || !newCampaignData.target) return alert('Mohon lengkapi judul dan target dana!');
-                  setLocalPrograms(prev => [...prev, {
-                    id: Math.random() * 10000,
-                    kategori: newCampaignData.kategori,
-                    judul: newCampaignData.judul,
-                    deskripsi: 'Dibuat dari form admin',
-                    terkumpulPersen: 0,
-                    terkumpulRp: 0,
-                    targetRp: parseInt(newCampaignData.target) || 0,
-                    donatur: 0,
-                  }]);
+                  const targetRpNum = parseInt(newCampaignData.target.replace(/\D/g, '')) || 0;
+                  
+                  try {
+                    const { data, error } = await supabase.from('programs').insert([{
+                      kategori: newCampaignData.kategori,
+                      judul: newCampaignData.judul,
+                      deskripsi: 'Dibuat dari form admin',
+                      terkumpul_persen: 0,
+                      terkumpul_rp: 0,
+                      target_rp: targetRpNum,
+                      donatur: 0
+                    }]).select().single();
+                    
+                    if (data && !error) {
+                      setLocalPrograms(prev => [...prev, {
+                        id: data.id,
+                        kategori: data.kategori,
+                        judul: data.judul,
+                        deskripsi: data.deskripsi,
+                        terkumpulPersen: data.terkumpul_persen,
+                        terkumpulRp: data.terkumpul_rp,
+                        targetRp: data.target_rp,
+                        donatur: data.donatur,
+                      }]);
+                    } else {
+                      // Fallback if select().single() fails
+                      setLocalPrograms(prev => [...prev, {
+                        id: Math.random() * 10000,
+                        kategori: newCampaignData.kategori,
+                        judul: newCampaignData.judul,
+                        deskripsi: 'Dibuat dari form admin',
+                        terkumpulPersen: 0,
+                        terkumpulRp: 0,
+                        targetRp: targetRpNum,
+                        donatur: 0,
+                      }]);
+                    }
+                  } catch (err) { console.error('Error insert program:', err); }
+                  
                   setNewCampaignData({ judul: '', target: '', kategori: 'Zakat' });
                   setShowCampaignModal(false);
                   alert(`Program "${newCampaignData.judul}" berhasil dipublikasikan dan live!`);
@@ -2641,12 +2858,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
 
               <div className="mt-8 flex gap-3">
                 <button onClick={() => setEditCampaignModalData(null)} className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl transition-colors cursor-pointer">Batal</button>
-                <button onClick={() => {
+                <button onClick={async () => {
                   if(!editCampaignModalData.judul || !editCampaignModalData.target) return alert('Mohon lengkapi judul dan target dana!');
                   const targetRpNum = parseInt(editCampaignModalData.target.toString().replace(/\D/g, '')) || 0;
                   setEditedPrograms(prev => ({...prev, [editCampaignModalData.id]: {...(prev[editCampaignModalData.id] || {}), judul: editCampaignModalData.judul, targetRp: targetRpNum, kategori: editCampaignModalData.kategori}}));
-                  setEditCampaignModalData(null);
+                  
+                  try {
+                    await supabase.from('programs').update({
+                      judul: editCampaignModalData.judul,
+                      target_rp: targetRpNum,
+                      kategori: editCampaignModalData.kategori
+                    }).eq('id', editCampaignModalData.id);
+                  } catch (err) { console.error('Error update program:', err); }
+
                   alert(`Perubahan program "${editCampaignModalData.judul}" berhasil disimpan!`);
+                  setEditCampaignModalData(null);
                 }} className="flex-1 bg-lime-600 hover:bg-lime-700 text-white font-bold py-3 rounded-xl transition-colors cursor-pointer">Simpan Perubahan</button>
               </div>
             </div>
@@ -2888,19 +3114,40 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
 
               <div className="mt-8 flex gap-3">
                 <button onClick={() => setShowInventarisModal(false)} className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl transition-colors cursor-pointer">Batal</button>
-                <button onClick={() => {
+                <button onClick={async () => {
                   if(!inventarisFormData.nama || !inventarisFormData.kode || !inventarisFormData.kategori || !inventarisFormData.jumlahTotal || !inventarisFormData.satuan || !inventarisFormData.lokasi) {
                     return alert('Mohon lengkapi semua field yang wajib diisi (*)!');
                   }
                   
-                  if(inventarisFormData.id === 0) {
-                    setInventarisList(prev => [{...inventarisFormData, id: Math.random() * 10000}, ...prev]);
-                    alert('Barang berhasil ditambahkan ke inventaris!');
-                  } else {
-                    setInventarisList(prev => prev.map(p => p.id === inventarisFormData.id ? inventarisFormData : p));
-                    alert('Perubahan berhasil disimpan!');
+                  try {
+                    if(inventarisFormData.id === 0) {
+                      const newId = `INV-${Date.now()}`;
+                      const { error } = await supabase.from('masjid_inventaris').insert([{
+                        id: newId,
+                        nama: inventarisFormData.nama,
+                        kategori: inventarisFormData.kategori,
+                        jumlah: inventarisFormData.jumlahTotal,
+                        kondisi: 'Baik',
+                        tanggal_perolehan: new Date().toISOString()
+                      }]);
+                      if (error) throw error;
+                      setInventarisList(prev => [{...inventarisFormData, id: newId}, ...prev]);
+                      alert('Barang berhasil ditambahkan ke inventaris!');
+                    } else {
+                      const { error } = await supabase.from('masjid_inventaris').update({
+                        nama: inventarisFormData.nama,
+                        kategori: inventarisFormData.kategori,
+                        jumlah: inventarisFormData.jumlahTotal
+                      }).eq('id', inventarisFormData.id);
+                      if (error) throw error;
+                      setInventarisList(prev => prev.map(p => p.id === inventarisFormData.id ? inventarisFormData : p));
+                      alert('Perubahan berhasil disimpan!');
+                    }
+                    setShowInventarisModal(false);
+                  } catch (err) {
+                    console.error('Failed to save inventaris to Supabase', err);
+                    alert('Gagal menyimpan barang ke database.');
                   }
-                  setShowInventarisModal(false);
                 }} className="flex-1 bg-lime-600 hover:bg-lime-700 text-white font-bold py-3 rounded-xl transition-colors cursor-pointer">
                   Simpan Barang
                 </button>

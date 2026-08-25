@@ -207,3 +207,43 @@ CREATE POLICY "Public Read Audit Logs" ON public.audit_logs FOR SELECT USING (tr
 CREATE POLICY "Public Insert Audit Logs" ON public.audit_logs FOR INSERT WITH CHECK (true);
 
 -- Done! All tables, initial data, and RLS policies configured.
+
+-- --------------------------------------------------------------------
+-- 10. TABLE: kegiatan_registrations (Pendaftaran Kegiatan & Kajian)
+-- --------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.kegiatan_registrations (
+    id VARCHAR(100) PRIMARY KEY,
+    kegiatan_id INT NOT NULL,
+    nama VARCHAR(255) NOT NULL,
+    kontak VARCHAR(100) NOT NULL,
+    kategori VARCHAR(100) NOT NULL,
+    tanggal_daftar TIMESTAMPTZ DEFAULT NOW(),
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- --------------------------------------------------------------------
+-- 11. TABLE: masjid_inventaris (Manajemen Aset & Inventaris)
+-- --------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.masjid_inventaris (
+    id VARCHAR(100) PRIMARY KEY,
+    nama VARCHAR(255) NOT NULL,
+    kategori VARCHAR(100) NOT NULL,
+    jumlah INT DEFAULT 1,
+    kondisi VARCHAR(100) DEFAULT 'Baik',
+    tanggal_perolehan DATE,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- RLS
+ALTER TABLE public.kegiatan_registrations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.masjid_inventaris ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public Read Kegiatan" ON public.kegiatan_registrations FOR SELECT USING (true);
+CREATE POLICY "Public Insert Kegiatan" ON public.kegiatan_registrations FOR INSERT WITH CHECK (true);
+CREATE POLICY "Public Update Kegiatan" ON public.kegiatan_registrations FOR UPDATE USING (true);
+CREATE POLICY "Public Delete Kegiatan" ON public.kegiatan_registrations FOR DELETE USING (true);
+
+CREATE POLICY "Public Read Inventaris" ON public.masjid_inventaris FOR SELECT USING (true);
+CREATE POLICY "Public Insert Inventaris" ON public.masjid_inventaris FOR INSERT WITH CHECK (true);
+CREATE POLICY "Public Update Inventaris" ON public.masjid_inventaris FOR UPDATE USING (true);
+CREATE POLICY "Public Delete Inventaris" ON public.masjid_inventaris FOR DELETE USING (true);

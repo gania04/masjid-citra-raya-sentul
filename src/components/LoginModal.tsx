@@ -58,11 +58,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     const pass = password.trim();
     const targetClean = normalizeContact(identifier);
 
-    // Get freshest list from localStorage and props merged
-    const savedJamaahRaw = localStorage.getItem('registered_jamaah');
-    const savedUsers: any[] = savedJamaahRaw ? JSON.parse(savedJamaahRaw) : [];
     const userMap = new Map();
-    [...registeredJamaahList, ...savedUsers].forEach((u: any) => {
+    registeredJamaahList.forEach((u: any) => {
       if (u) {
         const key = (u.c || u.e || u.n || '').toLowerCase();
         if (key) userMap.set(key, u);
@@ -109,16 +106,10 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       const joinedAt = new Date().toLocaleDateString('id-ID', { month: 'short', year: 'numeric' });
       const userKey = phone || e || targetClean;
       
-      localStorage.setItem(`masjid_created_at_${userKey}`, joinedAt);
-      localStorage.setItem(`masjid_history_${userKey}`, JSON.stringify([]));
-
       const newJamaahObj = { n: nama, c: phone, e: e, s: 'Aktif', p: pass, joinedAt };
 
       if (onRegisterJamaah) {
         onRegisterJamaah(newJamaahObj);
-      } else {
-        const newList = [...allUsers, newJamaahObj];
-        localStorage.setItem('registered_jamaah', JSON.stringify(newList));
       }
       onJamaahLogin(nama, phone || e || identifier);
       onClose();
@@ -224,8 +215,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       }
     }
 
-    const savedJamaah = localStorage.getItem('registered_jamaah');
-    const allUsers: any[] = savedJamaah ? JSON.parse(savedJamaah) : registeredJamaahList;
+    const allUsers = registeredJamaahList;
 
     const found = allUsers.find((u: any) => {
       if (!u) return false;
@@ -249,36 +239,20 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       return;
     }
 
-    const savedJamaah = localStorage.getItem('registered_jamaah');
-    let allUsers: any[] = savedJamaah ? JSON.parse(savedJamaah) : registeredJamaahList;
-
     const cleanTarget = resetTargetUser ? normalizeContact(resetTargetUser.c || resetTargetUser.e || resetEmail) : normalizeContact(resetEmail);
 
-    let updated = false;
-    allUsers = allUsers.map((u: any) => {
-      if (!u) return u;
-      const uc = normalizeContact(u.c || '');
-      const ue = normalizeContact(u.e || '');
-      if (uc === cleanTarget || ue === cleanTarget) {
-        updated = true;
-        return { ...u, p: pass };
+    const updateSupabase = async () => {
+      try {
+        if (cleanTarget) {
+          await supabase.from('registered_jamaah').update({ password: pass }).eq('kontak', cleanTarget);
+        }
+      } catch (e) {
+        console.error('Failed to reset password in Supabase:', e);
       }
-      return u;
-    });
-
-    if (!updated) {
-      const newUser = {
-        n: resetTargetUser?.n || 'Jamaah Masjid',
-        c: resetTargetUser?.c || (resetEmail.includes('@') ? '' : normalizeContact(resetEmail)),
-        e: resetTargetUser?.e || (resetEmail.includes('@') ? resetEmail.trim() : ''),
-        s: 'Aktif',
-        p: pass
-      };
-      allUsers.push(newUser);
-    }
-
-    localStorage.setItem('registered_jamaah', JSON.stringify(allUsers));
+    };
     
+    updateSupabase();
+
     // Return back to the initial login screen (menu awal untuk masuk ulang)
     setLoginIdentifier(resetEmail || cleanTarget);
     setPassword('');

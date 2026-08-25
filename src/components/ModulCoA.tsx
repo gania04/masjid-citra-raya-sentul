@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { PlusCircle, Search, BookOpen, TrendingUp, TrendingDown, Shield, DollarSign, X, Check, FileSpreadsheet, Upload, RefreshCw, Trash2, Edit3 } from 'lucide-react';
 import { INITIAL_CHART_OF_ACCOUNTS, AkunCoA, JurnalEntry } from '../data/akuntansiData';
+import { supabase } from '../lib/supabase';
 
 const formatRp = (n: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
@@ -18,18 +19,59 @@ interface ModulCoAProps {
 }
 
 export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
-  const [accounts, setAccounts] = useState<AkunCoA[]>(() => {
-    const saved = localStorage.getItem('masjid_chart_of_accounts');
-    if (saved) {
+  const [accounts, setAccounts] = useState<AkunCoA[]>([]);
+
+  const mapKategoriToJenis = (kategori: string): any => {
+    if (kategori === 'Aset') return 'Aktiva';
+    if (kategori === 'Liabilitas') return 'Kewajiban';
+    if (kategori === 'Aset Bersih') return 'Ekuitas';
+    if (kategori === 'Penerimaan') return 'Pendapatan';
+    return 'Beban';
+  };
+
+  const mapJenisToKategori = (jenis: string) => {
+    if (jenis === 'Aktiva') return 'Aset';
+    if (jenis === 'Kewajiban') return 'Liabilitas';
+    if (jenis === 'Ekuitas') return 'Aset Bersih';
+    if (jenis === 'Pendapatan') return 'Penerimaan';
+    return 'Beban';
+  };
+
+  useEffect(() => {
+    const fetchCOA = async () => {
       try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      } catch (e) {
-        console.error('Error loading COA from localStorage', e);
+        const { data, error } = await supabase.from('chart_of_accounts').select('*').order('kode');
+        if (!error && data) {
+          const formatted: AkunCoA[] = data.map((d: any) => ({
+            kode: d.kode,
+            nama: d.nama,
+            jenis: mapKategoriToJenis(d.kategori),
+            kelompok: d.kelompok,
+            saldoNormal: d.is_debit ? 'Debit' : 'Kredit',
+            saldoAwal: Number(d.saldo) || 0,
+            status: d.status as any,
+          }));
+          setAccounts(formatted);
+          localStorage.setItem('masjid_chart_of_accounts', JSON.stringify(formatted));
+        } else {
+          const saved = localStorage.getItem('masjid_chart_of_accounts');
+          if (saved) {
+            try {
+              const parsed = JSON.parse(saved);
+              if (Array.isArray(parsed) && parsed.length > 0) setAccounts(parsed);
+            } catch (e) {
+              console.error('Error loading COA from localStorage', e);
+            }
+          } else {
+            setAccounts(INITIAL_CHART_OF_ACCOUNTS);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching COA:', err);
       }
-    }
-    return INITIAL_CHART_OF_ACCOUNTS;
-  });
+    };
+    fetchCOA();
+  }, []);
 
   const [search, setSearch] = useState('');
   const [filterJenis, setFilterJenis] = useState('Semua');
@@ -88,7 +130,7 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
   const totalPendapatan = accounts.filter(a => a.jenis === 'Pendapatan').reduce((s, a) => s + getLiveSaldo(a), 0);
   const totalBeban = accounts.filter(a => a.jenis === 'Beban').reduce((s, a) => s + getLiveSaldo(a), 0);
 
-  const handleAddAccount = (e: React.FormEvent) => {
+  const handleAddAccount = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newKode || !newNama) return;
 
@@ -105,9 +147,34 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
     if (editingKode) {
       const updated = accounts.map(a => a.kode === editingKode ? newAcc : a);
       updateAndSaveAccounts(updated);
+      
+      try {
+        await supabase.from('chart_of_accounts').update({
+          kode: newAcc.kode,
+          nama: newAcc.nama,
+          kategori: mapJenisToKategori(newAcc.jenis),
+          kelompok: newAcc.kelompok,
+          saldo: newAcc.saldoAwal,
+          status: newAcc.status,
+          is_debit: newAcc.saldoNormal === 'Debit'
+        }).eq('kode', editingKode);
+      } catch(err) { console.error('Error updating COA', err); }
+      
       setEditingKode(null);
     } else {
       updateAndSaveAccounts([...accounts, newAcc]);
+      
+      try {
+        await supabase.from('chart_of_accounts').insert([{
+          kode: newAcc.kode,
+          nama: newAcc.nama,
+          kategori: mapJenisToKategori(newAcc.jenis),
+          kelompok: newAcc.kelompok,
+          saldo: newAcc.saldoAwal,
+          status: newAcc.status,
+          is_debit: newAcc.saldoNormal === 'Debit'
+        }]);
+      } catch(err) { console.error('Error inserting COA', err); }
     }
 
     setShowAddModal(false);
@@ -117,27 +184,39 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
     setNewStatus('Aktif');
   };
 
-  const handleToggleAccountStatus = (kode: string) => {
+  const handleToggleAccountStatus = async (kode: string) => {
+    let newStatusStr = 'Aktif';
     const updated = accounts.map(a => {
       if (a.kode === kode) {
         const current = a.status || 'Aktif';
-        return { ...a, status: (current === 'Aktif' ? 'Non-Aktif' : 'Aktif') as any };
+        newStatusStr = current === 'Aktif' ? 'Non-Aktif' : 'Aktif';
+        return { ...a, status: newStatusStr as any };
       }
       return a;
     });
     updateAndSaveAccounts(updated);
+    
+    try {
+      await supabase.from('chart_of_accounts').update({ status: newStatusStr }).eq('kode', kode);
+    } catch (err) { console.error(err); }
   };
 
-  const handleDeleteAccount = (kode: string) => {
+  const handleDeleteAccount = async (kode: string) => {
     if (confirm(`Apakah Anda yakin ingin menghapus Akun ${kode}?`)) {
       const updated = accounts.filter(a => a.kode !== kode);
       updateAndSaveAccounts(updated);
+      try {
+        await supabase.from('chart_of_accounts').delete().eq('kode', kode);
+      } catch (err) { console.error(err); }
     }
   };
 
-  const handleClearAllAccounts = () => {
+  const handleClearAllAccounts = async () => {
     if (confirm('⚠️ Apakah Anda yakin ingin MENGHAPUS SELURUH COA yang terdaftar saat ini? Tindakan ini akan mengosongkan seluruh master akun.')) {
       updateAndSaveAccounts([]);
+      try {
+        await supabase.from('chart_of_accounts').delete().neq('kode', 'placeholder'); // delete all
+      } catch (err) { console.error(err); }
       alert('✅ Seluruh data COA telah berhasil dihapus dan dikosongkan!');
     }
   };
@@ -154,8 +233,7 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
     setShowAddModal(true);
   };
 
-  // Batch Parser for Google Sheets / Excel copy-paste text
-  const handleImportSpreadsheet = () => {
+  const handleImportSpreadsheet = async () => {
     if (!rawSpreadsheetText.trim()) {
       setImportStatusMsg('Teks spreadsheet kosong. Silakan paste teks atau tabel dari Google Sheets / Excel.');
       return;
@@ -169,7 +247,6 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
       const cleanLine = line.trim();
       if (!cleanLine) return;
 
-      // Handle tab-separated (from Google Sheets paste) or comma/semicolon separated
       const delimiter = cleanLine.includes('\t') ? '\t' : cleanLine.includes(';') ? ';' : cleanLine.includes(',') ? ',' : ' ';
       const parts = cleanLine.split(delimiter).map(p => p.trim().replace(/^["']|["']$/g, ''));
 
@@ -177,7 +254,6 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
         const kode = parts[0];
         const nama = parts[1];
         
-        // Skip header lines like "Kode", "Nama Akun"
         if (kode.toLowerCase().includes('kode') || nama.toLowerCase().includes('nama')) return;
 
         let jenis: 'Aktiva' | 'Kewajiban' | 'Ekuitas' | 'Pendapatan' | 'Beban' = 'Aktiva';
@@ -202,6 +278,7 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
           kelompok,
           saldoNormal,
           saldoAwal,
+          status: 'Aktif'
         });
         successCount++;
       }
@@ -209,6 +286,26 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
 
     if (importedAccs.length > 0) {
       let finalAccs = importedAccs;
+      
+      try {
+        if (replaceExisting) {
+          await supabase.from('chart_of_accounts').delete().neq('kode', 'placeholder'); // Clear table first
+        }
+        
+        const upsertData = importedAccs.map(newAcc => ({
+          kode: newAcc.kode,
+          nama: newAcc.nama,
+          kategori: mapJenisToKategori(newAcc.jenis),
+          kelompok: newAcc.kelompok,
+          saldo: newAcc.saldoAwal,
+          status: newAcc.status,
+          is_debit: newAcc.saldoNormal === 'Debit'
+        }));
+        await supabase.from('chart_of_accounts').upsert(upsertData, { onConflict: 'kode' });
+      } catch (err) {
+        console.error('Bulk insert COA failed:', err);
+      }
+
       if (!replaceExisting) {
         const existingMap = new Map<string, AkunCoA>(accounts.map(a => [a.kode, a]));
         importedAccs.forEach(newA => existingMap.set(newA.kode, newA));
@@ -271,9 +368,22 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
             </button>
 
             <button
-              onClick={() => {
+              onClick={async () => {
                 if (confirm('Muat ulang 65 Akun COA lengkap dari Google Spreadsheet?')) {
                   updateAndSaveAccounts(INITIAL_CHART_OF_ACCOUNTS);
+                  try {
+                    await supabase.from('chart_of_accounts').delete().neq('kode', 'placeholder');
+                    const upsertData = INITIAL_CHART_OF_ACCOUNTS.map(newAcc => ({
+                      kode: newAcc.kode,
+                      nama: newAcc.nama,
+                      kategori: mapJenisToKategori(newAcc.jenis),
+                      kelompok: newAcc.kelompok,
+                      saldo: newAcc.saldoAwal,
+                      status: newAcc.status || 'Aktif',
+                      is_debit: newAcc.saldoNormal === 'Debit'
+                    }));
+                    await supabase.from('chart_of_accounts').upsert(upsertData, { onConflict: 'kode' });
+                  } catch (err) { console.error('Bulk load COA failed', err); }
                   alert('✅ Berhasil memuat 65 Akun COA dari Google Spreadsheet!');
                 }
               }}
