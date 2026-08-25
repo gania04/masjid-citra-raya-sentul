@@ -378,6 +378,7 @@ export default function App() {
               registeredJamaahList={registeredJamaahList}
               donasiHistory={donasiHistory}
               onVerifyDonasi={handleVerifyDonasi}
+              onAddDonasiHistoryItem={(newItem: any) => setDonasiHistory(prev => [newItem, ...prev])}
               auditLogs={auditLogs}
             />
           </div>

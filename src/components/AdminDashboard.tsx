@@ -35,11 +35,12 @@ interface AdminDashboardProps {
   registeredJamaahList: any[];
   donasiHistory?: any[];
   onVerifyDonasi?: (id: string, status: 'Berhasil' | 'Ditolak') => void;
+  onAddDonasiHistoryItem?: (item: any) => void;
   adminRole?: string;
   auditLogs?: any[];
 }
 
-export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs, onAddDonation, homeVisibility, setHomeVisibility, registeredJamaahList, donasiHistory = [], onVerifyDonasi, adminRole = 'direktur', auditLogs = [] }) => {
+export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs, onAddDonation, homeVisibility, setHomeVisibility, registeredJamaahList, donasiHistory = [], onVerifyDonasi, onAddDonasiHistoryItem, adminRole = 'direktur', auditLogs = [] }) => {
   const [activeMenu, setActiveMenu] = useState('utama');
   const [activeCategory, setActiveCategory] = useState('utama');
   const [kasTab, setKasTab] = useState('ringkasan');
@@ -540,7 +541,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
         
         // Simpan ke tabel donations (Riwayat Transaksi) dengan status Berhasil
         const donasiId = 'INV-' + Math.floor(Math.random() * 10000);
-        await supabase.from('donations').insert([{
+        const donasiRecord = {
           id: donasiId,
           tanggal: tanggalFormatted,
           program_id: selectedProgram,
@@ -551,7 +552,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
           bukti: null,
           nama_donatur: namaDonatur,
           kontak_donatur: kontakDonaturStr || '-'
-        }]);
+        };
+        await supabase.from('donations').insert([donasiRecord]);
+        
+        if (onAddDonasiHistoryItem) {
+          onAddDonasiHistoryItem({
+            id: donasiId,
+            tanggal: tanggalFormatted,
+            programId: selectedProgram,
+            programName: progTitle,
+            nominal,
+            metode: 'Tunai / Admin',
+            status: 'Berhasil',
+            bukti: null,
+            namaDonatur: namaDonatur,
+            kontakDonatur: kontakDonaturStr || '-'
+          });
+        }
 
       } catch (err) { console.error('Error insert jurnal_umum/donations:', err); }
       
