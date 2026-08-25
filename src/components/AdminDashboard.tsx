@@ -273,6 +273,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
   const [asetTab, setAsetTab] = useState<'semua' | 'rusak'>('semua');
 
   // Broadcast Jamaah State
+  const checkDonorRegistration = (donorContact: string) => {
+    if (!donorContact || donorContact === '-') return false;
+    const cleanDonor = donorContact.replace(/\D/g, ''); 
+    const donorEmail = donorContact.toLowerCase().trim();
+
+    return registeredJamaahList.some(j => {
+      if (j.e && j.e.toLowerCase().trim() === donorEmail) return true;
+      if (j.c) {
+        const cleanJ = j.c.replace(/\D/g, '');
+        if (cleanJ && cleanDonor && (cleanJ.endsWith(cleanDonor) || cleanDonor.endsWith(cleanJ))) {
+           if (cleanJ.length >= 8 && cleanDonor.length >= 8) {
+             return cleanJ.slice(-8) === cleanDonor.slice(-8);
+           }
+           return cleanJ === cleanDonor;
+        }
+      }
+      return false;
+    });
+  };
+
   const [showPengumumanModal, setShowPengumumanModal] = useState(false);
   const [pengumumanFormData, setPengumumanFormData] = useState({ id: 0, title: '', tag: 'Kegiatan', desc: '', img: '' });
   const [showBroadcastDetailModal, setShowBroadcastDetailModal] = useState<any>(null);
@@ -1546,15 +1566,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                           <div className="flex items-center gap-2 mb-0.5">
                             <p className="font-bold text-slate-800">{d.namaDonatur || 'Hamba Allah'}</p>
                             {d.kontakDonatur && d.kontakDonatur !== '-' && (
-                              <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${registeredJamaahList.some(j => (j.c && j.c.includes(d.kontakDonatur)) || (j.e && j.e.includes(d.kontakDonatur))) ? 'bg-lime-100 text-lime-700 border border-lime-200' : 'bg-red-50 text-red-600 border border-red-200 cursor-pointer hover:bg-red-100'}`} 
+                              <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${checkDonorRegistration(d.kontakDonatur) ? 'bg-lime-100 text-lime-700 border border-lime-200' : 'bg-red-50 text-red-600 border border-red-200 cursor-pointer hover:bg-red-100'}`} 
                               onClick={() => {
-                                if (!registeredJamaahList.some(j => (j.c && j.c.includes(d.kontakDonatur)) || (j.e && j.e.includes(d.kontakDonatur)))) {
+                                if (!checkDonorRegistration(d.kontakDonatur)) {
                                   window.open(`https://wa.me/${d.kontakDonatur.replace(/\D/g, '')}?text=Assalamualaikum%20${encodeURIComponent(d.namaDonatur || 'Bapak/Ibu')},%20Terima%20kasih%20atas%20donasinya.%20Mohon%20kesediaannya%20untuk%20mendaftar%20di%20Portal%20Jamaah%20Masjid%20kami%20melalui%20link%20berikut:%20[Link%20Portal]`, '_blank');
                                 }
                               }}
-                              title={!registeredJamaahList.some(j => (j.c && j.c.includes(d.kontakDonatur)) || (j.e && j.e.includes(d.kontakDonatur))) ? 'Klik untuk Kirim WA Ajakan Daftar' : 'Telah Terdaftar di Portal'}
+                              title={!checkDonorRegistration(d.kontakDonatur) ? 'Klik untuk Kirim WA Ajakan Daftar' : 'Telah Terdaftar di Portal'}
                               >
-                                {registeredJamaahList.some(j => (j.c && j.c.includes(d.kontakDonatur)) || (j.e && j.e.includes(d.kontakDonatur))) ? 'Terdaftar' : 'Belum Daftar'}
+                                {checkDonorRegistration(d.kontakDonatur) ? 'Terdaftar' : 'Belum Daftar'}
                               </span>
                             )}
                           </div>
