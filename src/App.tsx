@@ -234,27 +234,11 @@ export default function App() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch Programs
-        const { data: programsData, error: progErr } = await supabase.from('programs').select('*').order('id');
-        if (!progErr && programsData && programsData.length > 0) {
-          const formattedPrograms = programsData.map((p: any) => ({
-            id: p.id,
-            kategori: p.kategori,
-            judul: p.judul,
-            deskripsi: p.deskripsi,
-            terkumpulPersen: p.terkumpul_persen || 0,
-            terkumpulRp: p.terkumpul_rp || 0,
-            targetRp: p.target_rp || 0,
-            donatur: p.donatur || 0,
-            gambar: p.gambar
-          }));
-          setPrograms(formattedPrograms);
-        }
-
-        // Fetch Donations
+        // 1. Fetch Donations First to calculate exact live balances
         const { data: donasiData, error: donasiErr } = await supabase.from('donations').select('*').order('created_at', { ascending: false });
+        let formattedDonasi: any[] = [];
         if (!donasiErr && donasiData) {
-          const formattedDonasi = donasiData.map((d: any) => ({
+          formattedDonasi = donasiData.map((d: any) => ({
             id: d.id,
             tanggal: d.tanggal,
             programId: d.program_id,
@@ -269,6 +253,39 @@ export default function App() {
           if (formattedDonasi.length > 0) {
              setDonasiHistory(formattedDonasi);
           }
+        }
+
+        // 2. Fetch Programs and synchronize live totals
+        const { data: programsData, error: progErr } = await supabase.from('programs').select('*').order('id');
+        if (!progErr && programsData && programsData.length > 0) {
+          const formattedPrograms = programsData.map((p: any) => {
+            const programDonations = formattedDonasi.filter(d => d.programId === p.id && d.status === 'Berhasil');
+            const totalTerkumpul = programDonations.reduce((sum, d) => sum + d.nominal, 0);
+            const totalDonatur = programDonations.length;
+            const percentage = p.target_rp > 0 ? Math.min(100, Math.round((totalTerkumpul / p.target_rp) * 100)) : 0;
+
+            // Auto-heal database if out of sync
+            if (p.terkumpul_rp !== totalTerkumpul || p.donatur !== totalDonatur) {
+               supabase.from('programs').update({
+                  terkumpul_rp: totalTerkumpul,
+                  terkumpul_persen: percentage,
+                  donatur: totalDonatur
+               }).eq('id', p.id).then();
+            }
+
+            return {
+              id: p.id,
+              kategori: p.kategori,
+              judul: p.judul,
+              deskripsi: p.deskripsi,
+              terkumpulPersen: percentage,
+              terkumpulRp: totalTerkumpul,
+              targetRp: p.target_rp || 0,
+              donatur: totalDonatur,
+              gambar: p.gambar
+            };
+          });
+          setPrograms(formattedPrograms);
         }
 
         // Fetch Jamaah
