@@ -112,12 +112,17 @@ export const DaftarProgram: React.FC<DaftarProgramProps> = ({ programs, onDonate
                     </div>
                   )}
                   
-                  <div className="flex justify-between items-end pt-2 border-t border-slate-100">
+                  <div className="flex justify-between items-end pt-3 mt-4 border-t border-slate-100">
                     <div>
                       <p className="text-xs text-slate-500 mb-1">Terkumpul:</p>
                       <p className="font-bold text-lime-700">{formatRp(prog.terkumpulRp)}</p>
                     </div>
-                    {(!prog.targetRp || prog.targetRp === 0) && (
+                    {prog.targetRp && prog.targetRp > 0 ? (
+                      <div className="text-right">
+                        <p className="text-xs text-slate-500 mb-1">Target Donasi:</p>
+                        <p className="font-bold text-slate-700">{formatRp(prog.targetRp)}</p>
+                      </div>
+                    ) : (
                       <div className="text-right">
                         <p className="text-xs text-slate-500 mb-1">Partisipasi:</p>
                         <p className="font-bold text-slate-700">{prog.donatur} Donatur</p>
