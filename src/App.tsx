@@ -262,7 +262,11 @@ export default function App() {
             const programDonations = formattedDonasi.filter(d => d.programId === p.id && d.status === 'Berhasil');
             const totalTerkumpul = programDonations.reduce((sum, d) => sum + d.nominal, 0);
             const totalDonatur = programDonations.length;
-            const percentage = p.target_rp > 0 ? Math.min(100, Math.round((totalTerkumpul / p.target_rp) * 100)) : 0;
+            let percentage = 0;
+            if (p.target_rp > 0 && totalTerkumpul > 0) {
+              const rawPct = (totalTerkumpul / p.target_rp) * 100;
+              percentage = rawPct < 1 ? 1 : Math.min(100, Math.round(rawPct));
+            }
 
             // Auto-heal database if out of sync
             if (p.terkumpul_rp !== totalTerkumpul || p.donatur !== totalDonatur) {
@@ -319,10 +323,16 @@ export default function App() {
     const updatedPrograms = programs.map(p => {
       if (p.id === programId) {
         const newTerkumpul = p.terkumpulRp + nominal;
+        let percentage = 0;
+        if (p.targetRp > 0 && newTerkumpul > 0) {
+          const rawPct = (newTerkumpul / p.targetRp) * 100;
+          percentage = rawPct < 1 ? 1 : Math.min(100, Math.round(rawPct));
+        }
+
         return {
           ...p,
           terkumpulRp: newTerkumpul,
-          terkumpulPersen: p.targetRp > 0 ? Math.min(100, Math.round((newTerkumpul / p.targetRp) * 100)) : 0,
+          terkumpulPersen: percentage,
           donatur: p.donatur + 1
         };
       }
