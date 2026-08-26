@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BarChart3, Scale, Download, FileSpreadsheet, Layers, Filter, CheckCircle, AlertTriangle, ArrowRightLeft } from 'lucide-react';
+import { BarChart3, Scale, Download, FileSpreadsheet, Layers, Filter, CheckCircle, AlertTriangle, ArrowRightLeft, ChevronDown } from 'lucide-react';
 import { INITIAL_CHART_OF_ACCOUNTS, INITIAL_JURNAL_ENTRIES, AkunCoA, JurnalEntry } from '../data/akuntansiData';
 
 const formatRp = (n: number) =>
@@ -258,30 +258,30 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
   return (
     <div className="space-y-6 animate-in fade-in">
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-lime-800 via-lime-800 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="bg-white rounded-2xl p-4 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-slate-200">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center">
-            <BarChart3 className="w-6 h-6 text-lime-200" />
+          <div className="w-10 h-10 rounded-xl bg-lime-50 border border-lime-100 flex items-center justify-center">
+            <BarChart3 className="w-5 h-5 text-lime-600" />
           </div>
           <div>
-            <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight">Laporan Neraca Aktivitas & Keuangan</h2>
-            <p className="text-lime-200 text-xs sm:text-sm">Terintegrasi Pemisahan Dana Zakat, Infaq, Wakaf & Sodaqoh (ISAK 35 / PSAK 109)</p>
+            <h2 className="text-lg font-extrabold tracking-tight text-slate-800">Laporan Neraca Aktivitas & Keuangan</h2>
+            <p className="text-slate-500 text-[11px]">Terintegrasi Pemisahan Dana Zakat, Infaq, Wakaf & Sodaqoh (ISAK 35 / PSAK 109)</p>
           </div>
         </div>
 
         <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3">
-          <div className="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-1.5 border border-white/20">
-            <span className="text-xs font-bold">Periode:</span>
-            <input type="date" value={filterStartDate} onChange={e => setFilterStartDate(e.target.value)} className="bg-transparent text-white text-xs focus:outline-none focus:ring-0 [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert" />
-            <span className="text-xs font-bold">-</span>
-            <input type="date" value={filterEndDate} onChange={e => setFilterEndDate(e.target.value)} className="bg-transparent text-white text-xs focus:outline-none focus:ring-0 [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert" />
+          <div className="flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-1.5 border border-slate-200">
+            <span className="text-xs font-bold text-slate-700">Periode:</span>
+            <input type="date" value={filterStartDate} onChange={e => setFilterStartDate(e.target.value)} className="bg-transparent text-slate-700 font-medium text-xs focus:outline-none focus:ring-0" />
+            <span className="text-xs font-bold text-slate-400">-</span>
+            <input type="date" value={filterEndDate} onChange={e => setFilterEndDate(e.target.value)} className="bg-transparent text-slate-700 font-medium text-xs focus:outline-none focus:ring-0" />
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => alert(`Mengekspor Laporan Neraca Aktivitas ${selectedFundFilter === 'Semua' ? 'Konsolidasi' : selectedFundFilter === 'Komparatif' ? 'Matrix Perbandingan' : selectedFundFilter === 'Multi' ? 'Multi-Neraca Terpisah' : 'Dana ' + selectedFundFilter} ke PDF...`)}
-              className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white font-bold px-4 py-2.5 rounded-2xl text-xs transition-all border border-white/20 cursor-pointer"
+              className="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-2.5 rounded-xl text-xs transition-all border border-slate-200 cursor-pointer"
             >
-              <Download className="w-4 h-4 text-lime-300" /> Export PDF
+              <Download className="w-4 h-4 text-slate-500" /> Export PDF
             </button>
             <button
               onClick={() => alert(`Mengekspor Laporan Neraca Aktivitas ${selectedFundFilter === 'Semua' ? 'Konsolidasi' : selectedFundFilter === 'Komparatif' ? 'Matrix Perbandingan' : selectedFundFilter === 'Multi' ? 'Multi-Neraca Terpisah' : 'Dana ' + selectedFundFilter} ke Excel...`)}
@@ -297,15 +297,15 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
         
         {/* DANA ZAKAT CARD */}
-        <div className="bg-gradient-to-br from-emerald-50 to-white border border-emerald-200 rounded-2xl p-4 shadow-xs relative overflow-hidden">
+        <div className="bg-gradient-to-br from-emerald-50 to-white border border-emerald-200 rounded-2xl p-3 shadow-xs relative overflow-hidden">
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[11px] font-black text-emerald-800 uppercase tracking-wider flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span> Dana Zakat
+            <span className="text-[10px] font-black text-emerald-800 uppercase tracking-wider flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Dana Zakat
             </span>
-            <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md font-bold">Mustahik</span>
+            <span className="text-[9px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md font-bold">Mustahik</span>
           </div>
-          <p className="text-xl font-black font-mono text-emerald-900">{formatRp(zakatMetrics.totalSaldoNeto)}</p>
-          <div className="mt-2 pt-2 border-t border-emerald-100/80 text-[11px] space-y-0.5 font-medium">
+          <p className="text-lg font-black font-mono text-emerald-900">{formatRp(zakatMetrics.totalSaldoNeto)}</p>
+          <div className="mt-1.5 pt-1.5 border-t border-emerald-100/80 text-[10px] space-y-0.5 font-medium">
             <div className="flex justify-between text-emerald-700">
               <span>Terima Zakat:</span>
               <span className="font-mono font-bold">{formatRp(zakatMetrics.pendapatan)}</span>
@@ -318,15 +318,15 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
         </div>
 
         {/* DANA INFAQ CARD */}
-        <div className="bg-gradient-to-br from-blue-50 to-white border border-blue-200 rounded-2xl p-4 shadow-xs relative overflow-hidden">
+        <div className="bg-gradient-to-br from-blue-50 to-white border border-blue-200 rounded-2xl p-3 shadow-xs relative overflow-hidden">
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[11px] font-black text-blue-800 uppercase tracking-wider flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-blue-500"></span> Dana Infaq
+            <span className="text-[10px] font-black text-blue-800 uppercase tracking-wider flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Dana Infaq
             </span>
-            <span className="text-[10px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md font-bold">Jumat & Harian</span>
+            <span className="text-[9px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md font-bold">Jumat & Harian</span>
           </div>
-          <p className="text-xl font-black font-mono text-blue-900">{formatRp(infaqMetrics.totalSaldoNeto)}</p>
-          <div className="mt-2 pt-2 border-t border-blue-100/80 text-[11px] space-y-0.5 font-medium">
+          <p className="text-lg font-black font-mono text-blue-900">{formatRp(infaqMetrics.totalSaldoNeto)}</p>
+          <div className="mt-1.5 pt-1.5 border-t border-blue-100/80 text-[10px] space-y-0.5 font-medium">
             <div className="flex justify-between text-blue-700">
               <span>Terima Infak:</span>
               <span className="font-mono font-bold">{formatRp(infaqMetrics.pendapatan)}</span>
@@ -339,15 +339,15 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
         </div>
 
         {/* DANA WAKAF CARD */}
-        <div className="bg-gradient-to-br from-purple-50 to-white border border-purple-200 rounded-2xl p-4 shadow-xs relative overflow-hidden">
+        <div className="bg-gradient-to-br from-purple-50 to-white border border-purple-200 rounded-2xl p-3 shadow-xs relative overflow-hidden">
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[11px] font-black text-purple-800 uppercase tracking-wider flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-purple-500"></span> Dana Wakaf
+            <span className="text-[10px] font-black text-purple-800 uppercase tracking-wider flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span> Dana Wakaf
             </span>
-            <span className="text-[10px] bg-purple-100 text-purple-800 px-2 py-0.5 rounded-md font-bold">Aset Restriksi</span>
+            <span className="text-[9px] bg-purple-100 text-purple-800 px-2 py-0.5 rounded-md font-bold">Aset Restriksi</span>
           </div>
-          <p className="text-xl font-black font-mono text-purple-900">{formatRp(wakafMetrics.totalSaldoNeto)}</p>
-          <div className="mt-2 pt-2 border-t border-purple-100/80 text-[11px] space-y-0.5 font-medium">
+          <p className="text-lg font-black font-mono text-purple-900">{formatRp(wakafMetrics.totalSaldoNeto)}</p>
+          <div className="mt-1.5 pt-1.5 border-t border-purple-100/80 text-[10px] space-y-0.5 font-medium">
             <div className="flex justify-between text-purple-700">
               <span>Wakaf Uang:</span>
               <span className="font-mono font-bold">{formatRp(wakafMetrics.pendapatan)}</span>
@@ -360,15 +360,15 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
         </div>
 
         {/* DANA SODAQOH CARD */}
-        <div className="bg-gradient-to-br from-amber-50 to-white border border-amber-200 rounded-2xl p-4 shadow-xs relative overflow-hidden">
+        <div className="bg-gradient-to-br from-amber-50 to-white border border-amber-200 rounded-2xl p-3 shadow-xs relative overflow-hidden">
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[11px] font-black text-amber-800 uppercase tracking-wider flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-amber-500"></span> Dana Sodaqoh
+            <span className="text-[10px] font-black text-amber-800 uppercase tracking-wider flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Dana Sodaqoh
             </span>
-            <span className="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md font-bold">Sosial & Yatim</span>
+            <span className="text-[9px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md font-bold">Sosial & Yatim</span>
           </div>
-          <p className="text-xl font-black font-mono text-amber-900">{formatRp(sodaqohMetrics.totalSaldoNeto)}</p>
-          <div className="mt-2 pt-2 border-t border-amber-100/80 text-[11px] space-y-0.5 font-medium">
+          <p className="text-lg font-black font-mono text-amber-900">{formatRp(sodaqohMetrics.totalSaldoNeto)}</p>
+          <div className="mt-1.5 pt-1.5 border-t border-amber-100/80 text-[10px] space-y-0.5 font-medium">
             <div className="flex justify-between text-amber-700">
               <span>Sedekah Masuk:</span>
               <span className="font-mono font-bold">{formatRp(sodaqohMetrics.pendapatan)}</span>
@@ -429,91 +429,32 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
                 Rincian Posisi Keuangan & Perubahan Aktiva Neto Berdasarkan Pemisahan Dana Zakat, Infaq, Wakaf & Sodaqoh (ISAK 35)
               </p>
 
-              {/* Fund Breakdown Filter Controls */}
-              <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1 mr-1">
-                  <Filter className="w-3.5 h-3.5" /> Pilih Laporan Neraca Aktivitas:
-                </span>
-                <button
-                  onClick={() => setSelectedFundFilter('Semua')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                    selectedFundFilter === 'Semua'
-                      ? 'bg-slate-900 text-white shadow-xs'
-                      : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
-                  }`}
-                >
-                  Semua Dana (Konsolidasi)
-                </button>
-                <button
-                  onClick={() => setSelectedFundFilter('Zakat')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                    selectedFundFilter === 'Zakat'
-                      ? 'bg-emerald-600 text-white shadow-xs'
-                      : 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100'
-                  }`}
-                >
-                  <span className="w-2 h-2 rounded-full bg-emerald-400"></span> Neraca Zakat
-                </button>
-                <button
-                  onClick={() => setSelectedFundFilter('Infaq')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                    selectedFundFilter === 'Infaq'
-                      ? 'bg-blue-600 text-white shadow-xs'
-                      : 'bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100'
-                  }`}
-                >
-                  <span className="w-2 h-2 rounded-full bg-blue-400"></span> Neraca Infaq
-                </button>
-                <button
-                  onClick={() => setSelectedFundFilter('Wakaf')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                    selectedFundFilter === 'Wakaf'
-                      ? 'bg-purple-600 text-white shadow-xs'
-                      : 'bg-purple-50 text-purple-800 border border-purple-200 hover:bg-purple-100'
-                  }`}
-                >
-                  <span className="w-2 h-2 rounded-full bg-purple-400"></span> Neraca Wakaf
-                </button>
-                <button
-                  onClick={() => setSelectedFundFilter('Sodaqoh')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                    selectedFundFilter === 'Sodaqoh'
-                      ? 'bg-amber-600 text-white shadow-xs'
-                      : 'bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100'
-                  }`}
-                >
-                  <span className="w-2 h-2 rounded-full bg-amber-400"></span> Neraca Sodaqoh
-                </button>
-                <button
-                  onClick={() => setSelectedFundFilter('Operasional')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                    selectedFundFilter === 'Operasional'
-                      ? 'bg-slate-700 text-white shadow-xs'
-                      : 'bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200'
-                  }`}
-                >
-                  <span className="w-2 h-2 rounded-full bg-slate-400"></span> Dana Operasional
-                </button>
-                <button
-                  onClick={() => setSelectedFundFilter('Komparatif')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 cursor-pointer ${
-                    selectedFundFilter === 'Komparatif'
-                      ? 'bg-lime-700 text-white shadow-md ring-2 ring-lime-400/50'
-                      : 'bg-lime-100 text-lime-800 border border-lime-300 hover:bg-lime-200'
-                  }`}
-                >
-                  <ArrowRightLeft className="w-3.5 h-3.5 text-lime-700" /> Tabel Perbandingan 4 Dana
-                </button>
-                <button
-                  onClick={() => setSelectedFundFilter('Multi')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 cursor-pointer ${
-                    selectedFundFilter === 'Multi'
-                      ? 'bg-emerald-800 text-white shadow-md ring-2 ring-emerald-400/50'
-                      : 'bg-emerald-100 text-emerald-900 border border-emerald-300 hover:bg-emerald-200'
-                  }`}
-                >
-                  <Layers className="w-3.5 h-3.5" /> Tampilkan 4 Neraca Terpisah (Multi-View)
-                </button>
+              {/* Fund Breakdown Filter Controls (Dropdown) */}
+              <div className="mt-6 mb-2 max-w-sm mx-auto">
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center justify-center gap-1.5 mb-2">
+                  <Filter className="w-3.5 h-3.5" /> Silakan Pilih Mode Neraca:
+                </label>
+                <div className="relative group">
+                  <select
+                    value={selectedFundFilter}
+                    onChange={(e) => setSelectedFundFilter(e.target.value as FundCategory)}
+                    className="w-full appearance-none bg-white border-2 border-lime-500 text-lime-900 font-extrabold text-sm py-3 pl-4 pr-12 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-lime-500/20 focus:border-lime-600 transition-all cursor-pointer hover:bg-lime-50"
+                  >
+                    <option value="Semua">Semua Dana (Konsolidasi)</option>
+                    <option value="Zakat">Neraca Dana Zakat</option>
+                    <option value="Infaq">Neraca Dana Infaq</option>
+                    <option value="Wakaf">Neraca Dana Wakaf</option>
+                    <option value="Sodaqoh">Neraca Dana Sodaqoh</option>
+                    <option value="Operasional">Neraca Dana Operasional</option>
+                    <option value="Komparatif">Tabel Perbandingan 4 Dana (Matrix)</option>
+                    <option value="Multi">Tampilkan 4 Neraca Terpisah (Multi-View)</option>
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-lime-700 group-hover:text-lime-900 transition-colors">
+                    <div className="bg-lime-100 p-1.5 rounded-lg border border-lime-200">
+                      <ChevronDown className="w-4 h-4" />
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 

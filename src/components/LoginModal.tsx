@@ -155,7 +155,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           onClose();
           return;
         } else {
-          setErrorMsg('Kata sandi Admin/DKM salah! Silakan coba lagi (Default: admin123).');
+          setErrorMsg('Kata sandi Admin/DKM salah! Silakan coba lagi.');
           return;
         }
       }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ClipboardList, CheckCircle, Clock, XCircle, ChevronDown, ChevronUp, 
   AlertTriangle, PlusCircle, ShieldCheck, UserCheck, Check, X, FileText 
@@ -7,6 +7,7 @@ import {
   INITIAL_ANGGARAN_LIST, INITIAL_PENGAJUAN_LIST, INITIAL_CHART_OF_ACCOUNTS, 
   AnggaranItem, PengajuanPengeluaran, JurnalEntry 
 } from '../data/akuntansiData';
+import { supabase } from '../lib/supabase';
 
 const formatRp = (n: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
@@ -31,16 +32,61 @@ const APPROVAL_LEVELS = [
 
 interface ModulAnggaranApprovalProps {
   onAutoPostJournal?: (entry: JurnalEntry) => void;
+  adminRole?: string;
+  appSettings?: any;
 }
 
-export const ModulAnggaranApproval: React.FC<ModulAnggaranApprovalProps> = ({ onAutoPostJournal }) => {
+export const ModulAnggaranApproval: React.FC<ModulAnggaranApprovalProps> = ({ onAutoPostJournal, adminRole = 'direktur', appSettings }) => {
   const [tab, setTab] = useState<'anggaran' | 'pengajuan' | 'tambah'>('pengajuan');
   const [anggaranList, setAnggaranList] = useState<AnggaranItem[]>(INITIAL_ANGGARAN_LIST);
   const [pengajuanList, setPengajuanList] = useState<PengajuanPengeluaran[]>(INITIAL_PENGAJUAN_LIST);
-  const [expandedId, setExpandedId] = useState<string | null>('PG-001');
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  // Interactive Testing Role (Bendahara | Ketua DKM | Direktur)
-  const [currentTestingRole, setCurrentTestingRole] = useState<'Bendahara' | 'Ketua DKM' | 'Direktur'>('Bendahara');
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    const { data: anggaranData } = await supabase.from('anggaran').select('*').order('created_at', { ascending: false });
+    const { data: pengajuanData } = await supabase.from('pengajuan_pengeluaran').select('*').order('created_at', { ascending: false });
+    
+    if (anggaranData && anggaranData.length > 0) {
+      setAnggaranList(anggaranData.map((d: any) => ({
+        id: d.id,
+        tahun: d.tahun,
+        bulan: d.bulan,
+        kategori: d.kategori,
+        namaKegiatan: d.nama_kegiatan,
+        kodeAkun: d.kode_akun,
+        jumlahDianggarkan: Number(d.jumlah_dianggarkan),
+        jumlahRealisasi: Number(d.jumlah_realisasi),
+        status: d.status,
+        dibuatOleh: d.dibuat_oleh,
+        riwayatApproval: d.riwayat_approval || []
+      })));
+    }
+    
+    if (pengajuanData && pengajuanData.length > 0) {
+      setPengajuanList(pengajuanData.map((d: any) => ({
+        id: d.id,
+        tanggal: d.tanggal,
+        noPengajuan: d.no_pengajuan,
+        judul: d.judul,
+        keterangan: d.keterangan,
+        kodeAkun: d.kode_akun,
+        namaAkun: d.nama_akun,
+        jumlah: Number(d.jumlah),
+        dibuatOleh: d.dibuat_oleh,
+        rolePermohon: d.role_permohon,
+        status: d.status,
+        stepAktif: d.step_aktif,
+        riwayatApproval: d.riwayat_approval || []
+      })));
+    }
+  };
+
+  // Role Approval tied to logged-in user
+  const currentTestingRole = adminRole === 'bendahara' ? 'Bendahara' : adminRole === 'ketua' ? 'Ketua DKM' : adminRole === 'direktur' ? 'Direktur' : 'Staf';
   const [approvalNote, setApprovalNote] = useState('');
 
   // Form Pengajuan State
@@ -124,6 +170,17 @@ export const ModulAnggaranApproval: React.FC<ModulAnggaranApprovalProps> = ({ on
 
     setPengajuanList(updated);
     setApprovalNote('');
+    
+    // Save back to supabase
+    const toUpdate = updated.find(u => u.id === pengajuanId);
+    if (toUpdate) {
+      supabase.from('pengajuan_pengeluaran').update({
+        status: toUpdate.status,
+        step_aktif: toUpdate.stepAktif,
+        riwayat_approval: toUpdate.riwayatApproval
+      }).eq('id', pengajuanId).then();
+    }
+
     alert(
       action === 'Disetujui'
         ? `Pengeluaran disetujui oleh ${currentTestingRole}! ${
@@ -156,13 +213,31 @@ export const ModulAnggaranApproval: React.FC<ModulAnggaranApprovalProps> = ({ on
       status: 'Menunggu Bendahara',
       stepAktif: 1,
       riwayatApproval: [
-        { level: 1, role: 'Bendahara', nama: 'H. Ahmad', aksi: 'Menunggu' },
-        { level: 2, role: 'Ketua DKM', nama: 'Ustadz H. M. Zainuddin', aksi: 'Menunggu' },
-        { level: 3, role: 'Direktur', nama: 'Prof. Dr. M. Syafii Antonio', aksi: 'Menunggu' },
+        { level: 1, role: 'Bendahara', nama: appSettings?.nama_bendahara || 'Bendahara', aksi: 'Menunggu' },
+        { level: 2, role: 'Ketua DKM', nama: appSettings?.nama_dkm || 'Ketua DKM', aksi: 'Menunggu' },
+        { level: 3, role: 'Direktur', nama: appSettings?.nama_direktur || 'Direktur', aksi: 'Menunggu' },
       ],
     };
 
     setPengajuanList([newPengajuan, ...pengajuanList]);
+    
+    // Insert into supabase
+    supabase.from('pengajuan_pengeluaran').insert([{
+      id: newPengajuan.id,
+      tanggal: newPengajuan.tanggal,
+      no_pengajuan: newPengajuan.noPengajuan,
+      judul: newPengajuan.judul,
+      keterangan: newPengajuan.keterangan,
+      kode_akun: newPengajuan.kodeAkun,
+      nama_akun: newPengajuan.namaAkun,
+      jumlah: newPengajuan.jumlah,
+      dibuat_oleh: newPengajuan.dibuatOleh,
+      role_permohon: newPengajuan.rolePermohon,
+      status: newPengajuan.status,
+      step_aktif: newPengajuan.stepAktif,
+      riwayat_approval: newPengajuan.riwayatApproval
+    }]).then();
+
     setTab('pengajuan');
     setExpandedId(newPengajuan.id);
 
@@ -207,43 +282,18 @@ export const ModulAnggaranApproval: React.FC<ModulAnggaranApprovalProps> = ({ on
         </div>
       </div>
 
-      {/* Role Selector Simulator Bar */}
-      <div className="bg-lime-50 border border-lime-200 rounded-3xl p-5 shadow-xs space-y-3">
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-2 text-lime-900">
-            <ShieldCheck className="w-5 h-5 text-lime-700 shrink-0" />
-            <span className="font-extrabold text-xs sm:text-sm">Simulasi Otorisasi Role Approval:</span>
+      {/* Active Role Indicator */}
+      <div className="bg-lime-50 border border-lime-200 rounded-3xl p-5 shadow-xs flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <ShieldCheck className="w-6 h-6 text-lime-700 shrink-0" />
+          <div>
+            <p className="text-xs font-bold text-lime-700 uppercase tracking-wider">Akses Otorisasi Saat Ini</p>
+            <p className="font-extrabold text-sm text-lime-900">{currentTestingRole}</p>
           </div>
-          <span className="text-xs font-semibold text-lime-800">
-            Pilih Role Anda saat ini untuk menguji tombol Setujui / Tolak:
-          </span>
         </div>
-
-        <div className="grid grid-cols-3 gap-3">
-          {APPROVAL_LEVELS.map(l => (
-            <button
-              key={l.role}
-              onClick={() => setCurrentTestingRole(l.role as any)}
-              className={`p-3.5 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
-                currentTestingRole === l.role
-                  ? 'bg-lime-900 text-white border-lime-950 shadow-md ring-2 ring-lime-400 font-bold'
-                  : 'bg-white hover:bg-lime-100/50 border-lime-200 text-slate-700'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <span className={`w-6 h-6 rounded-full text-xs font-black flex items-center justify-center ${
-                  currentTestingRole === l.role ? 'bg-lime-400 text-lime-950' : 'bg-slate-200 text-slate-700'
-                }`}>
-                  L{l.level}
-                </span>
-                {currentTestingRole === l.role && <UserCheck className="w-4 h-4 text-lime-300" />}
-              </div>
-              <p className="text-xs sm:text-sm font-extrabold mt-2">{l.role}</p>
-              <p className={`text-[10px] ${currentTestingRole === l.role ? 'text-lime-200' : 'text-slate-400'}`}>
-                {l.name}
-              </p>
-            </button>
-          ))}
+        <div className="bg-white px-3 py-1.5 rounded-xl border border-lime-100 flex items-center gap-2">
+          <UserCheck className="w-4 h-4 text-lime-600" />
+          <span className="text-xs font-bold text-lime-800">Sesuai Akun Login</span>
         </div>
       </div>
 
@@ -417,7 +467,7 @@ export const ModulAnggaranApproval: React.FC<ModulAnggaranApprovalProps> = ({ on
                     </div>
 
                     {/* Action Form if current role can approve */}
-                    {item.status !== 'Disetujui' && item.status !== 'Ditolak' && (
+                    {item.status !== 'Disetujui' && item.status !== 'Ditolak' && needsActionFromCurrentRole && (
                       <div className="bg-white p-5 rounded-2xl border-2 border-lime-200 space-y-3">
                         <div className="flex items-center gap-2">
                           <ShieldCheck className="w-5 h-5 text-lime-700" />

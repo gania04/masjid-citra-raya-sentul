@@ -14,7 +14,7 @@ interface JamaahDashboardProps {
 }
 
 export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, kontak, donasiHistory = [] }) => {
-  const [activeTab, setActiveTab] = useState<'ringkasan' | 'donasi' | 'laporan' | 'histori' | 'profil' | 'jadwal' | 'quran' | 'tanya'>('ringkasan');
+  const [activeTab, setActiveTab] = useState<'ringkasan' | 'donasi' | 'laporan' | 'histori' | 'profil' | 'jadwal' | 'quran' | 'tanya' | 'kajian'>('ringkasan');
   const [penghasilan, setPenghasilan] = useState('');
   const [bonus, setBonus] = useState('');
   const [showKalkulator, setShowKalkulator] = useState(false);
@@ -58,6 +58,7 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
       case 'ringkasan': return 'Ringkasan Utama';
       case 'quran': return 'Al-Qur\'an Digital';
       case 'jadwal': return 'Jadwal Shalat Presisi';
+      case 'kajian': return 'Jadwal & Pendaftaran Kajian';
       case 'tanya': return 'Tanya DKM & Aspirasi';
       case 'donasi': return 'Pengingat Donasi & E-Wallet';
       case 'laporan': return 'Progress ZISWAF';
@@ -175,6 +176,9 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
   const [waNotificationMsg, setWaNotificationMsg] = useState('');
   const [waSendingStatus, setWaSendingStatus] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  // Real ZISWAF Programs State
+  const [programsList, setProgramsList] = useState<any[]>([]);
 
   // Wallet Connection State
   const [connectedWallet, setConnectedWallet] = useState<string | null>(() => {
@@ -234,6 +238,14 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
         console.error('Error parsing bookmark', e);
       }
     }
+
+    const fetchPrograms = async () => {
+      const { data, error } = await supabase.from('programs').select('*');
+      if (data && !error) {
+        setProgramsList(data);
+      }
+    };
+    fetchPrograms();
   }, [nama, kontak]);
 
   // Safe string values to prevent uncaught TypeError during render
@@ -519,7 +531,7 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
               <button
                 onClick={() => setOpenDropdown(openDropdown === 'layanan' ? null : 'layanan')}
                 className={`w-full p-3 rounded-2xl font-bold text-xs flex items-center justify-between transition-all cursor-pointer border ${
-                  activeTab === 'tanya'
+                  activeTab === 'tanya' || activeTab === 'kajian'
                     ? 'bg-emerald-800 text-white border-emerald-700 shadow-md'
                     : 'bg-slate-50 text-slate-700 hover:bg-emerald-50 hover:text-emerald-900 border-slate-200'
                 }`}
@@ -873,9 +885,9 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
                 </div>
                 <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20 shrink-0 text-center w-full md:w-auto">
                   <p className="text-[10px] font-bold text-lime-300 uppercase tracking-wider">Hotline WA DKM</p>
-                  <p className="text-base font-extrabold text-white mt-0.5">0815-1704-5406</p>
+                  <p className="text-base font-extrabold text-white mt-0.5">0812-1920-0400</p>
                   <a
-                    href="https://wa.me/6281517045406?text=Assalamu'alaikum%20Pengurus%20DKM%20Masjid%20Citra%20Sentul%20Raya,%20saya%20ingin%20bertanya:"
+                    href="https://wa.me/6281219200400?text=Assalamu'alaikum%20Pengurus%20DKM%20Masjid%20Citra%20Sentul%20Raya,%20saya%20ingin%20bertanya:"
                     target="_blank"
                     rel="noreferrer"
                     className="mt-2.5 inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-[#25D366] hover:bg-[#20ba5a] text-white text-xs font-bold rounded-xl transition-all shadow-sm w-full cursor-pointer"
@@ -1077,52 +1089,8 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
                 <div className="bg-emerald-50/80 p-4 rounded-xl border border-emerald-200/80 flex items-center gap-3">
                   <CheckCircle2 className="w-5 h-5 text-emerald-700 shrink-0" />
                   <div className="text-xs text-slate-700 leading-relaxed">
-                    Pengingat terkirim otomatis oleh **Sistem Terpusat Masjid** ke nomor WA Anda (<span className="font-semibold text-emerald-950">{profilContact}</span>).
+                    Pengingat terkirim otomatis oleh **Sistem Terpusat Masjid** ke nomor WA Anda (<span className="font-semibold text-emerald-950">{profilContact}</span>). Notifikasi ini dikirim pada tanggal {tanggalPengingat} setiap bulannya.
                   </div>
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      setWaSendingStatus('Mengirim ke WA...');
-                      const result = await sendWaViaGateway({
-                        nama: profilName,
-                        phone: profilContact,
-                        tanggal: tanggalPengingat,
-                        nominal: `Rp ${targetNominal}`,
-                        programName: 'Infaq & Shadaqah Rutin Jamaah'
-                      }, waGatewayToken);
-                      setWaSendingStatus(result.message);
-                      setTimeout(() => setWaSendingStatus(null), 6000);
-                    }}
-                    className="flex-1 px-4 py-3 bg-[#25D366] hover:bg-[#20ba5a] text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
-                  >
-                    <Send className="w-4 h-4" /> Uji Coba Kirim WA HP Sekarang
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      setWaSendingStatus('Mengirim Push Notification...');
-                      const sent = await triggerDeviceNotification({
-                        nama: profilName,
-                        phone: profilContact,
-                        tanggal: tanggalPengingat,
-                        nominal: `Rp ${targetNominal}`,
-                        programName: 'Infaq & Shadaqah Rutin Jamaah'
-                      });
-                      if (sent) {
-                        setWaSendingStatus('🔔 Push Notification terkirim ke bilah notifikasi HP Anda!');
-                      } else {
-                        setWaSendingStatus('Gagal atau izin notifikasi browser belum diberikan.');
-                      }
-                      setTimeout(() => setWaSendingStatus(null), 6000);
-                    }}
-                    className="flex-1 px-4 py-3 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
-                  >
-                    <Bell className="w-4 h-4" /> Uji Coba Push Notif HP
-                  </button>
                 </div>
 
                 {waSendingStatus && (
@@ -1493,26 +1461,43 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
             <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-4 mb-6">
               <Activity className="w-5 h-5 text-emerald-600" /> Progress Program ZISWAF Masjid
             </h2>
-            <div className="border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs">
-              <div className="md:flex">
-                <div className="md:w-1/3 h-48 md:h-auto relative">
-                  <img src="https://images.unsplash.com/photo-1564769625905-50e93615e769?auto=format&fit=crop&w=800&q=80" alt="Pembangunan" className="w-full h-full object-cover" />
-                  <div className="absolute top-3 left-3 bg-emerald-700 text-white text-[10px] font-bold px-2.5 py-1 rounded-md uppercase">Didukung Anda</div>
-                </div>
-                <div className="p-6 md:w-2/3 flex flex-col justify-center">
-                  <h3 className="text-base md:text-lg font-bold text-slate-800 mb-1">Pembangunan Masjid Citra Sentul Raya</h3>
-                  <p className="text-xs text-emerald-700 font-bold mb-3">Tahap 2: Konstruksi & Atap Utama</p>
-                  <div className="space-y-3">
-                    <div>
-                      <div className="flex justify-between text-xs font-bold mb-1"><span className="text-emerald-700">Terkumpul 68%</span><span className="text-slate-500">Rp 1.02 M / Rp 1.5 M</span></div>
-                      <div className="w-full bg-slate-100 rounded-full h-2.5"><div className="bg-emerald-600 h-2.5 rounded-full" style={{ width: '68%' }}></div></div>
-                    </div>
-                    <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs text-slate-600 leading-relaxed">
-                      Alhamdulillah, pengecoran tiang utama lantai 1 selesai. Pekerjaan berlanjut ke perakitan kerangka atap baja ringan.
+            <div className="space-y-6">
+              {programsList.length > 0 ? programsList.map((program, index) => {
+                const percentage = program.target_rp > 0 ? Math.min(100, Math.round((program.terkumpul_rp / program.target_rp) * 100)) : 0;
+                return (
+                  <div key={program.id || index} className="border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs">
+                    <div className="md:flex">
+                      <div className="md:w-1/3 h-48 md:h-auto relative bg-slate-100">
+                        <img src="https://images.unsplash.com/photo-1564769625905-50e93615e769?auto=format&fit=crop&w=800&q=80" alt={program.judul} className="w-full h-full object-cover opacity-80" />
+                        <div className="absolute top-3 left-3 bg-emerald-700 text-white text-[10px] font-bold px-2.5 py-1 rounded-md uppercase">{program.kategori}</div>
+                      </div>
+                      <div className="p-6 md:w-2/3 flex flex-col justify-center">
+                        <h3 className="text-base md:text-lg font-bold text-slate-800 mb-1">{program.judul}</h3>
+                        <p className="text-xs text-emerald-700 font-bold mb-3">{program.donatur} Donatur Tergabung</p>
+                        <div className="space-y-3">
+                          <div>
+                            <div className="flex justify-between text-xs font-bold mb-1">
+                              <span className="text-emerald-700">Terkumpul {percentage}%</span>
+                              <span className="text-slate-500">{formatRp(program.terkumpul_rp)} / {formatRp(program.target_rp)}</span>
+                            </div>
+                            <div className="w-full bg-slate-100 rounded-full h-2.5">
+                              <div className="bg-emerald-600 h-2.5 rounded-full" style={{ width: `${percentage}%` }}></div>
+                            </div>
+                          </div>
+                          <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs text-slate-600 leading-relaxed">
+                            Alhamdulillah, progres penggalangan dana terus berjalan. Jazakumullah khairan katsiran atas partisipasi para jamaah.
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
+                );
+              }) : (
+                <div className="text-center py-10 text-slate-500">
+                  <Activity className="w-10 h-10 mx-auto text-slate-300 mb-3" />
+                  <p>Belum ada program ZISWAF yang aktif.</p>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         )}
@@ -1637,6 +1622,8 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
             </div>
           </div>
         )}
+
+        {/* TAB 8 TELAH DIHAPUS - KAJIAN & PENDAFTARAN */}
 
       </div>
 

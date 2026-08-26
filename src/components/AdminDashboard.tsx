@@ -3,6 +3,7 @@ import { LogOut, MonitorPlay, RefreshCw, Book, Calendar, Video, ShieldCheck, Set
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import { QRCodeSVG as QRCode } from 'qrcode.react';
 import { ModulCoA } from './ModulCoA';
 import { ModulJurnal } from './ModulJurnal';
 import { ModulBukuBesar } from './ModulBukuBesar';
@@ -158,18 +159,45 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
     return true;
   };
 
-  const handleDeleteKas = (id: number) => {
+  const handleDeleteKas = async (id: any) => {
     if (window.confirm('Yakin ingin menghapus transaksi ini?')) {
       setKasEntries(prev => prev.filter(e => e.id !== id));
+      setJournals(prev => prev.filter(j => j.id !== id));
+      try {
+        await supabase.from('jurnal_umum').delete().eq('no_bukti', id);
+      } catch (err) { console.error(err); }
     }
   };
 
-  const handleEditKas = (entry: any) => {
+  const handleEditKas = async (entry: any) => {
     const newAmount = prompt('Masukkan nominal baru:', entry.amount);
     if (newAmount && !isNaN(Number(newAmount))) {
       const newDesc = prompt('Masukkan keterangan baru:', entry.desc);
       if (newDesc) {
         setKasEntries(prev => prev.map(e => e.id === entry.id ? { ...e, amount: Number(newAmount), desc: newDesc } : e));
+        setJournals(prev => prev.map(j => {
+          if (j.id === entry.id) {
+             const newBaris = j.baris.map(b => {
+                if (b.debit > 0) return { ...b, debit: Number(newAmount) };
+                if (b.kredit > 0) return { ...b, kredit: Number(newAmount) };
+                return b;
+             });
+             return { ...j, keterangan: newDesc, baris: newBaris };
+          }
+          return j;
+        }));
+        
+        try {
+          const { data: lines } = await supabase.from('jurnal_umum').select('id, debit, kredit').eq('no_bukti', entry.id);
+          if (lines) {
+             for (const line of lines) {
+                const updateData: any = { keterangan: newDesc };
+                if (line.debit > 0) updateData.debit = Number(newAmount);
+                if (line.kredit > 0) updateData.kredit = Number(newAmount);
+                await supabase.from('jurnal_umum').update(updateData).eq('id', line.id);
+             }
+          }
+        } catch (err) { console.error(err); }
       }
     }
   };
@@ -205,6 +233,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
   const [selectedProgram, setSelectedProgram] = useState<number>(programs[0].id);
   const [nominalStr, setNominalStr] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showDonaturModal, setShowDonaturModal] = useState<number | null>(null);
 
   // Kas State (Riwayat Transaksi)
   const [kasEntries, setKasEntries] = useState<any[]>([]);
@@ -438,10 +467,34 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
   const saldoAkhir = totalIn - totalOut;
 
   const [journals, setJournals] = useState<JurnalEntry[]>([]);
+  const [accounts, setAccounts] = useState<any[]>([]);
+  const [appSettings, setAppSettings] = useState<any>(null);
 
   useEffect(() => {
-    const fetchJournals = async () => {
+    const fetchJournalsAndCoA = async () => {
       try {
+        // Fetch App Settings
+        const { data: settingsData } = await supabase.from('app_settings').select('*').single();
+        if (settingsData) {
+          setAppSettings(settingsData);
+        }
+
+        // Fetch CoA
+        const { data: coaData, error: coaErr } = await supabase.from('chart_of_accounts').select('*').order('kode');
+        if (!coaErr && coaData) {
+          const formatted = coaData.map((d: any) => ({
+            kode: d.kode,
+            nama: d.nama,
+            jenis: d.kategori === 'Aset' ? 'Aktiva' : (d.kategori === 'Liabilitas' ? 'Kewajiban' : (d.kategori === 'Aset Bersih' ? 'Ekuitas' : (d.kategori === 'Penerimaan' ? 'Pendapatan' : 'Beban'))),
+            kelompok: d.kelompok,
+            saldoNormal: d.is_debit ? 'Debit' : 'Kredit',
+            saldoAwal: Number(d.saldo) || 0,
+            status: d.status,
+          }));
+          setAccounts(formatted);
+        }
+
+        // Fetch Journals
         const { data, error } = await supabase.from('jurnal_umum').select('*, chart_of_accounts(nama)').order('created_at', { ascending: false });
         if (!error && data) {
           const grouped = new Map<string, JurnalEntry>();
@@ -467,13 +520,29 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                kredit: Number(row.kredit)
              });
           });
-          setJournals(Array.from(grouped.values()));
+          const journalsArray = Array.from(grouped.values());
+          setJournals(journalsArray);
+          
+          // Generate kasEntries
+          const kasList: any[] = [];
+          journalsArray.forEach(j => {
+             const kasLine = j.baris.find(b => b.kodeAkun.startsWith('110'));
+             if (kasLine) {
+                const dateFormatted = j.tanggal ? (j.tanggal.includes('/') ? j.tanggal : j.tanggal.split('-').reverse().join('/')) : '';
+                if (kasLine.debit > 0) {
+                   kasList.push({ id: j.id, date: dateFormatted, desc: j.keterangan, type: 'in', amount: kasLine.debit });
+                } else if (kasLine.kredit > 0) {
+                   kasList.push({ id: j.id, date: dateFormatted, desc: j.keterangan, type: 'out', amount: kasLine.kredit });
+                }
+             }
+          });
+          setKasEntries(kasList);
         }
       } catch (err) {
         console.error('Error fetching jurnal_umum:', err);
       }
     };
-    fetchJournals();
+    fetchJournalsAndCoA();
   }, []);
 
   const handleAutoPostJournal = (entry: JurnalEntry) => {
@@ -1116,41 +1185,41 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
               const saldo = totalIn - totalOut;
               
               return (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-2">
-                  <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-md flex items-center justify-between transition-transform hover:-translate-y-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 mb-3">
+                  <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between transition-transform hover:-translate-y-1">
                     <div>
-                      <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Saldo Kas Saat Ini</p>
-                      <h3 className="text-2xl font-extrabold text-slate-800">Rp {saldo.toLocaleString('id-ID')}</h3>
+                      <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-0.5">Saldo Kas Saat Ini</p>
+                      <h3 className="text-lg font-extrabold text-slate-800">Rp {saldo.toLocaleString('id-ID')}</h3>
                     </div>
-                    <div className="w-12 h-12 bg-lime-100 rounded-full flex items-center justify-center shrink-0">
-                      <Wallet className="w-6 h-6 text-lime-600" />
+                    <div className="w-9 h-9 bg-lime-100 rounded-full flex items-center justify-center shrink-0">
+                      <Wallet className="w-4 h-4 text-lime-600" />
                     </div>
                   </div>
-                  <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-md flex items-center justify-between transition-transform hover:-translate-y-1">
+                  <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between transition-transform hover:-translate-y-1">
                     <div>
-                      <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Total Pemasukan</p>
-                      <h3 className="text-xl font-extrabold text-emerald-600">Rp {totalIn.toLocaleString('id-ID')}</h3>
+                      <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-0.5">Total Pemasukan</p>
+                      <h3 className="text-base font-extrabold text-emerald-600">Rp {totalIn.toLocaleString('id-ID')}</h3>
                     </div>
-                    <div className="w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center shrink-0">
-                      <TrendingUp className="w-6 h-6 text-emerald-600" />
+                    <div className="w-9 h-9 bg-emerald-50 rounded-full flex items-center justify-center shrink-0">
+                      <TrendingUp className="w-4 h-4 text-emerald-600" />
                     </div>
                   </div>
-                  <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-md flex items-center justify-between transition-transform hover:-translate-y-1">
+                  <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between transition-transform hover:-translate-y-1">
                     <div>
-                      <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Total Pengeluaran</p>
-                      <h3 className="text-xl font-extrabold text-red-600">Rp {totalOut.toLocaleString('id-ID')}</h3>
+                      <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-0.5">Total Pengeluaran</p>
+                      <h3 className="text-base font-extrabold text-red-600">Rp {totalOut.toLocaleString('id-ID')}</h3>
                     </div>
-                    <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center shrink-0">
-                      <TrendingDown className="w-6 h-6 text-red-600" />
+                    <div className="w-9 h-9 bg-red-50 rounded-full flex items-center justify-center shrink-0">
+                      <TrendingDown className="w-4 h-4 text-red-600" />
                     </div>
                   </div>
-                  <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-md flex items-center justify-between transition-transform hover:-translate-y-1">
+                  <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between transition-transform hover:-translate-y-1">
                     <div>
-                      <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Total Transaksi</p>
-                      <h3 className="text-2xl font-extrabold text-slate-800">{kasEntries.length}</h3>
+                      <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-0.5">Total Transaksi</p>
+                      <h3 className="text-lg font-extrabold text-slate-800">{kasEntries.length}</h3>
                     </div>
-                    <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center shrink-0">
-                      <Activity className="w-6 h-6 text-blue-600" />
+                    <div className="w-9 h-9 bg-blue-50 rounded-full flex items-center justify-center shrink-0">
+                      <Activity className="w-4 h-4 text-blue-600" />
                     </div>
                   </div>
                 </div>
@@ -1158,34 +1227,34 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
             })()}
 
             {/* Connection Banner */}
-            <div className="bg-gradient-to-r from-lime-800 via-lime-700 to-lime-800 rounded-2xl p-6 text-white shadow-xl flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 border border-lime-500/30">
+            <div className="bg-gradient-to-r from-lime-800 via-lime-700 to-lime-800 rounded-xl p-4 text-white shadow-md flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 border border-lime-500/30">
               <div className="space-y-1">
-                <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 text-lime-100 text-xs font-extrabold uppercase tracking-wider backdrop-blur-md">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/20 text-lime-100 text-[10px] font-extrabold uppercase tracking-wider backdrop-blur-md">
                   🔗 Terhubung Otomatis Sistem Akuntansi Double-Entry
                 </span>
-                <h2 className="text-2xl font-extrabold text-white">Riwayat Transaksi Kas Masjid</h2>
-                <p className="text-lime-100 text-xs md:text-sm max-w-3xl leading-relaxed">
-                  Setiap mutasi kas (pemasukan & pengeluaran) di halaman ini langsung tersinkronisasi otomatis dengan **Chart of Accounts (CoA)**, **Jurnal Umum**, **Buku Besar**, **Neraca Aktivitas & Laba Rugi**, dan **Laporan Keuangan ISAK 35**.
+                <h2 className="text-lg font-extrabold text-white">Riwayat Transaksi Kas Masjid</h2>
+                <p className="text-lime-100 text-[11px] max-w-3xl leading-relaxed">
+                  Semua mutasi kas tersinkronisasi otomatis dengan **Chart of Accounts (CoA)**, **Jurnal Umum**, **Buku Besar**, dan **Neraca**.
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2 shrink-0">
                 <button 
                   onClick={() => { setActiveMenu('lapkeu'); setLapkeuTab('jurnal'); }}
-                  className="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl text-xs backdrop-blur-md transition-all border border-white/20 flex items-center gap-1.5 cursor-pointer"
+                  className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white font-bold rounded-lg text-xs backdrop-blur-md transition-all border border-white/20 flex items-center gap-1 cursor-pointer"
                 >
-                  <FileText className="w-4 h-4 text-lime-300" /> Lihat Jurnal Umum
+                  <FileText className="w-3.5 h-3.5 text-lime-300" /> Jurnal Umum
                 </button>
                 <button 
                   onClick={() => { setActiveMenu('lapkeu'); setLapkeuTab('bukubesar'); }}
-                  className="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl text-xs backdrop-blur-md transition-all border border-white/20 flex items-center gap-1.5 cursor-pointer"
+                  className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white font-bold rounded-lg text-xs backdrop-blur-md transition-all border border-white/20 flex items-center gap-1 cursor-pointer"
                 >
-                  <Book className="w-4 h-4 text-lime-300" /> Buku Besar
+                  <Book className="w-3.5 h-3.5 text-lime-300" /> Buku Besar
                 </button>
                 <button 
                   onClick={() => { setActiveMenu('lapkeu'); setLapkeuTab('neraca'); }}
-                  className="px-3.5 py-2 bg-lime-400 hover:bg-lime-300 text-lime-950 font-extrabold rounded-xl text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+                  className="px-3 py-1.5 bg-lime-400 hover:bg-lime-300 text-lime-950 font-extrabold rounded-lg text-xs shadow transition-all flex items-center gap-1 cursor-pointer"
                 >
-                  <Scale className="w-4 h-4 text-lime-950" /> Neraca Aktivitas & Laba Rugi ➔
+                  <Scale className="w-3.5 h-3.5 text-lime-950" /> Neraca Laba Rugi ➔
                 </button>
               </div>
             </div>
@@ -1453,7 +1522,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                       ))}
                     </select>
                   </div>
-                  </div>
                   <div>
                     <label className="block text-sm font-bold text-slate-500 mb-2">Nominal Donasi (Rp)</label>
                     <input 
@@ -1513,13 +1581,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                         
                         <div className="pt-3 border-t border-slate-200 mt-3 text-center flex flex-col gap-2">
                           <button onClick={() => {
-                            const donors = (donasiHistory || []).filter((d: any) => d.status === 'Berhasil' && d.programId === p.id);
-                            if (donors.length > 0) {
-                              const list = donors.map((d: any) => `- ${d.nama} (${formatRp(d.nominal)})`).join('\n');
-                              alert(`Daftar Donatur untuk ${p.judul}:\n\n${list}`);
-                            } else {
-                              alert(`Belum ada donasi terverifikasi untuk program ini.`);
-                            }
+                            setShowDonaturModal(p.id);
                           }} className="text-xs bg-lime-100 text-lime-700 hover:bg-lime-200 font-bold py-2 px-4 rounded-lg transition-colors cursor-pointer w-full">
                             Lihat Daftar Donatur
                           </button>
@@ -1569,13 +1631,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                   </div>
                   <div className="mt-4 pt-4 border-t border-slate-100 flex flex-wrap gap-2">
                     <button onClick={() => {
-                      const donors = (donasiHistory || []).filter((d: any) => d.status === 'Berhasil' && d.programId === p.id);
-                      if (donors.length > 0) {
-                        const list = donors.map((d: any) => `- ${d.namaDonatur || 'Hamba Allah'} (${formatRp(d.nominal)})`).join('\n');
-                        alert(`Daftar Donatur untuk ${p.judul}:\n\n${list}`);
-                      } else {
-                        alert(`Belum ada donasi terverifikasi untuk program ini.`);
-                      }
+                      setShowDonaturModal(p.id);
                     }} className="w-full bg-lime-50 text-lime-700 border border-lime-200 hover:bg-lime-100 font-bold py-2 rounded-lg text-xs transition-colors cursor-pointer">Lihat Donatur</button>
                     <div className="flex w-full gap-2">
                       <button onClick={() => {
@@ -1893,29 +1949,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
         {activeMenu === 'pengaturan' && (
           <div className="animate-in fade-in space-y-6">
             
-            {/* Secondary Navigation */}
-            <div className="bg-lime-100/50 rounded-xl border border-lime-200 overflow-hidden flex flex-wrap gap-1 p-1">
-              {[
-                { id: 'admin_utama', label: 'Utama & Keamanan' },
-                { id: 'hero', label: 'Foto Animasi Beranda' },
-                { id: 'visibilitas', label: 'Visibilitas Modul' },
-                { id: 'qr', label: 'Cetak QR Aplikasi' },
-                { id: 'sponsor', label: 'Sponsor & Mitra' },
-                { id: 'sejarah', label: 'Profil & Sejarah Masjid' },
-                { id: 'reset', label: 'Reset Data' },
-              ].map(tab => (
-                <button
-                  key={tab.id}
-                  onClick={() => setSettingTab(tab.id)}
-                  className={`px-6 py-2.5 rounded-lg text-sm font-bold transition-colors ${
-                    settingTab === tab.id 
-                      ? 'bg-lime-500 text-slate-900 border-2 border-lime-400' 
-                      : 'text-slate-600 hover:text-slate-800 hover:bg-slate-100/50'
-                  }`}
+            {/* Secondary Navigation (Dropdown) */}
+            <div className="relative mb-6">
+              <label htmlFor="settings-menu" className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Pilih Menu Pengaturan</label>
+              <div className="relative">
+                <select
+                  id="settings-menu"
+                  value={settingTab}
+                  onChange={(e) => setSettingTab(e.target.value)}
+                  className="w-full md:w-1/2 appearance-none p-3.5 pr-10 bg-lime-50 border-2 border-lime-200 rounded-xl text-sm font-bold text-slate-800 shadow-sm focus:ring-4 focus:ring-lime-500/20 focus:border-lime-500 focus:outline-none transition-all cursor-pointer"
                 >
-                  {tab.label}
-                </button>
-              ))}
+                  <option value="admin_utama">Utama & Keamanan</option>
+                  <option value="hero">Foto Animasi Beranda</option>
+                  <option value="visibilitas">Visibilitas Modul</option>
+                  <option value="qr">Cetak QR Aplikasi</option>
+                  <option value="sponsor">Sponsor & Mitra</option>
+                  <option value="sejarah">Profil & Sejarah Masjid</option>
+                  <option value="reset">Reset Data</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                  <ChevronDown className="w-5 h-5 text-lime-600" />
+                </div>
+              </div>
             </div>
 
             {/* Sub-menu Content */}
@@ -2083,10 +2138,31 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                   <p className="text-slate-500 text-sm mb-8 max-w-lg">QR Code ini dapat Anda cetak dan tempel di area masjid (mading, tiang, dll) agar jamaah bisa langsung membuka aplikasi ini di HP mereka.</p>
                   
                   <div className="bg-white p-6 rounded-3xl inline-block shadow-2xl">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https://masjid-citra-sentul.app" alt="QR Code" className="w-64 h-64 mb-4 rounded-xl border border-slate-100" />
+                    <QRCode value={window.location.origin} size={256} className="mb-4 rounded-xl border border-slate-100" />
                     <p className="text-slate-500 font-bold text-sm tracking-widest uppercase mb-1">Scan Untuk Buka</p>
                     <p className="text-lime-600 font-bold text-xl">Aplikasi Citra Sentul Raya</p>
                   </div>
+
+                  <button 
+                    onClick={async () => {
+                      if (navigator.share) {
+                        try {
+                          await navigator.share({
+                            title: 'Masjid Citra Sentul Raya',
+                            text: 'Mari bergabung dan akses layanan Masjid Citra Sentul Raya melalui portal berikut:',
+                            url: window.location.origin,
+                          });
+                        } catch (error) {
+                          console.log('Error sharing', error);
+                        }
+                      } else {
+                        alert('Browser Anda tidak mendukung fitur berbagi langsung. Silakan salin URL browser Anda.');
+                      }
+                    }} 
+                    className="mt-6 bg-lime-600 hover:bg-lime-700 text-white font-bold py-3 px-8 rounded-xl transition-colors shadow-lg flex items-center gap-2 cursor-pointer"
+                  >
+                    <Link2 className="w-5 h-5" /> Bagikan Aplikasi Ke Jamaah
+                  </button>
                 </div>
               )}
 
@@ -2804,13 +2880,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
         {['lapkeu', 'jurnal', 'bukubesar', 'coa', 'anggaran'].includes(activeMenu) && (
           <div className="animate-in fade-in space-y-6">
             {/* Header Banner */}
-            <div className="bg-gradient-to-r from-lime-950 via-lime-900 to-slate-900 rounded-2xl p-6 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-lime-700/40">
+            <div className="bg-white rounded-2xl p-4 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-3 border border-slate-200">
               <div>
-                <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-lime-500/30 text-lime-200 text-xs font-bold uppercase tracking-wider mb-2 border border-lime-400/30">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wider mb-1.5 border border-slate-200">
                   📊 Modul Akuntansi Standar ISAK 35
                 </span>
-                <h2 className="text-2xl font-extrabold text-white">Fitur Laporan Keuangan & Akuntansi Masjid</h2>
-                <p className="text-lime-200 text-xs md:text-sm mt-1 max-w-3xl leading-relaxed">
+                <h2 className="text-lg font-extrabold text-slate-800 leading-none">Fitur Laporan Keuangan & Akuntansi Masjid</h2>
+                <p className="text-slate-500 text-[11px] mt-1.5 max-w-3xl leading-snug">
                   Terhubung langsung secara real-time dengan **Riwayat Transaksi** & **Input Donasi ZISWAF**. Mengintegrasikan Chart of Accounts (CoA), Jurnal Umum Double-Entry, Buku Besar, Neraca Aktivitas & Laba Rugi, serta Approval Anggaran.
                 </p>
               </div>
@@ -2827,13 +2903,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
             {/* Sub-Navigation Tabs dipindahkan ke atas menu dropdown */}
 
             {/* Sub-Tab Module Display */}
-            {lapkeuTab === 'neraca' && <ModulLaporanKeuangan journals={journals} />}
-            {lapkeuTab === 'jurnal' && <ModulJurnal entries={journals} onAddJournal={handleAutoPostJournal} />}
-            {lapkeuTab === 'bukubesar' && <ModulBukuBesar journals={journals} />}
+            {lapkeuTab === 'neraca' && <ModulLaporanKeuangan journals={journals} accounts={accounts} />}
+            {lapkeuTab === 'jurnal' && <ModulJurnal entries={journals} accounts={accounts} onAddJournal={handleAutoPostJournal} />}
+            {lapkeuTab === 'bukubesar' && <ModulBukuBesar journals={journals} accounts={accounts} />}
             {lapkeuTab === 'coa' && <ModulCoA journals={journals} />}
-            {lapkeuTab === 'anggaran' && <ModulAnggaranApproval onAutoPostJournal={handleAutoPostJournal} />}
+            {lapkeuTab === 'anggaran' && <ModulAnggaranApproval onAutoPostJournal={handleAutoPostJournal} adminRole={adminRole} appSettings={appSettings} />}
           </div>
         )}
+
+        {/* ── MODUL LAINNYA ── */}
 
         {showCampaignModal && (
           <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
@@ -3453,6 +3531,68 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
             </div>
           </div>
         )}
+
+        {/* DONATUR MODAL */}
+        {showDonaturModal !== null && (() => {
+          const p = [...programs, ...localPrograms].find(x => x.id === showDonaturModal);
+          if (!p) return null;
+          const donors = (donasiHistory || []).filter((d: any) => d.programId === p.id);
+          
+          return (
+            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-2xl w-full shadow-2xl border border-slate-100 max-h-[85vh] flex flex-col animate-in fade-in zoom-in duration-200">
+                <div className="flex items-center justify-between border-b border-slate-200 pb-4 mb-4 shrink-0">
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-800">Daftar Donatur</h3>
+                    <p className="text-sm font-semibold text-lime-600 mt-1">{p.judul}</p>
+                  </div>
+                  <button onClick={() => setShowDonaturModal(null)} className="p-2 bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600 rounded-full cursor-pointer transition-colors">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                <div className="overflow-y-auto flex-1 pr-2 space-y-3 custom-scrollbar">
+                  {donors.length > 0 ? (
+                    donors.map((d: any, idx: number) => (
+                      <div key={idx} className="p-4 border border-slate-200 rounded-xl bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-lime-300 transition-colors">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <span className="font-bold text-slate-800 text-base">{d.namaDonatur || 'Hamba Allah'}</span>
+                            <span className="text-[11px] text-slate-500 font-medium bg-slate-200 px-2 py-0.5 rounded-full">{d.tanggal}</span>
+                          </div>
+                          <div className="text-lg font-mono font-extrabold text-lime-600">{formatRp(d.nominal)}</div>
+                          {d.metode && <div className="text-[11px] text-slate-500 mt-1">Metode: {d.metode}</div>}
+                        </div>
+                        <div className="flex items-center">
+                           {d.status === 'Berhasil' ? (
+                             <span className="px-3 py-1.5 bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-xs font-bold flex items-center gap-1">
+                               <ShieldCheck className="w-3.5 h-3.5" /> Terverifikasi
+                             </span>
+                           ) : d.status === 'Menunggu Verifikasi' ? (
+                             <button onClick={() => {
+                               setShowDonaturModal(null);
+                               setActiveMenu('verifikasi');
+                             }} className="px-3 py-1.5 bg-amber-100 text-amber-700 hover:bg-amber-200 border border-amber-200 rounded-lg text-xs font-bold cursor-pointer transition-colors shadow-sm flex items-center gap-1 group">
+                               Menunggu Verifikasi <span className="group-hover:translate-x-0.5 transition-transform">➔</span>
+                             </button>
+                           ) : (
+                             <span className="px-3 py-1.5 bg-red-100 text-red-700 border border-red-200 rounded-lg text-xs font-bold flex items-center gap-1">
+                               <X className="w-3.5 h-3.5" /> Ditolak
+                             </span>
+                           )}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-12 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
+                      <Database className="w-12 h-12 text-slate-300 mb-3" />
+                      <p className="text-slate-500 font-medium text-sm">Belum ada data donatur untuk program ini.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
       </div>
     </div>

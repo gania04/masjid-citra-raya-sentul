@@ -2,6 +2,7 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig, Plugin} from 'vite';
+import { VitePWA } from 'vite-plugin-pwa';
 import {GoogleGenAI} from '@google/genai';
 
 function geminiAiPlugin(): Plugin {
@@ -84,7 +85,34 @@ Gunakan bahasa Indonesia yang halus, sebut "Bapak/Ibu" atau "Jamaah yang dirahma
 
 export default defineConfig(() => {
   return {
-    plugins: [react(), tailwindcss(), geminiAiPlugin()],
+    plugins: [
+      react(), 
+      tailwindcss(), 
+      geminiAiPlugin(),
+      VitePWA({
+        registerType: 'autoUpdate',
+        manifest: {
+          name: 'Masjid Citra Sentul Raya',
+          short_name: 'Masjid CSR',
+          description: 'Aplikasi Portal Layanan Masjid Citra Sentul Raya',
+          theme_color: '#059669',
+          background_color: '#ffffff',
+          display: 'standalone',
+          icons: [
+            {
+              src: 'https://images.unsplash.com/photo-1564769625905-50e93615e769?auto=format&fit=crop&w=192&q=80',
+              sizes: '192x192',
+              type: 'image/png'
+            },
+            {
+              src: 'https://images.unsplash.com/photo-1564769625905-50e93615e769?auto=format&fit=crop&w=512&q=80',
+              sizes: '512x512',
+              type: 'image/png'
+            }
+          ]
+        }
+      })
+    ],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

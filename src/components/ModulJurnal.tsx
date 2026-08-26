@@ -14,11 +14,13 @@ const SUMBER_COLOR: Record<string, string> = {
 
 interface ModulJurnalProps {
   entries?: JurnalEntry[];
+  accounts?: AkunCoA[];
   onAddJournal?: (entry: JurnalEntry) => void;
 }
 
 export const ModulJurnal: React.FC<ModulJurnalProps> = ({ 
   entries = INITIAL_JURNAL_ENTRIES, 
+  accounts = INITIAL_CHART_OF_ACCOUNTS,
   onAddJournal 
 }) => {
   const [journalList, setJournalList] = useState<JurnalEntry[]>(entries);
@@ -63,7 +65,7 @@ export const ModulJurnal: React.FC<ModulJurnalProps> = ({
   const updateBaris = (index: number, field: keyof JurnalBaris, value: any) => {
     const updated = [...formBaris];
     if (field === 'kodeAkun') {
-      const selectedCoA = INITIAL_CHART_OF_ACCOUNTS.find(a => a.kode === value);
+      const selectedCoA = accounts.find(a => a.kode === value);
       updated[index].kodeAkun = value;
       updated[index].namaAkun = selectedCoA ? selectedCoA.nama : '';
     } else {
@@ -358,7 +360,7 @@ export const ModulJurnal: React.FC<ModulJurnalProps> = ({
                         className="w-full p-2.5 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-lime-500"
                       >
                         <option value="">-- Pilih Akun CoA --</option>
-                        {INITIAL_CHART_OF_ACCOUNTS.map(a => (
+                        {accounts.map(a => (
                           <option key={a.kode} value={a.kode}>
                             {a.kode} - {a.nama} ({a.jenis})
                           </option>

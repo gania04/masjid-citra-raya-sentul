@@ -97,37 +97,28 @@ export const DaftarProgram: React.FC<DaftarProgramProps> = ({ programs, onDonate
                 <p className="text-slate-600 text-sm mb-6 flex-grow">{prog.deskripsi}</p>
                 
                 <div className="space-y-4">
-                  {prog.targetRp > 0 && (
-                    <div>
-                      <div className="flex justify-between text-xs font-semibold mb-1">
-                        <span className="text-lime-700">Terkumpul {prog.terkumpulPersen}%</span>
-                        <span className="text-slate-500">{prog.donatur} Donatur</span>
-                      </div>
-                      <div className="w-full bg-slate-100 rounded-full h-2">
-                        <div
-                          className="bg-lime-500 h-2 rounded-full transition-all duration-1000"
-                          style={{ width: `${Math.min(prog.terkumpulPersen, 100)}%` }}
-                        ></div>
-                      </div>
+                  <div>
+                    <div className="flex justify-between text-xs font-semibold mb-1">
+                      <span className="text-lime-700">Terkumpul {prog.targetRp > 0 ? `${prog.terkumpulPersen}%` : formatRp(prog.terkumpulRp)}</span>
+                      <span className="text-slate-500">{prog.donatur} Donatur</span>
                     </div>
-                  )}
+                    <div className="w-full bg-slate-100 rounded-full h-2">
+                      <div
+                        className="bg-lime-500 h-2 rounded-full transition-all duration-1000"
+                        style={{ width: `${prog.targetRp > 0 ? Math.min(prog.terkumpulPersen, 100) : 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
                   
                   <div className="flex justify-between items-end pt-3 mt-4 border-t border-slate-100">
                     <div>
                       <p className="text-xs text-slate-500 mb-1">Terkumpul:</p>
                       <p className="font-bold text-lime-700">{formatRp(prog.terkumpulRp)}</p>
                     </div>
-                    {prog.targetRp && prog.targetRp > 0 ? (
-                      <div className="text-right">
-                        <p className="text-xs text-slate-500 mb-1">Target Donasi:</p>
-                        <p className="font-bold text-slate-700">{formatRp(prog.targetRp)}</p>
-                      </div>
-                    ) : (
-                      <div className="text-right">
-                        <p className="text-xs text-slate-500 mb-1">Partisipasi:</p>
-                        <p className="font-bold text-slate-700">{prog.donatur} Donatur</p>
-                      </div>
-                    )}
+                    <div className="text-right">
+                      <p className="text-xs text-slate-500 mb-1">Target Donasi:</p>
+                      <p className="font-bold text-slate-700">{prog.targetRp > 0 ? formatRp(prog.targetRp) : 'Tanpa Batas'}</p>
+                    </div>
                   </div>
 
                   <div className="flex items-center justify-between mt-4 border-t border-slate-100 pt-4">

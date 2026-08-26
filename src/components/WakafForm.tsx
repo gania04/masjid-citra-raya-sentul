@@ -435,11 +435,11 @@ export const WakafForm: React.FC<WakafFormProps> = ({ onAddMuwakif, onShowCertif
                           <div className="absolute -inset-1.5 rounded-2xl bg-gradient-to-tr from-lime-400 via-emerald-500 to-teal-400 opacity-40 blur-md group-hover:opacity-75 transition duration-300" />
                           
                           {/* Inner white container */}
-                          <div className="relative bg-white p-2.5 rounded-2xl shadow-2xl border border-lime-300/40 w-40 h-40 overflow-hidden flex items-center justify-center">
+                          <div className="relative bg-white p-3 rounded-2xl shadow-2xl border border-lime-300/40 w-48 h-48 sm:w-56 sm:h-56 overflow-hidden flex items-center justify-center">
                             <img
                               src="/images/qris-masjid.jpg"
                               alt="QRIS Masjid Citra Sentul Raya"
-                              className="w-full h-full object-contain rounded-lg select-none block transition-transform duration-300 group-hover:scale-102"
+                              className="w-full h-full object-contain object-center rounded-xl select-none block transition-transform duration-300 group-hover:scale-105"
                             />
                             {/* Scanning laser line overlay */}
                             <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-lime-400 to-transparent shadow-[0_0_8px_2px_#a3e635] scanner-laser pointer-events-none" />
@@ -653,11 +653,11 @@ export const WakafForm: React.FC<WakafFormProps> = ({ onAddMuwakif, onShowCertif
                 >
                   {/* Glow */}
                   <div className="absolute -inset-2 rounded-2xl bg-lime-400/30 blur-md group-hover:bg-lime-400/50 transition-all" />
-                  <div className="relative bg-white p-3.5 rounded-2xl shadow-2xl border-2 border-lime-300/60">
+                  <div className="relative bg-white p-4 rounded-2xl shadow-2xl border-2 border-lime-300/60 w-full max-w-[280px] mx-auto aspect-square flex items-center justify-center overflow-hidden">
                     <img
                       src="/images/qris-masjid.jpg"
                       alt="QRIS Masjid Citra Sentul Raya Full"
-                      className="w-52 h-auto rounded-xl mx-auto block select-none"
+                      className="w-full h-full object-contain object-center rounded-xl mx-auto block select-none"
                     />
                     <div className="absolute inset-0 bg-emerald-900/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center gap-1.5">
                       {isQrisZoomed

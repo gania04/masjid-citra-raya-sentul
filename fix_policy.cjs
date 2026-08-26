@@ -1,0 +1,1 @@
+const fs = require("fs"); const content = fs.readFileSync("supabase_master_schema.sql", "utf-8"); const result = content.replace(/CREATE POLICY "([^"]+)" ON (public\.\w+) (.*);/g, "DROP POLICY IF EXISTS \"$1\" ON $2;\nCREATE POLICY \"$1\" ON $2 $3;"); fs.writeFileSync("supabase_master_schema.sql", result);

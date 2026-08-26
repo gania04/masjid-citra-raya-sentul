@@ -191,7 +191,7 @@ export default function App() {
         nominal,
         metode,
         status: 'Menunggu Verifikasi',
-        bukti: null,
+        bukti: bukti,
         nama_donatur: namaDonatur || 'Hamba Allah',
         kontak_donatur: kontakDonatur || '-'
       }]);

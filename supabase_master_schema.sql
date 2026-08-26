@@ -180,30 +180,49 @@ ALTER TABLE public.jurnal_umum ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 
 -- Allow Public & Anon Read/Write Access Policies
+DROP POLICY IF EXISTS "Public Read Programs" ON public.programs;
 CREATE POLICY "Public Read Programs" ON public.programs FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Public Insert Programs" ON public.programs;
 CREATE POLICY "Public Insert Programs" ON public.programs FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Public Update Programs" ON public.programs;
 CREATE POLICY "Public Update Programs" ON public.programs FOR UPDATE USING (true);
 
+DROP POLICY IF EXISTS "Public Read Donations" ON public.donations;
 CREATE POLICY "Public Read Donations" ON public.donations FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Public Insert Donations" ON public.donations;
 CREATE POLICY "Public Insert Donations" ON public.donations FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Public Update Donations" ON public.donations;
 CREATE POLICY "Public Update Donations" ON public.donations FOR UPDATE USING (true);
 
+DROP POLICY IF EXISTS "Public Read Registered Jamaah" ON public.registered_jamaah;
 CREATE POLICY "Public Read Registered Jamaah" ON public.registered_jamaah FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Public Insert Registered Jamaah" ON public.registered_jamaah;
 CREATE POLICY "Public Insert Registered Jamaah" ON public.registered_jamaah FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Public Update Registered Jamaah" ON public.registered_jamaah;
 CREATE POLICY "Public Update Registered Jamaah" ON public.registered_jamaah FOR UPDATE USING (true);
 
+DROP POLICY IF EXISTS "Public Read Tanya DKM" ON public.tanya_dkm;
 CREATE POLICY "Public Read Tanya DKM" ON public.tanya_dkm FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Public Insert Tanya DKM" ON public.tanya_dkm;
 CREATE POLICY "Public Insert Tanya DKM" ON public.tanya_dkm FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Public Update Tanya DKM" ON public.tanya_dkm;
 CREATE POLICY "Public Update Tanya DKM" ON public.tanya_dkm FOR UPDATE USING (true);
 
+DROP POLICY IF EXISTS "Public Read COA" ON public.chart_of_accounts;
 CREATE POLICY "Public Read COA" ON public.chart_of_accounts FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Public Insert COA" ON public.chart_of_accounts;
 CREATE POLICY "Public Insert COA" ON public.chart_of_accounts FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Public Update COA" ON public.chart_of_accounts;
 CREATE POLICY "Public Update COA" ON public.chart_of_accounts FOR UPDATE USING (true);
 
+DROP POLICY IF EXISTS "Public Read Jurnal" ON public.jurnal_umum;
 CREATE POLICY "Public Read Jurnal" ON public.jurnal_umum FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Public Insert Jurnal" ON public.jurnal_umum;
 CREATE POLICY "Public Insert Jurnal" ON public.jurnal_umum FOR INSERT WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Public Read Audit Logs" ON public.audit_logs;
 CREATE POLICY "Public Read Audit Logs" ON public.audit_logs FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Public Insert Audit Logs" ON public.audit_logs;
 CREATE POLICY "Public Insert Audit Logs" ON public.audit_logs FOR INSERT WITH CHECK (true);
 
 -- Done! All tables, initial data, and RLS policies configured.
@@ -238,12 +257,224 @@ CREATE TABLE IF NOT EXISTS public.masjid_inventaris (
 ALTER TABLE public.kegiatan_registrations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.masjid_inventaris ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Public Read Kegiatan" ON public.kegiatan_registrations;
 CREATE POLICY "Public Read Kegiatan" ON public.kegiatan_registrations FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Public Insert Kegiatan" ON public.kegiatan_registrations;
 CREATE POLICY "Public Insert Kegiatan" ON public.kegiatan_registrations FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Public Update Kegiatan" ON public.kegiatan_registrations;
 CREATE POLICY "Public Update Kegiatan" ON public.kegiatan_registrations FOR UPDATE USING (true);
+DROP POLICY IF EXISTS "Public Delete Kegiatan" ON public.kegiatan_registrations;
 CREATE POLICY "Public Delete Kegiatan" ON public.kegiatan_registrations FOR DELETE USING (true);
 
+DROP POLICY IF EXISTS "Public Read Inventaris" ON public.masjid_inventaris;
 CREATE POLICY "Public Read Inventaris" ON public.masjid_inventaris FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Public Insert Inventaris" ON public.masjid_inventaris;
 CREATE POLICY "Public Insert Inventaris" ON public.masjid_inventaris FOR INSERT WITH CHECK (true);
-CREATE POLICY "Public Update Inventaris" ON public.masjid_inventaris FOR UPDATE USING (true);
+DROP POLICY IF EXISTS "Public Delete Inventaris" ON public.masjid_inventaris;
 CREATE POLICY "Public Delete Inventaris" ON public.masjid_inventaris FOR DELETE USING (true);
+
+-- --------------------------------------------------------------------
+-- 12. VIEWS: Laporan Keuangan Khusus (Untuk Dashboard Supabase)
+-- --------------------------------------------------------------------
+
+-- View: kas_masjid (Menampilkan khusus transaksi Pemasukan & Pengeluaran Kas)
+CREATE OR REPLACE VIEW public.kas_masjid AS
+SELECT 
+    ju.id,
+    ju.tanggal,
+    ju.no_bukti,
+    ju.keterangan,
+    CASE 
+        WHEN ju.debit > 0 THEN 'Pemasukan'
+        ELSE 'Pengeluaran'
+    END AS jenis_transaksi,
+    GREATEST(ju.debit, ju.kredit) AS nominal,
+    ju.user_input,
+    ju.created_at
+FROM 
+    public.jurnal_umum ju
+WHERE 
+    ju.kode_akun LIKE '110%' -- Mengambil hanya akun Kas (1101, 1102, dst)
+ORDER BY 
+    ju.tanggal DESC;
+
+-- View: buku_besar (Menampilkan rincian Jurnal per Akun)
+CREATE OR REPLACE VIEW public.buku_besar AS
+SELECT 
+    ju.id,
+    ju.tanggal,
+    ju.no_bukti,
+    ju.keterangan,
+    ju.kode_akun,
+    coa.nama AS nama_akun,
+    ju.debit,
+    ju.kredit,
+    ju.user_input,
+    ju.created_at
+FROM 
+    public.jurnal_umum ju
+JOIN 
+    public.chart_of_accounts coa ON ju.kode_akun = coa.kode
+ORDER BY 
+    ju.tanggal DESC;
+-- --------------------------------------------------------------------
+-- 13. TABLE: admin_users (Data Autentikasi Admin)
+-- --------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.admin_users (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    nama VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    role VARCHAR(50) NOT NULL,
+    status VARCHAR(50) DEFAULT 'Aktif',
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Seed initial admin
+INSERT INTO public.admin_users (nama, email, password_hash, role)
+VALUES 
+('Admin Masjid', 'admin@masjid.com', '123456', 'direktur'),
+('Bendahara Masjid', 'bendahara@masjid.com', '123456', 'bendahara')
+ON CONFLICT (email) DO NOTHING;
+
+-- --------------------------------------------------------------------
+-- 14. TABLE: app_settings (Konfigurasi Aplikasi & Profil)
+-- --------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.app_settings (
+    id INT PRIMARY KEY DEFAULT 1,
+    nama_masjid VARCHAR(255) NOT NULL,
+    nama_dkm VARCHAR(255) NOT NULL,
+    nama_bendahara VARCHAR(255) NOT NULL,
+    nama_direktur VARCHAR(255) NOT NULL,
+    alamat TEXT,
+    kontak_utama VARCHAR(100),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Seed initial settings
+INSERT INTO public.app_settings (id, nama_masjid, nama_dkm, nama_bendahara, nama_direktur, alamat, kontak_utama)
+VALUES (1, 'Masjid Citra Sentul Raya', 'Ustadz H. M. Zainuddin', 'H. Ahmad', 'Prof. Dr. M. Syafii Antonio', 'Jl. Sentul Raya No.1, Bogor', '0812-3456-7890')
+ON CONFLICT (id) DO NOTHING;
+
+-- --------------------------------------------------------------------
+-- 15. TABLE: kajian (Data Daftar Kajian)
+-- --------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.kajian (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    judul VARCHAR(255) NOT NULL,
+    ustadz VARCHAR(255) NOT NULL,
+    tanggal DATE NOT NULL,
+    waktu VARCHAR(100) NOT NULL,
+    kategori VARCHAR(100) NOT NULL,
+    kuota INT DEFAULT 0,
+    status VARCHAR(50) DEFAULT 'Akan Datang',
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- --------------------------------------------------------------------
+-- 16. TABLE: anggaran (Rencana Anggaran & RAPB)
+-- --------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.anggaran (
+    id VARCHAR(100) PRIMARY KEY,
+    tahun INT NOT NULL,
+    bulan INT NOT NULL,
+    kategori VARCHAR(100) NOT NULL,
+    nama_kegiatan VARCHAR(255) NOT NULL,
+    kode_akun VARCHAR(50) NOT NULL,
+    jumlah_dianggarkan NUMERIC(15, 2) NOT NULL,
+    jumlah_realisasi NUMERIC(15, 2) DEFAULT 0,
+    status VARCHAR(100) DEFAULT 'Draft',
+    dibuat_oleh VARCHAR(100),
+    riwayat_approval JSONB DEFAULT '[]'::jsonb,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- --------------------------------------------------------------------
+-- 17. TABLE: pengajuan_pengeluaran (Alur TTD & Approval)
+-- --------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.pengajuan_pengeluaran (
+    id VARCHAR(100) PRIMARY KEY,
+    tanggal DATE NOT NULL,
+    no_pengajuan VARCHAR(100) NOT NULL,
+    judul VARCHAR(255) NOT NULL,
+    keterangan TEXT,
+    kode_akun VARCHAR(50) NOT NULL,
+    nama_akun VARCHAR(255) NOT NULL,
+    jumlah NUMERIC(15, 2) NOT NULL,
+    dibuat_oleh VARCHAR(100) NOT NULL,
+    role_permohon VARCHAR(100) NOT NULL,
+    status VARCHAR(100) DEFAULT 'Menunggu Bendahara',
+    step_aktif INT DEFAULT 1,
+    riwayat_approval JSONB DEFAULT '[]'::jsonb,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- RLS
+ALTER TABLE public.admin_users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.app_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.kajian ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.anggaran ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.pengajuan_pengeluaran ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public Access Admin Users" ON public.admin_users;
+CREATE POLICY "Public Access Admin Users" ON public.admin_users FOR ALL USING (true);
+DROP POLICY IF EXISTS "Public Access App Settings" ON public.app_settings;
+CREATE POLICY "Public Access App Settings" ON public.app_settings FOR ALL USING (true);
+DROP POLICY IF EXISTS "Public Access Kajian" ON public.kajian;
+CREATE POLICY "Public Access Kajian" ON public.kajian FOR ALL USING (true);
+DROP POLICY IF EXISTS "Public Access Anggaran" ON public.anggaran;
+CREATE POLICY "Public Access Anggaran" ON public.anggaran FOR ALL USING (true);
+DROP POLICY IF EXISTS "Public Access Pengajuan" ON public.pengajuan_pengeluaran;
+CREATE POLICY "Public Access Pengajuan" ON public.pengajuan_pengeluaran FOR ALL USING (true);
+
+-- --------------------------------------------------------------------
+-- 18. VIEWS: Laporan Keuangan Tambahan
+-- --------------------------------------------------------------------
+CREATE OR REPLACE VIEW public.neraca_view AS
+SELECT 
+    coa.kode,
+    coa.nama AS nama_akun,
+    coa.kategori,
+    coa.kelompok,
+    coa.saldo AS saldo_awal,
+    COALESCE(SUM(CASE WHEN coa.is_debit = TRUE THEN ju.debit - ju.kredit ELSE ju.kredit - ju.debit END), 0) + coa.saldo AS saldo_akhir
+FROM 
+    public.chart_of_accounts coa
+LEFT JOIN 
+    public.jurnal_umum ju ON coa.kode = ju.kode_akun
+WHERE 
+    coa.kategori IN ('Aset', 'Liabilitas', 'Ekuitas', 'Aset Bersih')
+GROUP BY 
+    coa.kode, coa.nama, coa.kategori, coa.kelompok, coa.saldo, coa.is_debit;
+
+CREATE OR REPLACE VIEW public.laba_rugi_view AS
+SELECT 
+    coa.kode,
+    coa.nama AS nama_akun,
+    coa.kategori,
+    coa.kelompok,
+    COALESCE(SUM(CASE WHEN coa.is_debit = FALSE THEN ju.kredit - ju.debit ELSE ju.debit - ju.kredit END), 0) AS total_mutasi
+FROM 
+    public.chart_of_accounts coa
+LEFT JOIN 
+    public.jurnal_umum ju ON coa.kode = ju.kode_akun
+WHERE 
+    coa.kategori IN ('Penerimaan', 'Pendapatan', 'Beban')
+GROUP BY 
+    coa.kode, coa.nama, coa.kategori, coa.kelompok, coa.is_debit;
+
+-- --------------------------------------------------------------------
+-- 19. TABLE: registered_jamaah (Data Akun Jamaah Terdaftar)
+-- --------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.registered_jamaah (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    nama VARCHAR(255) NOT NULL,
+    kontak VARCHAR(100) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- RLS
+ALTER TABLE public.registered_jamaah ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public Access Jamaah" ON public.registered_jamaah;
+CREATE POLICY "Public Access Jamaah" ON public.registered_jamaah FOR ALL USING (true);
