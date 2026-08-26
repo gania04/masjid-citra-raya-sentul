@@ -577,6 +577,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
 
   const [namaDonaturStr, setNamaDonaturStr] = useState('');
   const [kontakDonaturStr, setKontakDonaturStr] = useState('');
+  const [ziswafTgl, setZiswafTgl] = useState(new Date().toISOString().split('T')[0]);
+  const [ziswafBukti, setZiswafBukti] = useState<File | null>(null);
+  const [selectedJamaahZiswaf, setSelectedJamaahZiswaf] = useState('manual');
+
+  const handleJamaahZiswafChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    setSelectedJamaahZiswaf(val);
+    if (val === 'manual') {
+      setNamaDonaturStr('');
+      setKontakDonaturStr('');
+    } else {
+      const jamaah = registeredJamaahList[parseInt(val)];
+      if (jamaah) {
+        setNamaDonaturStr(jamaah.n);
+        setKontakDonaturStr(jamaah.c || jamaah.e || '');
+      }
+    }
+  };
 
   const handleZiswafSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -590,8 +608,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
       const isWakaf = progTitle.toLowerCase().includes('wakaf');
       const namaDonatur = namaDonaturStr.trim() || 'Hamba Allah';
       const noBukti = `BKM-DON-${Date.now().toString().slice(-5)}`;
-      const tanggal = new Date().toISOString().split('T')[0];
-      const tanggalFormatted = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+      const tanggal = ziswafTgl || new Date().toISOString().split('T')[0];
+      const tglObj = new Date(tanggal);
+      const tanggalFormatted = !isNaN(tglObj.getTime()) ? tglObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : tanggal;
 
       const newJournal: JurnalEntry = {
         id: `JU-ZIS-${Date.now()}`,
@@ -644,7 +663,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
           nominal,
           metode: 'Tunai / Admin',
           status: 'Berhasil',
-          bukti: null,
+          bukti: ziswafBukti ? URL.createObjectURL(ziswafBukti) : null,
           nama_donatur: namaDonatur,
           kontak_donatur: kontakDonaturStr || '-'
         };
@@ -659,7 +678,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
             nominal,
             metode: 'Tunai / Admin',
             status: 'Berhasil',
-            bukti: null,
+            bukti: ziswafBukti ? URL.createObjectURL(ziswafBukti) : null,
             namaDonatur: namaDonatur,
             kontakDonatur: kontakDonaturStr || '-'
           });
@@ -670,6 +689,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
       setNominalStr('');
       setNamaDonaturStr('');
       setKontakDonaturStr('');
+      setZiswafBukti(null);
+      setZiswafTgl(new Date().toISOString().split('T')[0]);
+      setSelectedJamaahZiswaf('manual');
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
     }
@@ -1561,6 +1583,29 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
+                      <label className="block text-sm font-bold text-slate-500 mb-2">Tanggal Donasi</label>
+                      <input 
+                        type="date"
+                        value={ziswafTgl}
+                        onChange={(e) => setZiswafTgl(e.target.value)}
+                        className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-lime-600"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-slate-500 mb-2">Pilih Jamaah (Otomatis)</label>
+                      <select 
+                        value={selectedJamaahZiswaf}
+                        onChange={handleJamaahZiswafChange}
+                        className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-lime-600"
+                      >
+                        <option value="manual">Input Manual (Hamba Allah)</option>
+                        {registeredJamaahList.map((j, idx) => (
+                          <option key={idx} value={idx}>{j.n} - {j.c || j.e}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
                       <label className="block text-sm font-bold text-slate-500 mb-2">Nama Donatur (Opsional)</label>
                       <input 
                         type="text"
@@ -1568,6 +1613,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                         value={namaDonaturStr}
                         onChange={(e) => setNamaDonaturStr(e.target.value)}
                         className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-lime-600"
+                        disabled={selectedJamaahZiswaf !== 'manual'}
                       />
                     </div>
                     <div>
@@ -1578,7 +1624,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                         value={kontakDonaturStr}
                         onChange={(e) => setKontakDonaturStr(e.target.value)}
                         className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-lime-600"
+                        disabled={selectedJamaahZiswaf !== 'manual'}
                       />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-500 mb-2">Upload Bukti Transfer (Opsional)</label>
+                    <div className="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center cursor-pointer hover:bg-slate-50 hover:border-lime-400 transition-colors" onClick={() => document.getElementById('ziswaf-bukti-upload')?.click()}>
+                      <Upload className="w-6 h-6 text-slate-400 mx-auto mb-2" />
+                      <p className="text-xs font-semibold text-slate-500">{ziswafBukti ? ziswafBukti.name : 'Klik untuk memilih file foto/screenshot bukti transfer'}</p>
+                      <input id="ziswaf-bukti-upload" type="file" accept="image/*" className="hidden" onChange={(e) => { if(e.target.files && e.target.files[0]) setZiswafBukti(e.target.files[0]) }} />
                     </div>
                   </div>
                   <button type="submit" className="w-full flex items-center justify-center gap-2 bg-lime-600 hover:bg-lime-700 text-white font-bold py-3.5 px-4 rounded-xl transition-colors shadow-lg shadow-lime-900/20">
