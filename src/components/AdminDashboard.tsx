@@ -134,7 +134,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
         id: 'pengaturan', 
         label: 'Pengaturan Sistem', 
         icon: Settings, 
-        action: () => { setActiveMenu('pengaturan'); setSettingTab('admin_utama'); } 
+        action: () => { setActiveMenu('pengaturan'); setSettingTab('admin_utama'); },
+        subItems: [
+          { id: 'admin_utama', label: 'Utama & Keamanan', action: () => { setActiveMenu('pengaturan'); setSettingTab('admin_utama'); } },
+          { id: 'hero', label: 'Foto Animasi Beranda', action: () => { setActiveMenu('pengaturan'); setSettingTab('hero'); } },
+          { id: 'visibilitas', label: 'Visibilitas Modul', action: () => { setActiveMenu('pengaturan'); setSettingTab('visibilitas'); } },
+          { id: 'qr', label: 'Cetak QR Aplikasi', action: () => { setActiveMenu('pengaturan'); setSettingTab('qr'); } },
+          { id: 'sponsor', label: 'Sponsor & Mitra', action: () => { setActiveMenu('pengaturan'); setSettingTab('sponsor'); } },
+          { id: 'sejarah', label: 'Profil & Sejarah Masjid', action: () => { setActiveMenu('pengaturan'); setSettingTab('sejarah'); } },
+          { id: 'reset', label: 'Reset Data', action: () => { setActiveMenu('pengaturan'); setSettingTab('reset'); } }
+        ]
       },
     ]
   };
@@ -1949,30 +1958,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
         {activeMenu === 'pengaturan' && (
           <div className="animate-in fade-in space-y-6">
             
-            {/* Secondary Navigation (Dropdown) */}
-            <div className="relative mb-6">
-              <label htmlFor="settings-menu" className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Pilih Menu Pengaturan</label>
-              <div className="relative">
-                <select
-                  id="settings-menu"
-                  value={settingTab}
-                  onChange={(e) => setSettingTab(e.target.value)}
-                  className="w-full md:w-1/2 appearance-none p-3.5 pr-10 bg-lime-50 border-2 border-lime-200 rounded-xl text-sm font-bold text-slate-800 shadow-sm focus:ring-4 focus:ring-lime-500/20 focus:border-lime-500 focus:outline-none transition-all cursor-pointer"
-                >
-                  <option value="admin_utama">Utama & Keamanan</option>
-                  <option value="hero">Foto Animasi Beranda</option>
-                  <option value="visibilitas">Visibilitas Modul</option>
-                  <option value="qr">Cetak QR Aplikasi</option>
-                  <option value="sponsor">Sponsor & Mitra</option>
-                  <option value="sejarah">Profil & Sejarah Masjid</option>
-                  <option value="reset">Reset Data</option>
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                  <ChevronDown className="w-5 h-5 text-lime-600" />
-                </div>
-              </div>
-            </div>
-
             {/* Sub-menu Content */}
             <div className="bg-white p-8 rounded-xl border border-slate-200">
               
