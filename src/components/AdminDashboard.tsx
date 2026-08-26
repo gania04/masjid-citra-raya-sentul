@@ -239,7 +239,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
   const [editedPrograms, setEditedPrograms] = useState<Record<number, any>>({});
   const [showCampaignModal, setShowCampaignModal] = useState(false);
   const [editCampaignModalData, setEditCampaignModalData] = useState<any>(null);
-  const [newCampaignData, setNewCampaignData] = useState({ judul: '', target: '', kategori: 'Zakat' });
+  const [newCampaignData, setNewCampaignData] = useState({ judul: '', target: '', kategori: 'Zakat', gambar: '' });
   const [selectedProgram, setSelectedProgram] = useState<number>(programs[0].id);
   const [nominalStr, setNominalStr] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
@@ -1716,7 +1716,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                     }} className="w-full bg-lime-50 text-lime-700 border border-lime-200 hover:bg-lime-100 font-bold py-2 rounded-lg text-xs transition-colors cursor-pointer">Lihat Donatur</button>
                     <div className="flex w-full gap-2">
                       <button onClick={() => {
-                        setEditCampaignModalData({ id: p.id, judul: p.judul, target: p.targetRp.toString(), kategori: p.kategori });
+                        setEditCampaignModalData({ id: p.id, judul: p.judul, target: p.targetRp.toString(), kategori: p.kategori, gambar: p.gambar });
                       }} className="flex-1 bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold py-2 rounded-lg text-xs transition-colors cursor-pointer">Edit</button>
                       <button onClick={async () => {
                         if(window.confirm(`Yakin ingin menutup program "${p.judul}"? Program ini tidak akan ditampilkan lagi.`)) {
@@ -2994,6 +2994,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                   <label className="block text-sm font-bold text-slate-700 mb-1">Target Pengumpulan Dana (Rp)</label>
                   <input type="number" value={newCampaignData.target} onChange={e => setNewCampaignData({...newCampaignData, target: e.target.value})} placeholder="Contoh: 50000000" className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-lime-500" />
                 </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">Unggah Foto Program (Opsional)</label>
+                  <input type="file" accept="image/*" onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setNewCampaignData(prev => ({...prev, gambar: reader.result as string}));
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }} className="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-lime-50 file:text-lime-700 hover:file:bg-lime-100 cursor-pointer" />
+                  {newCampaignData.gambar && <img src={newCampaignData.gambar} className="mt-3 h-28 w-auto rounded-lg border border-slate-200 object-cover" alt="Preview" />}
+                </div>
               </div>
 
               <div className="mt-8 flex gap-3">
@@ -3010,7 +3024,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                       terkumpul_persen: 0,
                       terkumpul_rp: 0,
                       target_rp: targetRpNum,
-                      donatur: 0
+                      donatur: 0,
+                      gambar: newCampaignData.gambar || 'https://images.unsplash.com/photo-1533900298318-6b8da08a523e?auto=format&fit=crop&q=80&w=400'
                     }]).select().single();
                     
                     if (data && !error) {
@@ -3035,11 +3050,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                         terkumpulRp: 0,
                         targetRp: targetRpNum,
                         donatur: 0,
+                        gambar: newCampaignData.gambar || 'https://images.unsplash.com/photo-1533900298318-6b8da08a523e?auto=format&fit=crop&q=80&w=400'
                       }]);
                     }
                   } catch (err) { console.error('Error insert program:', err); }
                   
-                  setNewCampaignData({ judul: '', target: '', kategori: 'Zakat' });
+                  setNewCampaignData({ judul: '', target: '', kategori: 'Zakat', gambar: '' });
                   setShowCampaignModal(false);
                   alert(`Program "${newCampaignData.judul}" berhasil dipublikasikan dan live!`);
                 }} className="flex-1 bg-lime-600 hover:bg-lime-700 text-white font-bold py-3 rounded-xl transition-colors cursor-pointer">Simpan & Publikasikan</button>
@@ -3072,6 +3088,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                   <label className="block text-sm font-bold text-slate-700 mb-1">Target Pengumpulan Dana (Rp)</label>
                   <input type="number" value={editCampaignModalData.target} onChange={e => setEditCampaignModalData({...editCampaignModalData, target: e.target.value})} placeholder="Contoh: 50000000" className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-lime-500" />
                 </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">Unggah Foto Program (Ganti Gambar)</label>
+                  <input type="file" accept="image/*" onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setEditCampaignModalData({...editCampaignModalData, gambar: reader.result as string});
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }} className="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-lime-50 file:text-lime-700 hover:file:bg-lime-100 cursor-pointer" />
+                  {editCampaignModalData.gambar && <img src={editCampaignModalData.gambar} className="mt-3 h-28 w-auto rounded-lg border border-slate-200 object-cover" alt="Preview" />}
+                </div>
               </div>
 
               <div className="mt-8 flex gap-3">
@@ -3079,13 +3109,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                 <button onClick={async () => {
                   if(!editCampaignModalData.judul || !editCampaignModalData.target) return alert('Mohon lengkapi judul dan target dana!');
                   const targetRpNum = parseInt(editCampaignModalData.target.toString().replace(/\D/g, '')) || 0;
-                  setEditedPrograms(prev => ({...prev, [editCampaignModalData.id]: {...(prev[editCampaignModalData.id] || {}), judul: editCampaignModalData.judul, targetRp: targetRpNum, kategori: editCampaignModalData.kategori}}));
+                  setEditedPrograms(prev => ({...prev, [editCampaignModalData.id]: {...(prev[editCampaignModalData.id] || {}), judul: editCampaignModalData.judul, targetRp: targetRpNum, kategori: editCampaignModalData.kategori, gambar: editCampaignModalData.gambar}}));
                   
                   try {
                     await supabase.from('programs').update({
                       judul: editCampaignModalData.judul,
                       target_rp: targetRpNum,
-                      kategori: editCampaignModalData.kategori
+                      kategori: editCampaignModalData.kategori,
+                      gambar: editCampaignModalData.gambar
                     }).eq('id', editCampaignModalData.id);
                   } catch (err) { console.error('Error update program:', err); }
 
