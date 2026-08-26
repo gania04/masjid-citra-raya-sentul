@@ -138,7 +138,7 @@ export const DaftarProgram: React.FC<DaftarProgramProps> = ({ programs, onDonate
                       }}
                       className="bg-lime-600 hover:bg-lime-700 text-white font-bold py-1.5 px-4 rounded-lg text-sm transition-colors cursor-pointer"
                     >
-                      Bayar Sekarang
+                      Donasi Sekarang
                     </button>
                   </div>
                 </div>

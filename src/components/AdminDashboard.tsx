@@ -11,7 +11,6 @@ import { ModulLaporanKeuangan } from './ModulLaporanKeuangan';
 import { ModulAnggaranApproval } from './ModulAnggaranApproval';
 import { BukuPanduanModal } from './BukuPanduanModal';
 import { INITIAL_JURNAL_ENTRIES, JurnalEntry } from '../data/akuntansiData';
-import { supabase } from '../lib/supabase';
 
 interface Program {
   id: number;
@@ -90,7 +89,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
         icon: Scale, 
         action: () => { setActiveMenu('lapkeu'); setLapkeuTab('neraca'); },
         subItems: [
-          { id: 'neraca', label: '⚖️ Neraca Aktivitas (ISAK 35 / PSAK 109)', action: () => { setActiveMenu('lapkeu'); setLapkeuTab('neraca'); } },
+          { id: 'neraca', label: '⚖️ Neraca Aktivitas (ISAK 35)', action: () => { setActiveMenu('lapkeu'); setLapkeuTab('neraca'); } },
           { id: 'jurnal', label: '📄 Jurnal Umum Double-Entry', action: () => { setActiveMenu('lapkeu'); setLapkeuTab('jurnal'); } },
           { id: 'bukubesar', label: '📕 Buku Besar', action: () => { setActiveMenu('lapkeu'); setLapkeuTab('bukubesar'); } },
           { id: 'coa', label: '📖 Chart of Accounts (CoA)', action: () => { setActiveMenu('lapkeu'); setLapkeuTab('coa'); } },
@@ -555,24 +554,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
     fetchJournalsAndCoA();
   }, []);
 
-  const handleAutoPostJournal = async (entry: JurnalEntry) => {
+  const handleAutoPostJournal = (entry: JurnalEntry) => {
     setJournals(prev => [entry, ...prev]);
-    
-    try {
-      const inserts = entry.baris.map((b, i) => ({
-        id: `${entry.id}-${i}`,
-        tanggal: entry.tanggal,
-        no_bukti: entry.noBukti,
-        keterangan: entry.keterangan,
-        kode_akun: b.kodeAkun,
-        debit: b.debit,
-        kredit: b.kredit,
-        user_input: entry.dibuatOleh
-      }));
-      await supabase.from('jurnal_umum').insert(inserts);
-    } catch (err) {
-      console.error('Error auto posting journal:', err);
-    }
   };
 
   const [namaDonaturStr, setNamaDonaturStr] = useState('');
@@ -703,6 +686,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
     const dateInput = (form.elements.namedItem('tgl') as HTMLInputElement).value;
     const descInput = (form.elements.namedItem('ket') as HTMLInputElement).value;
     const amountInput = parseFloat((form.elements.namedItem('nom') as HTMLInputElement).value);
+    const akunDebit = (form.elements.namedItem('akun_debit') as HTMLSelectElement)?.value || '1101';
+    const akunKredit = (form.elements.namedItem('akun_kredit') as HTMLSelectElement)?.value || '4101';
 
     if (descInput && amountInput > 0) {
       const dateFormatted = dateInput ? dateInput.split('-').reverse().join('/') : new Date().toLocaleDateString('id-ID');
@@ -712,6 +697,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
       const noBukti = `BKM-RT-${Date.now().toString().slice(-5)}`;
       const tanggal = dateInput || new Date().toISOString().split('T')[0];
 
+      const namaAkunDebit = accounts.find(a => a.kode === akunDebit)?.nama || 'Kas/Bank (Debit)';
+      const namaAkunKredit = accounts.find(a => a.kode === akunKredit)?.nama || 'Pendapatan/Penerimaan (Kredit)';
+
       const newJournal: JurnalEntry = {
         id: `JU-RT-${Date.now()}`,
         tanggal: tanggal,
@@ -719,8 +707,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
         keterangan: `Pemasukan: ${descInput}`,
         sumber: 'Kas Masjid',
         baris: [
-          { kodeAkun: '1101', namaAkun: 'Kas Operasional Masjid (Debit)', debit: amountInput, kredit: 0 },
-          { kodeAkun: '4101', namaAkun: 'Pendapatan Donasi Operasional (Kredit)', debit: 0, kredit: amountInput },
+          { kodeAkun: akunDebit, namaAkun: namaAkunDebit, debit: amountInput, kredit: 0 },
+          { kodeAkun: akunKredit, namaAkun: namaAkunKredit, debit: 0, kredit: amountInput },
         ],
         status: 'Posted',
         dibuatOleh: 'Admin Masjid',
@@ -736,7 +724,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
             tanggal: tanggal,
             no_bukti: noBukti,
             keterangan: newJournal.keterangan,
-            kode_akun: '1101',
+            kode_akun: akunDebit,
             debit: amountInput,
             kredit: 0,
             user_input: 'Admin Masjid'
@@ -746,7 +734,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
             tanggal: tanggal,
             no_bukti: noBukti,
             keterangan: newJournal.keterangan,
-            kode_akun: '4101',
+            kode_akun: akunKredit,
             debit: 0,
             kredit: amountInput,
             user_input: 'Admin Masjid'
@@ -766,6 +754,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
     const dateInput = (form.elements.namedItem('tgl') as HTMLInputElement).value;
     const descInput = (form.elements.namedItem('ket') as HTMLInputElement).value;
     const amountInput = parseFloat((form.elements.namedItem('nom') as HTMLInputElement).value);
+    const akunDebit = (form.elements.namedItem('akun_debit') as HTMLSelectElement)?.value || '5104';
+    const akunKredit = (form.elements.namedItem('akun_kredit') as HTMLSelectElement)?.value || '1101';
 
     if (descInput && amountInput > 0) {
       const dateFormatted = dateInput ? dateInput.split('-').reverse().join('/') : new Date().toLocaleDateString('id-ID');
@@ -775,6 +765,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
       const noBukti = `BKK-RT-${Date.now().toString().slice(-5)}`;
       const tanggal = dateInput || new Date().toISOString().split('T')[0];
 
+      const namaAkunDebit = accounts.find(a => a.kode === akunDebit)?.nama || 'Beban/Aset (Debit)';
+      const namaAkunKredit = accounts.find(a => a.kode === akunKredit)?.nama || 'Kas/Bank (Kredit)';
+
       const newJournal: JurnalEntry = {
         id: `JU-RT-${Date.now()}`,
         tanggal: tanggal,
@@ -782,8 +775,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
         keterangan: `Pengeluaran: ${descInput}`,
         sumber: 'Kas Masjid',
         baris: [
-          { kodeAkun: '5104', namaAkun: 'Beban Daya & Jasa Listrik/Air (Debit)', debit: amountInput, kredit: 0 },
-          { kodeAkun: '1101', namaAkun: 'Kas Operasional Masjid (Kredit)', debit: 0, kredit: amountInput },
+          { kodeAkun: akunDebit, namaAkun: namaAkunDebit, debit: amountInput, kredit: 0 },
+          { kodeAkun: akunKredit, namaAkun: namaAkunKredit, debit: 0, kredit: amountInput },
         ],
         status: 'Posted',
         dibuatOleh: 'Admin Masjid',
@@ -799,7 +792,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
             tanggal: tanggal,
             no_bukti: noBukti,
             keterangan: newJournal.keterangan,
-            kode_akun: '5104',
+            kode_akun: akunDebit,
             debit: amountInput,
             kredit: 0,
             user_input: 'Admin Masjid'
@@ -809,7 +802,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
             tanggal: tanggal,
             no_bukti: noBukti,
             keterangan: newJournal.keterangan,
-            kode_akun: '1101',
+            kode_akun: akunKredit,
             debit: 0,
             kredit: amountInput,
             user_input: 'Admin Masjid'
@@ -1375,6 +1368,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                       <input name="ket" type="text" placeholder="Contoh: Infaq Kotak Amal Jumat" className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-lime-600" required />
                     </div>
                     <div>
+                      <label className="block text-sm font-bold text-slate-500 mb-2">Akun CoA Penerimaan (Debit: Kas/Bank)</label>
+                      <select name="akun_debit" className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-lime-600" required>
+                        {accounts.filter(a => a.jenis === 'Aktiva').map(a => <option key={a.kode} value={a.kode}>{a.kode} - {a.nama}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-slate-500 mb-2">Akun CoA Pendapatan (Kredit)</label>
+                      <select name="akun_kredit" className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-lime-600" required>
+                        {accounts.filter(a => a.jenis === 'Pendapatan' || a.jenis === 'Kewajiban' || a.jenis === 'Ekuitas').map(a => <option key={a.kode} value={a.kode}>{a.kode} - {a.nama}</option>)}
+                      </select>
+                    </div>
+                    <div>
                       <label className="block text-sm font-bold text-slate-500 mb-2">Nominal Pemasukan (Rp)</label>
                       <input name="nom" type="number" placeholder="Contoh: 1500000" className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 font-mono text-lg focus:outline-none focus:border-lime-600" required />
                     </div>
@@ -1439,6 +1444,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                     <div>
                       <label className="block text-sm font-bold text-slate-500 mb-2">Keterangan / Tujuan Pengeluaran</label>
                       <input name="ket" type="text" placeholder="Contoh: Pembayaran Listrik & PDAM" className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-lime-600" required />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-slate-500 mb-2">Akun CoA Pengeluaran (Debit: Beban/Aset)</label>
+                      <select name="akun_debit" className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-lime-600" required>
+                        {accounts.filter(a => a.jenis === 'Beban' || a.jenis === 'Aktiva').map(a => <option key={a.kode} value={a.kode}>{a.kode} - {a.nama}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-slate-500 mb-2">Akun CoA Sumber Kas (Kredit: Kas/Bank)</label>
+                      <select name="akun_kredit" className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-lime-600" required>
+                        {accounts.filter(a => a.jenis === 'Aktiva').map(a => <option key={a.kode} value={a.kode}>{a.kode} - {a.nama}</option>)}
+                      </select>
                     </div>
                     <div>
                       <label className="block text-sm font-bold text-slate-500 mb-2">Nominal Pengeluaran (Rp)</label>
@@ -2940,7 +2957,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
             <div className="bg-white rounded-2xl p-4 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-3 border border-slate-200">
               <div>
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wider mb-1.5 border border-slate-200">
-                  📊 Modul Akuntansi Standar ISAK 35 / PSAK 109
+                  📊 Modul Akuntansi Standar ISAK 35
                 </span>
                 <h2 className="text-lg font-extrabold text-slate-800 leading-none">Fitur Laporan Keuangan & Akuntansi Masjid</h2>
                 <p className="text-slate-500 text-[11px] mt-1.5 max-w-3xl leading-snug">

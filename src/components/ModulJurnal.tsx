@@ -34,8 +34,8 @@ export const ModulJurnal: React.FC<ModulJurnalProps> = ({
   const [formKet, setFormKet] = useState('');
   const [formSumber, setFormSumber] = useState<'Donasi Umum' | 'Donasi Portal Jamaah' | 'Kas Masjid' | 'Anggaran'>('Kas Masjid');
   const [formBaris, setFormBaris] = useState<JurnalBaris[]>([
-    { kodeAkun: '', namaAkun: '', debit: 0, kredit: 0 },
-    { kodeAkun: '', namaAkun: '', debit: 0, kredit: 0 },
+    { kodeAkun: '1-1100', namaAkun: 'Kas Tunai Masjid', debit: 0, kredit: 0 },
+    { kodeAkun: '4-1200', namaAkun: 'Pendapatan Infaq Kotak Amal', debit: 0, kredit: 0 },
   ]);
 
   const allEntries = journalList;

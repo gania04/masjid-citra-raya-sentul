@@ -14,7 +14,7 @@ const slides: HeroSlide[] = [
     image: '/images/masjid-hero-night.png',
     title: 'Masjid Citra Sentul Raya',
     subtitle: 'Pusat Peradaban Islam & Kesejahteraan Umat di Kawasan Sirkuit Sentul, Bogor',
-    cta: 'Donasi Wakaf Sekarang',
+    cta: 'Bayar Wakaf Sekarang',
     ctaAction: 'ziswaf',
   },
   {

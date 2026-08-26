@@ -9,8 +9,8 @@ export type FundCategory = 'Semua' | 'Zakat' | 'Infaq' | 'Wakaf' | 'Sodaqoh' | '
 
 export const getAccountFundCategory = (akun: AkunCoA): 'Zakat' | 'Infaq' | 'Wakaf' | 'Sodaqoh' | 'Operasional' => {
   if (akun.kategoriDana) return akun.kategoriDana;
-  const name = akun.nama.toLowerCase();
-  const kel = akun.kelompok.toLowerCase();
+  const name = (akun.nama || '').toLowerCase();
+  const kel = (akun.kelompok || '').toLowerCase();
   if (name.includes('zakat') || kel.includes('zakat')) return 'Zakat';
   if (name.includes('infak') || name.includes('infaq') || kel.includes('infak')) return 'Infaq';
   if (name.includes('wakaf') || name.includes('bangunan') || name.includes('tanah') || kel.includes('wakaf')) return 'Wakaf';
@@ -138,7 +138,7 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
               <h4 className="text-base sm:text-lg font-black text-slate-900">
                 LAPORAN NERACA AKTIVITAS DANA {fundName.toUpperCase()}
               </h4>
-              <p className="text-[11px] text-slate-500 font-medium">Standar ISAK 35 / PSAK 109 - Posisi Keuangan Terpisah Dana {fundName}</p>
+              <p className="text-[11px] text-slate-500 font-medium">Standar ISAK 35 - Posisi Keuangan Terpisah Dana {fundName}</p>
             </div>
           </div>
           <div className="text-right">
@@ -422,11 +422,11 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
                 {selectedFundFilter === 'Wakaf' && 'LAPORAN NERACA AKTIVITAS DANA WAKAF'}
                 {selectedFundFilter === 'Sodaqoh' && 'LAPORAN NERACA AKTIVITAS DANA SODAQOH'}
                 {selectedFundFilter === 'Operasional' && 'LAPORAN NERACA AKTIVITAS DANA OPERASIONAL'}
-                {selectedFundFilter === 'Komparatif' && 'MATRIX PERBANDINGAN NERACA AKTIVITAS 4 DANA (ISAK 35 / PSAK 109)'}
+                {selectedFundFilter === 'Komparatif' && 'MATRIX PERBANDINGAN NERACA AKTIVITAS 4 DANA (ISAK 35)'}
                 {selectedFundFilter === 'Multi' && 'KUMPULAN LAPORAN NERACA AKTIVITAS TERPISAH (ZAKAT, INFAQ, WAKAF, SODAQOH)'}
               </h3>
               <p className="text-xs text-slate-500 font-medium mt-1">
-                Rincian Posisi Keuangan & Perubahan Aktiva Neto Berdasarkan Pemisahan Dana Zakat, Infaq, Wakaf & Sodaqoh (ISAK 35 / PSAK 109)
+                Rincian Posisi Keuangan & Perubahan Aktiva Neto Berdasarkan Pemisahan Dana Zakat, Infaq, Wakaf & Sodaqoh (ISAK 35)
               </p>
 
               {/* Fund Breakdown Filter Controls (Dropdown) */}
