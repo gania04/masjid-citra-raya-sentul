@@ -11,6 +11,7 @@ import { ModulLaporanKeuangan } from './ModulLaporanKeuangan';
 import { ModulAnggaranApproval } from './ModulAnggaranApproval';
 import { BukuPanduanModal } from './BukuPanduanModal';
 import { INITIAL_JURNAL_ENTRIES, JurnalEntry } from '../data/akuntansiData';
+import { supabase } from '../lib/supabase';
 
 interface Program {
   id: number;
@@ -89,7 +90,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
         icon: Scale, 
         action: () => { setActiveMenu('lapkeu'); setLapkeuTab('neraca'); },
         subItems: [
-          { id: 'neraca', label: '⚖️ Neraca Aktivitas (ISAK 35)', action: () => { setActiveMenu('lapkeu'); setLapkeuTab('neraca'); } },
+          { id: 'neraca', label: '⚖️ Neraca Aktivitas (ISAK 35 / PSAK 109)', action: () => { setActiveMenu('lapkeu'); setLapkeuTab('neraca'); } },
           { id: 'jurnal', label: '📄 Jurnal Umum Double-Entry', action: () => { setActiveMenu('lapkeu'); setLapkeuTab('jurnal'); } },
           { id: 'bukubesar', label: '📕 Buku Besar', action: () => { setActiveMenu('lapkeu'); setLapkeuTab('bukubesar'); } },
           { id: 'coa', label: '📖 Chart of Accounts (CoA)', action: () => { setActiveMenu('lapkeu'); setLapkeuTab('coa'); } },
@@ -554,8 +555,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
     fetchJournalsAndCoA();
   }, []);
 
-  const handleAutoPostJournal = (entry: JurnalEntry) => {
+  const handleAutoPostJournal = async (entry: JurnalEntry) => {
     setJournals(prev => [entry, ...prev]);
+    
+    try {
+      const inserts = entry.baris.map((b, i) => ({
+        id: `${entry.id}-${i}`,
+        tanggal: entry.tanggal,
+        no_bukti: entry.noBukti,
+        keterangan: entry.keterangan,
+        kode_akun: b.kodeAkun,
+        debit: b.debit,
+        kredit: b.kredit,
+        user_input: entry.dibuatOleh
+      }));
+      await supabase.from('jurnal_umum').insert(inserts);
+    } catch (err) {
+      console.error('Error auto posting journal:', err);
+    }
   };
 
   const [namaDonaturStr, setNamaDonaturStr] = useState('');
@@ -2868,7 +2885,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
             <div className="bg-white rounded-2xl p-4 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-3 border border-slate-200">
               <div>
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wider mb-1.5 border border-slate-200">
-                  📊 Modul Akuntansi Standar ISAK 35
+                  📊 Modul Akuntansi Standar ISAK 35 / PSAK 109
                 </span>
                 <h2 className="text-lg font-extrabold text-slate-800 leading-none">Fitur Laporan Keuangan & Akuntansi Masjid</h2>
                 <p className="text-slate-500 text-[11px] mt-1.5 max-w-3xl leading-snug">
