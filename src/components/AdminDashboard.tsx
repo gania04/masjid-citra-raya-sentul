@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, MonitorPlay, RefreshCw, Book, Calendar, Video, ShieldCheck, Settings, Users, Database, PlusCircle, Save, ArrowDownCircle, ArrowUpCircle, X, FileText, Camera, Megaphone, Clock, Smartphone, UserCheck, Key, Search, Link2, Trash2, Moon, BookOpen, Scale, ClipboardList, Edit, Wallet, TrendingUp, TrendingDown, Activity, Heart, Building, LayoutDashboard, ChevronDown } from 'lucide-react';
+import { LogOut, MonitorPlay, RefreshCw, Book, Calendar, Video, ShieldCheck, Settings, Users, Database, PlusCircle, Save, ArrowDownCircle, ArrowUpCircle, X, FileText, Camera, Megaphone, Clock, Smartphone, UserCheck, Key, Search, Link2, Trash2, Moon, BookOpen, Scale, ClipboardList, Edit, Wallet, TrendingUp, TrendingDown, Activity, Heart, Building, LayoutDashboard, ChevronDown, Upload } from 'lucide-react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -11,6 +11,7 @@ import { ModulLaporanKeuangan } from './ModulLaporanKeuangan';
 import { ModulAnggaranApproval } from './ModulAnggaranApproval';
 import { BukuPanduanModal } from './BukuPanduanModal';
 import { INITIAL_JURNAL_ENTRIES, JurnalEntry } from '../data/akuntansiData';
+import { supabase } from '../lib/supabase';
 
 interface Program {
   id: number;
@@ -39,6 +40,41 @@ interface AdminDashboardProps {
   onAddDonasiHistoryItem?: (item: any) => void;
   adminRole?: string;
   auditLogs?: any[];
+}
+
+class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean, error: Error | null}> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error("ErrorBoundary caught an error", error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-8 m-4 text-red-700 bg-red-50 border border-red-200 rounded-xl shadow-sm">
+          <h2 className="text-xl font-bold mb-2 flex items-center gap-2">⚠️ Terjadi Kesalahan pada Modul Keuangan</h2>
+          <p className="mb-4">Modul ini gagal dimuat karena ada kesalahan sistem (Blank Screen Error).</p>
+          <div className="bg-white p-4 rounded border overflow-auto text-xs font-mono max-h-64">
+            {this.state.error && this.state.error.toString()}
+            <br/><br/>
+            {this.state.error && this.state.error.stack}
+          </div>
+          <button 
+            onClick={() => this.setState({ hasError: false })} 
+            className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 font-bold"
+          >
+            Coba Muat Ulang
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs, onAddDonation, homeVisibility, setHomeVisibility, registeredJamaahList, donasiHistory = [], onVerifyDonasi, onAddDonasiHistoryItem, adminRole = 'direktur', auditLogs = [] }) => {
@@ -2952,37 +2988,37 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
 
         {/* ── MODUL LAPORAN KEUANGAN & AKUNTANSI TERINTEGRASI ── */}
         {['lapkeu', 'jurnal', 'bukubesar', 'coa', 'anggaran'].includes(activeMenu) && (
-          <div className="animate-in fade-in space-y-6">
-            {/* Header Banner */}
-            <div className="bg-white rounded-2xl p-4 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-3 border border-slate-200">
-              <div>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wider mb-1.5 border border-slate-200">
-                  📊 Modul Akuntansi Standar ISAK 35
-                </span>
-                <h2 className="text-lg font-extrabold text-slate-800 leading-none">Fitur Laporan Keuangan & Akuntansi Masjid</h2>
-                <p className="text-slate-500 text-[11px] mt-1.5 max-w-3xl leading-snug">
-                  Terhubung langsung secara real-time dengan **Riwayat Transaksi** & **Input Donasi ZISWAF**. Mengintegrasikan Chart of Accounts (CoA), Jurnal Umum Double-Entry, Buku Besar, Neraca Aktivitas & Laba Rugi, serta Approval Anggaran.
-                </p>
+          <ErrorBoundary>
+            <div className="animate-in fade-in space-y-6">
+              {/* Header Banner */}
+              <div className="bg-white rounded-2xl p-4 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-3 border border-slate-200">
+                <div>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wider mb-1.5 border border-slate-200">
+                    📊 Modul Akuntansi Standar ISAK 35
+                  </span>
+                  <h2 className="text-lg font-extrabold text-slate-800 leading-none">Fitur Laporan Keuangan & Akuntansi Masjid</h2>
+                  <p className="text-slate-500 text-[11px] mt-1.5 max-w-3xl leading-snug">
+                    Terhubung langsung secara real-time dengan **Riwayat Transaksi** & **Input Donasi ZISWAF**. Mengintegrasikan Chart of Accounts (CoA), Jurnal Umum Double-Entry, Buku Besar, Neraca Aktivitas & Laba Rugi, serta Approval Anggaran.
+                  </p>
+                </div>
+                <div className="flex gap-2 shrink-0">
+                  <button 
+                    onClick={() => setActiveMenu('kas')} 
+                    className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl text-xs backdrop-blur-md transition-colors border border-white/20 flex items-center gap-2 cursor-pointer"
+                  >
+                    <Book className="w-4 h-4 text-lime-400" /> Buka Riwayat Transaksi
+                  </button>
+                </div>
               </div>
-              <div className="flex gap-2 shrink-0">
-                <button 
-                  onClick={() => setActiveMenu('kas')} 
-                  className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl text-xs backdrop-blur-md transition-colors border border-white/20 flex items-center gap-2 cursor-pointer"
-                >
-                  <Book className="w-4 h-4 text-lime-400" /> Buka Riwayat Transaksi
-                </button>
-              </div>
+
+              {/* Sub-Tab Module Display */}
+              {lapkeuTab === 'neraca' && <ModulLaporanKeuangan journals={journals} accounts={accounts} />}
+              {lapkeuTab === 'jurnal' && <ModulJurnal entries={journals} accounts={accounts} onAddJournal={handleAutoPostJournal} />}
+              {lapkeuTab === 'bukubesar' && <ModulBukuBesar journals={journals} accounts={accounts} />}
+              {lapkeuTab === 'coa' && <ModulCoA journals={journals} />}
+              {lapkeuTab === 'anggaran' && <ModulAnggaranApproval onAutoPostJournal={handleAutoPostJournal} adminRole={adminRole} appSettings={appSettings} />}
             </div>
-
-            {/* Sub-Navigation Tabs dipindahkan ke atas menu dropdown */}
-
-            {/* Sub-Tab Module Display */}
-            {lapkeuTab === 'neraca' && <ModulLaporanKeuangan journals={journals} accounts={accounts} />}
-            {lapkeuTab === 'jurnal' && <ModulJurnal entries={journals} accounts={accounts} onAddJournal={handleAutoPostJournal} />}
-            {lapkeuTab === 'bukubesar' && <ModulBukuBesar journals={journals} accounts={accounts} />}
-            {lapkeuTab === 'coa' && <ModulCoA journals={journals} />}
-            {lapkeuTab === 'anggaran' && <ModulAnggaranApproval onAutoPostJournal={handleAutoPostJournal} adminRole={adminRole} appSettings={appSettings} />}
-          </div>
+          </ErrorBoundary>
         )}
 
         {/* ── MODUL LAINNYA ── */}

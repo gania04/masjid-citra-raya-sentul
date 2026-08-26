@@ -138,7 +138,7 @@ export const DaftarProgram: React.FC<DaftarProgramProps> = ({ programs, onDonate
                       }}
                       className="bg-lime-600 hover:bg-lime-700 text-white font-bold py-1.5 px-4 rounded-lg text-sm transition-colors cursor-pointer"
                     >
-                      Donasi Sekarang
+                      Bayar Sekarang
                     </button>
                   </div>
                 </div>
@@ -231,11 +231,11 @@ export const DaftarProgram: React.FC<DaftarProgramProps> = ({ programs, onDonate
                             title="Klik perbesar"
                           >
                             <div className="absolute -inset-1 rounded-xl bg-gradient-to-br from-lime-400 via-emerald-500 to-teal-500 opacity-40 blur-xs group-hover:opacity-75 transition duration-300" />
-                            <div className="relative bg-white p-2 rounded-xl shadow-lg border border-lime-300/30 w-28 h-28 overflow-hidden flex items-center justify-center">
+                            <div className="relative bg-white p-2.5 rounded-xl shadow-lg border border-lime-300/30 w-32 sm:w-40 aspect-square overflow-hidden flex items-center justify-center">
                               <img
                                 src="/images/qris-masjid.jpg"
                                 alt="QRIS Masjid Citra Sentul Raya"
-                                className="w-full h-full object-contain rounded-lg block transition-transform duration-300 group-hover:scale-102 select-none"
+                                className="w-full h-full object-cover object-top rounded-lg block transition-transform duration-300 group-hover:scale-105 select-none"
                               />
                               {/* Laser overlay */}
                               <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-lime-400 to-transparent shadow-[0_0_6px_1.5px_#a3e635] scanner-laser-small pointer-events-none" />
@@ -382,11 +382,11 @@ export const DaftarProgram: React.FC<DaftarProgramProps> = ({ programs, onDonate
                   title="Klik untuk zoom"
                 >
                   <div className="absolute -inset-2 rounded-2xl bg-lime-400/30 blur-md group-hover:bg-lime-400/50 transition-all" />
-                  <div className="relative bg-white p-3.5 rounded-2xl shadow-2xl border-2 border-lime-300/60">
+                  <div className="relative bg-white p-4 rounded-2xl shadow-2xl border-2 border-lime-300/60 w-full max-w-[280px] mx-auto overflow-hidden aspect-square flex items-center justify-center">
                     <img
                       src="/images/qris-masjid.jpg"
                       alt="QRIS Masjid Citra Sentul Raya Full"
-                      className="w-52 h-auto rounded-xl mx-auto block select-none"
+                      className="w-full h-full object-cover object-top rounded-xl mx-auto block select-none"
                     />
                     <div className="absolute inset-0 bg-emerald-900/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center gap-1.5">
                       {isQrisZoomed

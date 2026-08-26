@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Users, Calendar, Clock, BookOpen, UserPlus, CheckCircle, AlertCircle } from 'lucide-react';
+import { Users, Calendar, Clock, BookOpen, UserPlus, CheckCircle, AlertCircle, X } from 'lucide-react';
 
 export const ModulKajianJamaah: React.FC = () => {
   const [kajianList, setKajianList] = useState<any[]>([]);

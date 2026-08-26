@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { PlusCircle, FileText, CheckCircle, Clock, Search, AlertCircle, Trash2, ArrowRight } from 'lucide-react';
-import { INITIAL_CHART_OF_ACCOUNTS, INITIAL_JURNAL_ENTRIES, JurnalEntry, JurnalBaris } from '../data/akuntansiData';
+import { INITIAL_CHART_OF_ACCOUNTS, INITIAL_JURNAL_ENTRIES, JurnalEntry, JurnalBaris, AkunCoA } from '../data/akuntansiData';
 
 const formatRp = (n: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);

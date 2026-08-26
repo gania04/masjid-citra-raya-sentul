@@ -11,9 +11,10 @@ interface JamaahDashboardProps {
   nama: string;
   kontak: string;
   donasiHistory?: any[];
+  programs?: any[];
 }
 
-export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, kontak, donasiHistory = [] }) => {
+export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, kontak, donasiHistory = [], programs = [] }) => {
   const [activeTab, setActiveTab] = useState<'ringkasan' | 'donasi' | 'laporan' | 'histori' | 'profil' | 'jadwal' | 'quran' | 'tanya' | 'kajian'>('ringkasan');
   const [penghasilan, setPenghasilan] = useState('');
   const [bonus, setBonus] = useState('');
@@ -177,9 +178,6 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
   const [waSendingStatus, setWaSendingStatus] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   
-  // Real ZISWAF Programs State
-  const [programsList, setProgramsList] = useState<any[]>([]);
-
   // Wallet Connection State
   const [connectedWallet, setConnectedWallet] = useState<string | null>(() => {
     return localStorage.getItem('masjid_connected_wallet') || null;
@@ -238,14 +236,6 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
         console.error('Error parsing bookmark', e);
       }
     }
-
-    const fetchPrograms = async () => {
-      const { data, error } = await supabase.from('programs').select('*');
-      if (data && !error) {
-        setProgramsList(data);
-      }
-    };
-    fetchPrograms();
   }, [nama, kontak]);
 
   // Safe string values to prevent uncaught TypeError during render
@@ -1462,13 +1452,13 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
               <Activity className="w-5 h-5 text-emerald-600" /> Progress Program ZISWAF Masjid
             </h2>
             <div className="space-y-6">
-              {programsList.length > 0 ? programsList.map((program, index) => {
-                const percentage = program.target_rp > 0 ? Math.min(100, Math.round((program.terkumpul_rp / program.target_rp) * 100)) : 0;
+              {programs.length > 0 ? programs.map((program, index) => {
+                const percentage = program.targetRp > 0 ? Math.min(100, Math.round((program.terkumpulRp / program.targetRp) * 100)) : 0;
                 return (
                   <div key={program.id || index} className="border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs">
                     <div className="md:flex">
                       <div className="md:w-1/3 h-48 md:h-auto relative bg-slate-100">
-                        <img src="https://images.unsplash.com/photo-1564769625905-50e93615e769?auto=format&fit=crop&w=800&q=80" alt={program.judul} className="w-full h-full object-cover opacity-80" />
+                        <img src={program.gambar || "https://images.unsplash.com/photo-1564769625905-50e93615e769?auto=format&fit=crop&w=800&q=80"} alt={program.judul} className="w-full h-full object-cover opacity-80" />
                         <div className="absolute top-3 left-3 bg-emerald-700 text-white text-[10px] font-bold px-2.5 py-1 rounded-md uppercase">{program.kategori}</div>
                       </div>
                       <div className="p-6 md:w-2/3 flex flex-col justify-center">
@@ -1478,7 +1468,7 @@ export const JamaahDashboard: React.FC<JamaahDashboardProps> = ({ onBack, nama, 
                           <div>
                             <div className="flex justify-between text-xs font-bold mb-1">
                               <span className="text-emerald-700">Terkumpul {percentage}%</span>
-                              <span className="text-slate-500">{formatRp(program.terkumpul_rp)} / {formatRp(program.target_rp)}</span>
+                              <span className="text-slate-700">{formatRp(program.terkumpulRp)} / {formatRp(program.targetRp)}</span>
                             </div>
                             <div className="w-full bg-slate-100 rounded-full h-2.5">
                               <div className="bg-emerald-600 h-2.5 rounded-full" style={{ width: `${percentage}%` }}></div>
