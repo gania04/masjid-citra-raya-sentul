@@ -89,7 +89,7 @@ export const BukuPanduanModal: React.FC<BukuPanduanModalProps> = ({
         '**Tambah Akun**: Klik *Tambah Akun Baru*, isi Kode Akun (contoh: 1101, 5104), Nama Akun, Jenis, Kelompok, dan Status (Aktif / Non-Aktif).',
         '**Enable / Disable (Status)**: Klik status badge pada baris akun untuk mengaktifkan (Aktif) atau menonaktifkan (Non-Aktif) akun tertentu.',
         '**Batch Import Google Spreadsheet**: Klik *Import Google Spreadsheet / CSV*, centang *Hapus/Timpa COA Lama*, paste teks tabel dari Excel/Google Sheets, lalu klik Impor.',
-        '**Reset 65 COA**: Klik tombol *Muat COA Spreadsheet* untuk mengembalikan daftar 65 akun standar PSAK 109.',
+        '**Reset 65 COA**: Klik tombol *Muat COA Spreadsheet* untuk mengembalikan daftar 65 akun standar PSAK 409.',
       ],
       tip: 'Akun berstatus Non-Aktif tidak akan mengacaukan riwayat jurnal lama tetapi tercegah dari posting baru.',
     },

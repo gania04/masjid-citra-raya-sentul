@@ -265,7 +265,7 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
           </div>
           <div>
             <h2 className="text-lg font-extrabold tracking-tight text-slate-800">Laporan Neraca Aktivitas & Keuangan</h2>
-            <p className="text-slate-500 text-[11px]">Terintegrasi Pemisahan Dana Zakat, Infaq, Wakaf & Sodaqoh (ISAK 35 / PSAK 109)</p>
+            <p className="text-slate-500 text-[11px]">Terintegrasi Pemisahan Dana Zakat, Infaq, Wakaf & Sodaqoh (ISAK 35 / PSAK 409)</p>
           </div>
         </div>
 
