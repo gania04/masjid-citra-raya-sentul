@@ -591,8 +591,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
     fetchJournalsAndCoA();
   }, []);
 
-  const handleAutoPostJournal = (entry: JurnalEntry) => {
+  const handleAutoPostJournal = async (entry: JurnalEntry) => {
     setJournals(prev => [entry, ...prev]);
+    try {
+      const inserts = entry.baris.map((b, idx) => ({
+        id: `${entry.id}-${idx}`,
+        tanggal: entry.tanggal,
+        no_bukti: entry.noBukti,
+        keterangan: entry.keterangan,
+        kode_akun: b.kodeAkun,
+        debit: b.debit,
+        kredit: b.kredit,
+        user_input: entry.dibuatOleh || 'Sistem'
+      }));
+      await supabase.from('jurnal_umum').insert(inserts);
+    } catch (err) {
+      console.error('Error insert auto jurnal_umum:', err);
+    }
   };
 
   const [namaDonaturStr, setNamaDonaturStr] = useState('');
