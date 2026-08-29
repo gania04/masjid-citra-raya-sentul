@@ -18,7 +18,9 @@ import {
   ZoomOut,
   Download,
   X,
+  FileText,
 } from 'lucide-react';
+import jsPDF from 'jspdf';
 import { PAKET_WAKAF_LIST } from '../data/mockData';
 import { formatRupiah, buildWhatsAppLink, generateUniqueCode } from '../utils/formatters';
 import { Muwakif } from '../types';
@@ -45,8 +47,29 @@ export const WakafForm: React.FC<WakafFormProps> = ({ onAddMuwakif, onShowCertif
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [lastSubmittedMuwakif, setLastSubmittedMuwakif] = useState<Muwakif | null>(null);
 
-  const handleDownloadQris = async () => {
+  const handleDownloadQris = async (format: 'jpg' | 'pdf' = 'jpg') => {
     try {
+      if (format === 'pdf') {
+        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+        doc.setFontSize(16);
+        doc.text('QRIS - Masjid Citra Sentul Raya', 105, 20, { align: 'center' });
+        doc.setFontSize(12);
+        doc.text('NMID: ID1023304558381', 105, 30, { align: 'center' });
+        
+        const imgObj = new Image();
+        imgObj.src = '/images/qris-masjid.jpg';
+        await new Promise((resolve, reject) => {
+          imgObj.onload = resolve;
+          imgObj.onerror = reject;
+        });
+        
+        doc.addImage(imgObj, 'JPEG', 55, 40, 100, 100);
+        doc.setFontSize(10);
+        doc.text('Terima kasih atas infak dan sedekah Anda. Jazakumullah Khairan.', 105, 150, { align: 'center' });
+        doc.save('QRIS-Masjid-Citra-Sentul-Raya.pdf');
+        return;
+      }
+
       const response = await fetch('/images/qris-masjid.jpg');
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -58,11 +81,13 @@ export const WakafForm: React.FC<WakafFormProps> = ({ onAddMuwakif, onShowCertif
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch {
-      const link = document.createElement('a');
-      link.href = '/images/qris-masjid.jpg';
-      link.download = 'QRIS-Masjid-Citra-Sentul-Raya.jpg';
-      link.target = '_blank';
-      link.click();
+      if (format === 'jpg') {
+        const link = document.createElement('a');
+        link.href = '/images/qris-masjid.jpg';
+        link.download = 'QRIS-Masjid-Citra-Sentul-Raya.jpg';
+        link.target = '_blank';
+        link.click();
+      }
     }
   };
 
@@ -439,7 +464,7 @@ export const WakafForm: React.FC<WakafFormProps> = ({ onAddMuwakif, onShowCertif
                             <img
                               src="/images/qris-masjid.jpg"
                               alt="QRIS Masjid Citra Sentul Raya"
-                              className="w-full h-full object-cover object-top rounded-xl select-none block transition-transform duration-300 group-hover:scale-105"
+                              className="w-full h-full object-contain rounded-xl select-none block transition-transform duration-300 group-hover:scale-105"
                             />
                             {/* Scanning laser line overlay */}
                             <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-lime-400 to-transparent shadow-[0_0_8px_2px_#a3e635] scanner-laser pointer-events-none" />
@@ -519,11 +544,19 @@ export const WakafForm: React.FC<WakafFormProps> = ({ onAddMuwakif, onShowCertif
                             </button>
                             <button
                               type="button"
-                              onClick={handleDownloadQris}
+                              onClick={() => handleDownloadQris('jpg')}
                               className="px-2.5 py-1.5 bg-emerald-850 hover:bg-emerald-700 text-emerald-100 text-[11px] font-bold rounded-lg transition-all flex items-center gap-1 border border-emerald-600 active:scale-95 cursor-pointer"
                             >
                               <Download className="w-3.5 h-3.5" />
-                              <span>Unduh QR</span>
+                              <span>JPG</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDownloadQris('pdf')}
+                              className="px-2.5 py-1.5 bg-emerald-850 hover:bg-emerald-700 text-emerald-100 text-[11px] font-bold rounded-lg transition-all flex items-center gap-1 border border-emerald-600 active:scale-95 cursor-pointer"
+                            >
+                              <FileText className="w-3.5 h-3.5" />
+                              <span>PDF</span>
                             </button>
                           </div>
                         </div>
@@ -657,7 +690,7 @@ export const WakafForm: React.FC<WakafFormProps> = ({ onAddMuwakif, onShowCertif
                     <img
                       src="/images/qris-masjid.jpg"
                       alt="QRIS Masjid Citra Sentul Raya Full"
-                      className="w-full h-full object-cover object-top rounded-xl mx-auto block select-none"
+                      className="w-full h-full object-contain rounded-xl mx-auto block select-none"
                     />
                     <div className="absolute inset-0 bg-emerald-900/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center gap-1.5">
                       {isQrisZoomed

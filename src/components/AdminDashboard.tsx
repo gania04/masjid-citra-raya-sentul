@@ -318,14 +318,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
         if (!error && data) {
           const formatted = data.map((d: any) => ({
             id: d.id,
-            foto: 'https://images.unsplash.com/photo-1545127398-14699f92334b?auto=format&fit=crop&w=50&q=80', // Default placeholder
-            kode: d.id,
+            foto: d.foto || '',
+            kode: d.kode || d.id,
             nama: d.nama,
             kategori: d.kategori,
             jumlahTotal: d.jumlah,
             kondisi: d.kondisi,
-            satuan: 'Unit',
-            lokasi: 'Masjid'
+            satuan: d.satuan || 'Unit',
+            lokasi: d.lokasi || ''
           }));
           setInventarisList(formatted);
         }
@@ -341,7 +341,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
     { id: 1, inventarisId: 1, jumlah: 2, alasan: 'Suara pecah dan kabel putus digigit tikus', tanggal: new Date().toLocaleDateString('id-ID') }
   ]);
   const [showInventarisModal, setShowInventarisModal] = useState(false);
-  const [inventarisFormData, setInventarisFormData] = useState({ id: 0, foto: '', kode: '', nama: '', kategori: '', jumlahTotal: 1, satuan: 'Unit', lokasi: '' });
+  const [inventarisFormData, setInventarisFormData] = useState({ id: 0 as any, foto: '', kode: '', nama: '', kategori: '', jumlahTotal: 1, satuan: 'Unit', lokasi: '' });
+  const [inventarisFotoFile, setInventarisFotoFile] = useState<File | null>(null);
 
   const [showLaporRusakModal, setShowLaporRusakModal] = useState(false);
   const [laporRusakFormData, setLaporRusakFormData] = useState({ id: 0, inventarisId: 0, jumlah: 1, alasan: '' });
@@ -379,10 +380,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
 
   // Pengguna (Role & Audit) State
   const [akunPenggunaList, setAkunPenggunaList] = useState([
-    { id: 1, n: 'Haji Ahmad Subagja', t: 'KETUA DKM', e: 'ahmad.subagja@gmail.com', c: '081298765432', r: 'Admin Utama', d: '10/01/2026' },
-    { id: 2, n: 'Haji Bambang Pamungkas, M.M.', t: 'BENDAHARA DKM', e: 'bambang.pamungkas@outlook.com', c: '081311223344', r: 'Pengurus DKM', d: '15/01/2026' },
-    { id: 3, n: 'Ustadz H. M. Zainuddin, Sq', t: 'SEKRETARIS DKM', e: 'zainuddin.sq@citrasentul.id', c: '081555667788', r: 'Pengurus DKM', d: '01/02/2026' },
-    { id: 4, n: 'Yudi Haryono', t: 'JEMAAH', e: 'yudiharyono@gmail.com', c: '087812341234', r: 'Jamaah Terverifikasi', d: '01/02/2026' },
+    { id: 1, n: 'Haji Ahmad Subagja', t: 'KETUA DKM', e: 'ahmad.subagja@gmail.com', c: '081298765432', r: 'Admin', d: '10/01/2026' },
+    { id: 2, n: 'Haji Bambang Pamungkas, M.M.', t: 'BENDAHARA DKM', e: 'bambang.pamungkas@outlook.com', c: '081311223344', r: 'Bendahara', d: '15/01/2026' },
+    { id: 3, n: 'Prof. Dr. M. Syafii Antonio', t: 'DIREKTUR', e: 'direktur@citrasentul.id', c: '081555667788', r: 'Direktur', d: '01/02/2026' },
+    { id: 4, n: 'Yudi Haryono', t: 'JEMAAH', e: 'yudiharyono@gmail.com', c: '087812341234', r: 'Jamaah', d: '01/02/2026' },
   ]);
   const [showAkunPenggunaModal, setShowAkunPenggunaModal] = useState(false);
   const [akunPenggunaFormData, setAkunPenggunaFormData] = useState({ id: 0, n: '', t: 'JEMAAH', e: '', c: '', r: 'Jamaah Terverifikasi' });
@@ -626,13 +627,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
       const isZakat = progTitle.toLowerCase().includes('zakat');
       const isWakaf = progTitle.toLowerCase().includes('wakaf');
       const namaDonatur = namaDonaturStr.trim() || 'Hamba Allah';
-      const noBukti = `BKM-DON-${Date.now().toString().slice(-5)}`;
+      const noBukti = `BKM-DON-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
       const tanggal = ziswafTgl || new Date().toISOString().split('T')[0];
       const tglObj = new Date(tanggal);
       const tanggalFormatted = !isNaN(tglObj.getTime()) ? tglObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : tanggal;
 
       const newJournal: JurnalEntry = {
-        id: `JU-ZIS-${Date.now()}`,
+        id: `JU-ZIS-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
         tanggal: tanggal,
         noBukti: noBukti,
         keterangan: `Penerimaan Donasi ZISWAF: ${progTitle} dari ${namaDonatur}`,
@@ -649,9 +650,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
       setJournals(prev => [newJournal, ...prev]);
       
       try {
+        const juId1 = `JU-${Date.now()}-${Math.floor(Math.random() * 1000)}-1`;
+        const juId2 = `JU-${Date.now()}-${Math.floor(Math.random() * 1000)}-2`;
         await supabase.from('jurnal_umum').insert([
           {
-            id: `JU-${Date.now()}-1`,
+            id: juId1,
             tanggal: tanggal,
             no_bukti: noBukti,
             keterangan: newJournal.keterangan,
@@ -661,7 +664,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
             user_input: newJournal.dibuatOleh
           },
           {
-            id: `JU-${Date.now()}-2`,
+            id: juId2,
             tanggal: tanggal,
             no_bukti: noBukti,
             keterangan: newJournal.keterangan,
@@ -673,7 +676,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
         ]);
         
         // Simpan ke tabel donations (Riwayat Transaksi) dengan status Berhasil
-        const donasiId = 'INV-' + Math.floor(Math.random() * 10000);
+        const donasiId = `INV-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+        
+        let finalBuktiUrl = null;
+        if (ziswafBukti) {
+          const fileExt = ziswafBukti.name.split('.').pop();
+          const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+          const filePath = `donasi/${fileName}`;
+          
+          const { error: uploadError } = await supabase.storage.from('masjid-assets').upload(filePath, ziswafBukti, {
+            cacheControl: '3600',
+            upsert: false
+          });
+          
+          if (!uploadError) {
+            const { data: publicUrlData } = supabase.storage.from('masjid-assets').getPublicUrl(filePath);
+            finalBuktiUrl = publicUrlData.publicUrl;
+          } else {
+            console.error('Storage Upload Error:', uploadError);
+          }
+        }
+
         const donasiRecord = {
           id: donasiId,
           tanggal: tanggalFormatted,
@@ -682,7 +705,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
           nominal,
           metode: 'Tunai / Admin',
           status: 'Berhasil',
-          bukti: ziswafBukti ? URL.createObjectURL(ziswafBukti) : null,
+          bukti: finalBuktiUrl,
           nama_donatur: namaDonatur,
           kontak_donatur: kontakDonaturStr || '-'
         };
@@ -697,7 +720,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
             nominal,
             metode: 'Tunai / Admin',
             status: 'Berhasil',
-            bukti: ziswafBukti ? URL.createObjectURL(ziswafBukti) : null,
+            bukti: finalBuktiUrl,
             namaDonatur: namaDonatur,
             kontakDonatur: kontakDonaturStr || '-'
           });
@@ -730,7 +753,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
       const newKas = { id: Date.now(), date: dateFormatted, desc: descInput, type: 'in' as const, amount: amountInput };
       setKasEntries(prev => [newKas, ...prev]);
 
-      const noBukti = `BKM-RT-${Date.now().toString().slice(-5)}`;
+      const noBukti = `BKM-RT-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
       const tanggal = dateInput || new Date().toISOString().split('T')[0];
 
       const namaAkunDebit = accounts.find(a => a.kode === akunDebit)?.nama || 'Kas/Bank (Debit)';
@@ -798,7 +821,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
       const newKas = { id: Date.now(), date: dateFormatted, desc: descInput, type: 'out' as const, amount: amountInput };
       setKasEntries(prev => [newKas, ...prev]);
 
-      const noBukti = `BKK-RT-${Date.now().toString().slice(-5)}`;
+      const noBukti = `BKK-RT-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
       const tanggal = dateInput || new Date().toISOString().split('T')[0];
 
       const namaAkunDebit = accounts.find(a => a.kode === akunDebit)?.nama || 'Beban/Aset (Debit)';
@@ -1598,25 +1621,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
         {activeMenu === 'ziswaf' && (
           <div className="animate-in fade-in grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-1">
-              <div className="bg-white p-6 rounded-xl border border-slate-200">
-                <div className="flex items-center gap-2 mb-6 border-b border-slate-200 pb-4">
-                  <PlusCircle className="w-6 h-6 text-lime-600" />
-                  <h2 className="text-lg font-bold text-slate-800">Input Donasi Manual</h2>
+              <div className="bg-white p-4 rounded-xl border border-slate-200">
+                <div className="flex items-center gap-2 mb-4 border-b border-slate-200 pb-3">
+                  <PlusCircle className="w-5 h-5 text-lime-600" />
+                  <h2 className="text-base font-bold text-slate-800">Input Donasi Manual</h2>
                 </div>
 
                 {showSuccess && (
-                  <div className="mb-6 p-3 bg-lime-900/30 border border-lime-500/50 text-lime-600 text-sm font-semibold rounded-lg text-center">
+                  <div className="mb-4 p-2 bg-lime-900/30 border border-lime-500/50 text-lime-600 text-xs font-semibold rounded-lg text-center">
                     Data donasi ZISWAF berhasil disimpan!
                   </div>
                 )}
 
-                <form onSubmit={handleZiswafSubmit} className="space-y-5">
+                <form onSubmit={handleZiswafSubmit} className="space-y-3">
                   <div>
-                    <label className="block text-sm font-bold text-slate-500 mb-2">Pilih Program</label>
+                    <label className="block text-xs font-bold text-slate-500 mb-1">Pilih Program</label>
                     <select 
                       value={selectedProgram}
                       onChange={(e) => setSelectedProgram(Number(e.target.value))}
-                      className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-lime-600"
+                      className="w-full p-2 text-sm bg-slate-50 border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-lime-600"
                     >
                       {[...programs, ...localPrograms].map(p => (
                         <option key={p.id} value={p.id}>{p.judul} ({p.kategori})</option>
@@ -1624,33 +1647,33 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-slate-500 mb-2">Nominal Donasi (Rp)</label>
+                    <label className="block text-xs font-bold text-slate-500 mb-1">Nominal Donasi (Rp)</label>
                     <input 
                       type="text"
                       placeholder="Contoh: 500000"
                       value={nominalStr}
                       onChange={(e) => setNominalStr(e.target.value.replace(/\D/g, ''))}
-                      className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-lime-600 font-mono text-lg"
+                      className="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-lime-600 font-mono text-base"
                       required
                     />
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm font-bold text-slate-500 mb-2">Tanggal Donasi</label>
+                      <label className="block text-xs font-bold text-slate-500 mb-1">Tanggal Donasi</label>
                       <input 
                         type="date"
                         value={ziswafTgl}
                         onChange={(e) => setZiswafTgl(e.target.value)}
-                        className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-lime-600"
+                        className="w-full p-2 text-sm bg-slate-50 border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-lime-600"
                         required
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-bold text-slate-500 mb-2">Pilih Jamaah (Otomatis)</label>
+                      <label className="block text-xs font-bold text-slate-500 mb-1">Pilih Jamaah (Otomatis)</label>
                       <select 
                         value={selectedJamaahZiswaf}
                         onChange={handleJamaahZiswafChange}
-                        className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-lime-600"
+                        className="w-full p-2 text-sm bg-slate-50 border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-lime-600"
                       >
                         <option value="manual">Input Manual (Hamba Allah)</option>
                         {registeredJamaahList.map((j, idx) => (
@@ -1659,38 +1682,38 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-bold text-slate-500 mb-2">Nama Donatur (Opsional)</label>
+                      <label className="block text-xs font-bold text-slate-500 mb-1">Nama Donatur (Opsional)</label>
                       <input 
                         type="text"
                         placeholder="Contoh: Hamba Allah"
                         value={namaDonaturStr}
                         onChange={(e) => setNamaDonaturStr(e.target.value)}
-                        className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-lime-600"
+                        className="w-full p-2 text-sm bg-slate-50 border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-lime-600"
                         disabled={selectedJamaahZiswaf !== 'manual'}
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-bold text-slate-500 mb-2">No. HP / Email (Opsional)</label>
+                      <label className="block text-xs font-bold text-slate-500 mb-1">No. HP / Email (Opsional)</label>
                       <input 
                         type="text"
                         placeholder="Contoh: 08123456789"
                         value={kontakDonaturStr}
                         onChange={(e) => setKontakDonaturStr(e.target.value)}
-                        className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-lime-600"
+                        className="w-full p-2 text-sm bg-slate-50 border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-lime-600"
                         disabled={selectedJamaahZiswaf !== 'manual'}
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-slate-500 mb-2">Upload Bukti Transfer (Opsional)</label>
-                    <div className="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center cursor-pointer hover:bg-slate-50 hover:border-lime-400 transition-colors" onClick={() => document.getElementById('ziswaf-bukti-upload')?.click()}>
-                      <Upload className="w-6 h-6 text-slate-400 mx-auto mb-2" />
-                      <p className="text-xs font-semibold text-slate-500">{ziswafBukti ? ziswafBukti.name : 'Klik untuk memilih file foto/screenshot bukti transfer'}</p>
+                    <label className="block text-xs font-bold text-slate-500 mb-1">Upload Bukti Transfer (Opsional)</label>
+                    <div className="border-2 border-dashed border-slate-300 rounded-lg p-3 text-center cursor-pointer hover:bg-slate-50 hover:border-lime-400 transition-colors" onClick={() => document.getElementById('ziswaf-bukti-upload')?.click()}>
+                      <Upload className="w-5 h-5 text-slate-400 mx-auto mb-1" />
+                      <p className="text-[10px] font-semibold text-slate-500">{ziswafBukti ? ziswafBukti.name : 'Klik untuk memilih file foto/screenshot bukti transfer'}</p>
                       <input id="ziswaf-bukti-upload" type="file" accept="image/*" className="hidden" onChange={(e) => { if(e.target.files && e.target.files[0]) setZiswafBukti(e.target.files[0]) }} />
                     </div>
                   </div>
-                  <button type="submit" className="w-full flex items-center justify-center gap-2 bg-lime-600 hover:bg-lime-700 text-white font-bold py-3.5 px-4 rounded-xl transition-colors shadow-lg shadow-lime-900/20">
-                    <Save className="w-5 h-5" /> Simpan ke Database
+                  <button type="submit" className="w-full flex items-center justify-center gap-2 bg-lime-600 hover:bg-lime-700 text-white font-bold py-2.5 px-4 rounded-lg text-sm transition-colors shadow-sm shadow-lime-900/20">
+                    <Save className="w-4 h-4" /> Simpan ke Database
                   </button>
                 </form>
               </div>
@@ -2442,6 +2465,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                   <h2 className="text-xl font-bold text-slate-800">Manajemen Aset & Inventaris Masjid</h2>
                   <button onClick={() => {
                     setInventarisFormData({ id: 0, foto: '', kode: '', nama: '', kategori: '', jumlahTotal: 1, satuan: 'Unit', lokasi: '' });
+                    setInventarisFotoFile(null);
                     setShowInventarisModal(true);
                   }} className="bg-lime-600 hover:bg-lime-700 text-white font-bold py-2 px-6 rounded-xl transition-colors cursor-pointer">+ Tambah Barang Inventaris</button>
                 </div>
@@ -2501,6 +2525,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                                 </button>
                                 <button onClick={() => {
                                   setInventarisFormData(item as any);
+                                  setInventarisFotoFile(null);
                                   setShowInventarisModal(true);
                                 }} className="p-1.5 text-lime-600 hover:text-lime-800 cursor-pointer" title="Edit">
                                   <Edit className="w-4 h-4 inline" />
@@ -2900,7 +2925,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                       <tr key={u.id} className="hover:bg-slate-50">
                         <td className="p-4">
                           <p className="font-bold text-slate-800 mb-1">{u.n}</p>
-                          <span className="text-[10px] bg-lime-900/40 text-lime-500 border border-lime-700/50 px-2 py-0.5 rounded font-bold uppercase">{u.t}</span>
+                          <span className="text-[10px] bg-lime-300 text-slate-900 border border-lime-500 px-2 py-0.5 rounded font-extrabold uppercase">{u.t}</span>
                         </td>
                         <td className="p-4 text-slate-600 text-xs">
                           <p className="mb-1">{u.e}</p>
@@ -2915,10 +2940,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                             }} 
                             className="bg-white border border-lime-500 text-lime-600 rounded px-3 py-1 text-xs font-bold outline-none cursor-pointer focus:ring-1 focus:ring-lime-500"
                           >
-                            <option value="Admin Utama">Admin Utama</option>
-                            <option value="Pengurus DKM">Pengurus DKM</option>
-                            <option value="Tim Audit">Tim Audit</option>
-                            <option value="Jamaah Terverifikasi">Jamaah Terverifikasi</option>
+                            <option value="Admin">Admin</option>
+                            <option value="Bendahara">Bendahara</option>
+                            <option value="Direktur">Direktur</option>
+                            <option value="Jamaah">Jamaah</option>
                           </select>
                         </td>
                         <td className="p-4 text-slate-600 text-xs">{u.d}</td>
@@ -3403,6 +3428,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                   <input type="file" accept="image/*" onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) {
+                      setInventarisFotoFile(file);
                       const reader = new FileReader();
                       reader.onloadend = () => {
                         setInventarisFormData(prev => ({...prev, foto: reader.result as string}));
@@ -3422,30 +3448,61 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                   }
                   
                   try {
+                    let finalFotoUrl = inventarisFormData.foto;
+                    
+                    if (inventarisFotoFile) {
+                      const fileExt = inventarisFotoFile.name.split('.').pop();
+                      const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+                      const filePath = `inventaris/${fileName}`;
+                      
+                      const { error: uploadError } = await supabase.storage.from('masjid-assets').upload(filePath, inventarisFotoFile, {
+                        cacheControl: '3600',
+                        upsert: false
+                      });
+                      
+                      if (uploadError) {
+                        alert('Gagal mengupload gambar. Pastikan bucket "masjid-assets" sudah terbuat di Supabase!');
+                        console.error('Storage Upload Error:', uploadError);
+                        return; // Berhenti jika gagal upload
+                      }
+                      
+                      const { data: publicUrlData } = supabase.storage.from('masjid-assets').getPublicUrl(filePath);
+                      finalFotoUrl = publicUrlData.publicUrl;
+                    }
+
                     if(inventarisFormData.id === 0) {
                       const newId = `INV-${Date.now()}`;
                       const { error } = await supabase.from('masjid_inventaris').insert([{
                         id: newId,
                         nama: inventarisFormData.nama,
+                        kode: inventarisFormData.kode,
                         kategori: inventarisFormData.kategori,
                         jumlah: inventarisFormData.jumlahTotal,
+                        satuan: inventarisFormData.satuan,
+                        lokasi: inventarisFormData.lokasi,
+                        foto: finalFotoUrl,
                         kondisi: 'Baik',
                         tanggal_perolehan: new Date().toISOString()
                       }]);
                       if (error) throw error;
-                      setInventarisList(prev => [{...inventarisFormData, id: newId}, ...prev]);
+                      setInventarisList(prev => [{...inventarisFormData, id: newId, foto: finalFotoUrl}, ...prev]);
                       alert('Barang berhasil ditambahkan ke inventaris!');
                     } else {
                       const { error } = await supabase.from('masjid_inventaris').update({
                         nama: inventarisFormData.nama,
+                        kode: inventarisFormData.kode,
                         kategori: inventarisFormData.kategori,
-                        jumlah: inventarisFormData.jumlahTotal
+                        jumlah: inventarisFormData.jumlahTotal,
+                        satuan: inventarisFormData.satuan,
+                        lokasi: inventarisFormData.lokasi,
+                        foto: finalFotoUrl
                       }).eq('id', inventarisFormData.id);
                       if (error) throw error;
-                      setInventarisList(prev => prev.map(p => p.id === inventarisFormData.id ? inventarisFormData : p));
+                      setInventarisList(prev => prev.map(p => p.id === inventarisFormData.id ? {...inventarisFormData, foto: finalFotoUrl} : p));
                       alert('Perubahan berhasil disimpan!');
                     }
                     setShowInventarisModal(false);
+                    setInventarisFotoFile(null);
                   } catch (err) {
                     console.error('Failed to save inventaris to Supabase', err);
                     alert('Gagal menyimpan barang ke database.');

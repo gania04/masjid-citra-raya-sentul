@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Wallet, Upload, X, CheckCircle, ZoomIn, ZoomOut, Download, Copy, Check, QrCode } from 'lucide-react';
+import { Wallet, Upload, X, CheckCircle, ZoomIn, ZoomOut, Download, Copy, Check, QrCode, FileText } from 'lucide-react';
+import jsPDF from 'jspdf';
 
 interface Program {
   id: number;
@@ -15,7 +16,7 @@ interface Program {
 
 interface DaftarProgramProps {
   programs: Program[];
-  onDonate?: (programId: number, nominal: number, metode: string, bukti: string | null, namaDonatur: string, kontakDonatur: string) => void;
+  onDonate?: (programId: number, nominal: number, metode: string, bukti: File | string | null, namaDonatur: string, kontakDonatur: string) => void;
 }
 
 export const DaftarProgram: React.FC<DaftarProgramProps> = ({ programs, onDonate }) => {
@@ -36,8 +37,29 @@ export const DaftarProgram: React.FC<DaftarProgramProps> = ({ programs, onDonate
     setTimeout(() => setCopiedNominal(false), 2000);
   };
 
-  const handleDownloadQris = async () => {
+  const handleDownloadQris = async (format: 'jpg' | 'pdf' = 'jpg') => {
     try {
+      if (format === 'pdf') {
+        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+        doc.setFontSize(16);
+        doc.text('QRIS - Masjid Citra Sentul Raya', 105, 20, { align: 'center' });
+        doc.setFontSize(12);
+        doc.text('NMID: ID1023304558381', 105, 30, { align: 'center' });
+        
+        const imgObj = new Image();
+        imgObj.src = '/images/qris-masjid.jpg';
+        await new Promise((resolve, reject) => {
+          imgObj.onload = resolve;
+          imgObj.onerror = reject;
+        });
+        
+        doc.addImage(imgObj, 'JPEG', 55, 40, 100, 100);
+        doc.setFontSize(10);
+        doc.text('Terima kasih atas infak dan sedekah Anda. Jazakumullah Khairan.', 105, 150, { align: 'center' });
+        doc.save('QRIS-Masjid-Citra-Sentul-Raya.pdf');
+        return;
+      }
+
       const response = await fetch('/images/qris-masjid.jpg');
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -49,11 +71,13 @@ export const DaftarProgram: React.FC<DaftarProgramProps> = ({ programs, onDonate
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch {
-      const link = document.createElement('a');
-      link.href = '/images/qris-masjid.jpg';
-      link.download = 'QRIS-Masjid-Citra-Sentul-Raya.jpg';
-      link.target = '_blank';
-      link.click();
+      if (format === 'jpg') {
+        const link = document.createElement('a');
+        link.href = '/images/qris-masjid.jpg';
+        link.download = 'QRIS-Masjid-Citra-Sentul-Raya.jpg';
+        link.target = '_blank';
+        link.click();
+      }
     }
   };
   const formatRp = (angka: number) => {
@@ -235,7 +259,7 @@ export const DaftarProgram: React.FC<DaftarProgramProps> = ({ programs, onDonate
                               <img
                                 src="/images/qris-masjid.jpg"
                                 alt="QRIS Masjid Citra Sentul Raya"
-                                className="w-full h-full object-cover object-top rounded-lg block transition-transform duration-300 group-hover:scale-105 select-none"
+                                className="w-full h-full object-contain rounded-lg block transition-transform duration-300 group-hover:scale-105 select-none"
                               />
                               {/* Laser overlay */}
                               <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-lime-400 to-transparent shadow-[0_0_6px_1.5px_#a3e635] scanner-laser-small pointer-events-none" />
@@ -301,11 +325,19 @@ export const DaftarProgram: React.FC<DaftarProgramProps> = ({ programs, onDonate
                           </button>
                           <button
                             type="button"
-                            onClick={handleDownloadQris}
-                            className="flex-1 text-xs font-bold text-emerald-100 bg-emerald-800 hover:bg-emerald-700 px-3 py-1.5 rounded-lg border border-emerald-700 flex items-center justify-center gap-1 transition-all active:scale-95 cursor-pointer"
+                            onClick={() => handleDownloadQris('jpg')}
+                            className="flex-1 text-[10px] font-bold text-emerald-100 bg-emerald-800 hover:bg-emerald-700 px-2 py-1.5 rounded-lg border border-emerald-700 flex items-center justify-center gap-1 transition-all active:scale-95 cursor-pointer"
                           >
-                            <Download className="w-3.5 h-3.5" />
-                            <span>Unduh QR Code</span>
+                            <Download className="w-3 h-3" />
+                            <span>JPG</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadQris('pdf')}
+                            className="flex-1 text-[10px] font-bold text-emerald-100 bg-emerald-800 hover:bg-emerald-700 px-2 py-1.5 rounded-lg border border-emerald-700 flex items-center justify-center gap-1 transition-all active:scale-95 cursor-pointer"
+                          >
+                            <FileText className="w-3 h-3" />
+                            <span>PDF</span>
                           </button>
                         </div>
                       </div>
@@ -325,7 +357,7 @@ export const DaftarProgram: React.FC<DaftarProgramProps> = ({ programs, onDonate
                     disabled={!nominal || !buktiDonasi || !kontakDonatur}
                     onClick={() => {
                       if (onDonate) {
-                        onDonate(selectedProgramId, parseInt(nominal), metode, buktiDonasi ? URL.createObjectURL(buktiDonasi) : null, namaDonatur, kontakDonatur);
+                        onDonate(selectedProgramId, parseInt(nominal), metode, buktiDonasi, namaDonatur, kontakDonatur);
                       }
                       setStep('success');
                     }}
@@ -386,7 +418,7 @@ export const DaftarProgram: React.FC<DaftarProgramProps> = ({ programs, onDonate
                     <img
                       src="/images/qris-masjid.jpg"
                       alt="QRIS Masjid Citra Sentul Raya Full"
-                      className="w-full h-full object-cover object-top rounded-xl mx-auto block select-none"
+                      className="w-full h-full object-contain rounded-xl mx-auto block select-none"
                     />
                     <div className="absolute inset-0 bg-emerald-900/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center gap-1.5">
                       {isQrisZoomed

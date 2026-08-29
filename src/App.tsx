@@ -159,12 +159,34 @@ export default function App() {
     }
   ]);
 
-  const handleDonateSubmit = async (programId: number, nominal: number, metode: string, bukti: string | null, namaDonatur: string, kontakDonatur: string) => {
+  const handleDonateSubmit = async (programId: number, nominal: number, metode: string, bukti: File | string | null, namaDonatur: string, kontakDonatur: string) => {
     const program = programs.find(p => p.id === programId);
     if (!program) return;
     
-    const donasiId = 'INV-' + Math.floor(Math.random() * 10000);
+    const donasiId = `INV-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
     const tanggal = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+    
+    let finalBuktiUrl = null;
+    
+    if (bukti instanceof File) {
+      const fileExt = bukti.name.split('.').pop();
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `donasi/${fileName}`;
+      
+      const { error: uploadError } = await supabase.storage.from('masjid-assets').upload(filePath, bukti, {
+        cacheControl: '3600',
+        upsert: false
+      });
+      
+      if (!uploadError) {
+        const { data: publicUrlData } = supabase.storage.from('masjid-assets').getPublicUrl(filePath);
+        finalBuktiUrl = publicUrlData.publicUrl;
+      } else {
+        console.error('Storage Upload Error:', uploadError);
+      }
+    } else if (typeof bukti === 'string') {
+      finalBuktiUrl = bukti;
+    }
     
     const newDonasi = {
       id: donasiId,
@@ -174,7 +196,7 @@ export default function App() {
       nominal,
       metode,
       status: 'Menunggu Verifikasi',
-      bukti,
+      bukti: finalBuktiUrl,
       namaDonatur: namaDonatur || 'Hamba Allah',
       kontakDonatur: kontakDonatur || '-'
     };
@@ -191,7 +213,7 @@ export default function App() {
         nominal,
         metode,
         status: 'Menunggu Verifikasi',
-        bukti: bukti,
+        bukti: finalBuktiUrl,
         nama_donatur: namaDonatur || 'Hamba Allah',
         kontak_donatur: kontakDonatur || '-'
       }]);
@@ -243,7 +265,7 @@ export default function App() {
             tanggal: d.tanggal,
             programId: d.program_id,
             programName: d.program_name,
-            nominal: d.nominal,
+            nominal: Number(d.nominal),
             metode: d.metode,
             status: d.status,
             bukti: d.bukti,
@@ -262,14 +284,18 @@ export default function App() {
             const programDonations = formattedDonasi.filter(d => d.programId === p.id && d.status === 'Berhasil');
             const totalTerkumpul = programDonations.reduce((sum, d) => sum + d.nominal, 0);
             const totalDonatur = programDonations.length;
+            const pTargetRp = Number(p.target_rp) || 0;
+            const pTerkumpulRp = Number(p.terkumpul_rp) || 0;
+            const pDonatur = Number(p.donatur) || 0;
+            
             let percentage = 0;
-            if (p.target_rp > 0 && totalTerkumpul > 0) {
-              const rawPct = (totalTerkumpul / p.target_rp) * 100;
+            if (pTargetRp > 0 && totalTerkumpul > 0) {
+              const rawPct = (totalTerkumpul / pTargetRp) * 100;
               percentage = rawPct < 1 ? 1 : Math.min(100, Math.round(rawPct));
             }
 
             // Auto-heal database if out of sync
-            if (p.terkumpul_rp !== totalTerkumpul || p.donatur !== totalDonatur) {
+            if (pTerkumpulRp !== totalTerkumpul || pDonatur !== totalDonatur) {
                supabase.from('programs').update({
                   terkumpul_rp: totalTerkumpul,
                   terkumpul_persen: percentage,
@@ -284,7 +310,7 @@ export default function App() {
               deskripsi: p.deskripsi,
               terkumpulPersen: percentage,
               terkumpulRp: totalTerkumpul,
-              targetRp: p.target_rp || 0,
+              targetRp: pTargetRp,
               donatur: totalDonatur,
               gambar: p.gambar
             };

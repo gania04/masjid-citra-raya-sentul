@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { BookOpen, Search, ArrowRightLeft, FileSpreadsheet } from 'lucide-react';
 import { INITIAL_CHART_OF_ACCOUNTS, INITIAL_JURNAL_ENTRIES, JurnalEntry, AkunCoA } from '../data/akuntansiData';
+import * as XLSX from 'xlsx';
 
 const formatRp = (n: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
@@ -70,6 +71,27 @@ export const ModulBukuBesar: React.FC<ModulBukuBesarProps> = ({
     a.kode.includes(searchAccount) || a.nama.toLowerCase().includes(searchAccount.toLowerCase())
   );
 
+  const handleExportExcel = () => {
+    if (!selectedAkun) return;
+    const wsData = ledgerRows.map(r => ({
+      Tanggal: r.tanggal,
+      'No Bukti': r.noBukti,
+      Sumber: r.sumber,
+      Keterangan: r.keterangan,
+      Debit: r.debit,
+      Kredit: r.kredit,
+      Saldo: r.saldo
+    }));
+    
+    // Insert header info
+    wsData.unshift({ Tanggal: '', 'No Bukti': '', Sumber: '', Keterangan: 'SALDO AWAL', Debit: 0, Kredit: 0, Saldo: selectedAkun.saldoAwal });
+    
+    const worksheet = XLSX.utils.json_to_sheet(wsData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Buku Besar");
+    XLSX.writeFile(workbook, `Buku_Besar_${selectedAkun.kode}_${selectedAkun.nama.replace(/\s+/g, '_')}.xlsx`);
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in">
       {/* Banner Header */}
@@ -85,8 +107,8 @@ export const ModulBukuBesar: React.FC<ModulBukuBesarProps> = ({
         </div>
 
         <button 
-          onClick={() => alert(`Mengekspor Buku Besar ${selectedAkun.kode} - ${selectedAkun.nama} ke Excel...`)}
-          className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white font-bold px-4 py-2.5 rounded-2xl text-xs transition-all border border-white/20"
+          onClick={handleExportExcel}
+          className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white font-bold px-4 py-2.5 rounded-2xl text-xs transition-all border border-white/20 cursor-pointer"
         >
           <FileSpreadsheet className="w-4 h-4 text-lime-300" /> Export Ledger Excel
         </button>

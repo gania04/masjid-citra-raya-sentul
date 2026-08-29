@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { BarChart3, Scale, Download, FileSpreadsheet, Layers, Filter, CheckCircle, AlertTriangle, ArrowRightLeft, ChevronDown } from 'lucide-react';
 import { INITIAL_CHART_OF_ACCOUNTS, INITIAL_JURNAL_ENTRIES, AkunCoA, JurnalEntry } from '../data/akuntansiData';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
-const formatRp = (n: number) =>
-  new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
 
 export type FundCategory = 'Semua' | 'Zakat' | 'Infaq' | 'Wakaf' | 'Sodaqoh' | 'Operasional' | 'Komparatif' | 'Multi';
 
@@ -31,6 +32,11 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
   const [selectedFundFilter, setSelectedFundFilter] = useState<FundCategory>('Semua');
   const [filterStartDate, setFilterStartDate] = useState('');
   const [filterEndDate, setFilterEndDate] = useState('');
+
+  const formatRp = (n: number) => {
+    if (tab === 'neraca') return '-';
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
+  };
 
   const filteredJournals = journals.filter(j => {
     if (!filterStartDate && !filterEndDate) return true;
@@ -106,6 +112,63 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
   const aktivaGroups = [...new Set(aktivaList.map(a => a.kelompok))];
   const pendapatanGroups = [...new Set(pendapatanList.map(a => a.kelompok))];
   const bebanGroups = [...new Set(bebanList.map(a => a.kelompok))];
+
+  const handleExportExcel = () => {
+    const data = [];
+    data.push({ Kategori: 'AKTIVA', Kode: '', Nama: '', Saldo: '' });
+    aktivaList.forEach(a => data.push({ Kategori: 'Aktiva', Kode: a.kode, Nama: a.nama, Saldo: getLiveBalance(a.kode) }));
+    data.push({ Kategori: '', Kode: '', Nama: 'Total Aktiva', Saldo: totalAktiva });
+    
+    data.push({ Kategori: '', Kode: '', Nama: '', Saldo: '' });
+    data.push({ Kategori: 'KEWAJIBAN', Kode: '', Nama: '', Saldo: '' });
+    kewajibanList.forEach(a => data.push({ Kategori: 'Kewajiban', Kode: a.kode, Nama: a.nama, Saldo: getLiveBalance(a.kode) }));
+    data.push({ Kategori: '', Kode: '', Nama: 'Total Kewajiban', Saldo: totalKewajiban });
+
+    data.push({ Kategori: '', Kode: '', Nama: '', Saldo: '' });
+    data.push({ Kategori: 'SALDO DANA', Kode: '', Nama: '', Saldo: '' });
+    ekuitasList.forEach(a => data.push({ Kategori: 'Ekuitas', Kode: a.kode, Nama: a.nama, Saldo: getLiveBalance(a.kode) }));
+    
+    data.push({ Kategori: 'Surplus/Defisit', Kode: '', Nama: 'Periode Berjalan', Saldo: surplusDefisit });
+    data.push({ Kategori: '', Kode: '', Nama: 'Total Kewajiban & Ekuitas', Saldo: totalKewajiban + totalEkuitas + surplusDefisit });
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, `Neraca ${selectedFundFilter}`);
+    XLSX.writeFile(workbook, `Laporan_Neraca_${selectedFundFilter}.xlsx`);
+  };
+
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+    doc.text(`Laporan Neraca Aktivitas - Dana ${selectedFundFilter}`, 14, 15);
+    doc.setFontSize(10);
+    doc.text(`Periode: ${filterStartDate || 'Awal'} s/d ${filterEndDate || 'Sekarang'}`, 14, 22);
+    
+    const tableData: any[] = [];
+    tableData.push(['AKTIVA', '', '']);
+    aktivaList.forEach(a => tableData.push([a.kode, a.nama, formatRp(getLiveBalance(a.kode))]));
+    tableData.push(['', 'Total Aktiva', formatRp(totalAktiva)]);
+    tableData.push(['', '', '']);
+    
+    tableData.push(['KEWAJIBAN', '', '']);
+    kewajibanList.forEach(a => tableData.push([a.kode, a.nama, formatRp(getLiveBalance(a.kode))]));
+    tableData.push(['', 'Total Kewajiban', formatRp(totalKewajiban)]);
+    tableData.push(['', '', '']);
+    
+    tableData.push(['SALDO DANA', '', '']);
+    ekuitasList.forEach(a => tableData.push([a.kode, a.nama, formatRp(getLiveBalance(a.kode))]));
+    tableData.push(['', 'Surplus/Defisit', formatRp(surplusDefisit)]);
+    tableData.push(['', 'Total Kewajiban & Saldo Dana', formatRp(totalKewajiban + totalEkuitas + surplusDefisit)]);
+
+    (doc as any).autoTable({
+      startY: 30,
+      head: [['Kode', 'Keterangan', 'Saldo (Rp)']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [74, 109, 0] }
+    });
+    
+    doc.save(`Laporan_Neraca_${selectedFundFilter}.pdf`);
+  };
 
   // Helper renderer for a single fund balance sheet card
   const renderFundBalanceSheetDoc = (
@@ -278,13 +341,13 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => alert(`Mengekspor Laporan Neraca Aktivitas ${selectedFundFilter === 'Semua' ? 'Konsolidasi' : selectedFundFilter === 'Komparatif' ? 'Matrix Perbandingan' : selectedFundFilter === 'Multi' ? 'Multi-Neraca Terpisah' : 'Dana ' + selectedFundFilter} ke PDF...`)}
+              onClick={handleExportPDF}
               className="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-2.5 rounded-xl text-xs transition-all border border-slate-200 cursor-pointer"
             >
               <Download className="w-4 h-4 text-slate-500" /> Export PDF
             </button>
             <button
-              onClick={() => alert(`Mengekspor Laporan Neraca Aktivitas ${selectedFundFilter === 'Semua' ? 'Konsolidasi' : selectedFundFilter === 'Komparatif' ? 'Matrix Perbandingan' : selectedFundFilter === 'Multi' ? 'Multi-Neraca Terpisah' : 'Dana ' + selectedFundFilter} ke Excel...`)}
+              onClick={handleExportExcel}
               className="flex items-center gap-1.5 bg-lime-600 hover:bg-lime-500 text-white font-bold px-4 py-2.5 rounded-2xl text-xs transition-all shadow-md cursor-pointer"
             >
               <FileSpreadsheet className="w-4 h-4" /> Export Excel
