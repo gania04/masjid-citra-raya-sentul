@@ -2063,60 +2063,48 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                               <button 
                                 onClick={() => {
                                   if (onVerifyDonasi) onVerifyDonasi(d.id, 'Berhasil');
-                                  
-                                  // Auto Posting ke Kas Pemasukan
+
+                                  // Optimistic UI Update: Kas Pemasukan
                                   const dateFormatted = new Date().toLocaleDateString('id-ID');
-                                  const newKas = { id: Date.now(), date: dateFormatted, desc: `Donasi ZISWAF Jamaah: ${d.programName}`, type: 'in' as const, amount: d.nominal };
+                                  const newKas = { id: Date.now(), date: dateFormatted, desc: `Penerimaan Donasi ZISWAF a.n ${d.namaDonatur || 'Hamba Allah'}`, type: 'in' as const, amount: d.nominal };
                                   setKasEntries(prev => [newKas, ...prev]);
 
-                                  // Auto Posting ke Jurnal Umum
-                                  const isZakat = d.programName.toLowerCase().includes('zakat');
-                                  const isWakaf = d.programName.toLowerCase().includes('wakaf');
-                                  const noBukti = `BKM-DON-${Date.now().toString().slice(-5)}`;
-                                  const tanggal = new Date().toISOString().split('T')[0];
+                                  // Optimistic UI Update: Jurnal Umum & Neraca
+                                  const kat = d.programName.toLowerCase();
+                                  let akunDebit = '1106';
+                                  let akunKredit = '4103';
+                                  let namaDebit = 'Kas Bank Infak & Sodaqoh';
+                                  let namaKredit = 'Sedekah Jamaah';
 
+                                  if (kat.includes('zakat')) {
+                                     akunDebit = '1104'; akunKredit = '4106';
+                                     namaDebit = 'Kas Bank Zakat'; namaKredit = 'Penerimaan Zakat Maal & Fitrah';
+                                  } else if (kat.includes('infaq') || kat.includes('infak')) {
+                                     akunDebit = '1106'; akunKredit = '4102';
+                                     namaDebit = 'Kas Bank Infak & Sodaqoh'; namaKredit = 'Infak Harian';
+                                  } else if (kat.includes('wakaf')) {
+                                     akunDebit = '1105'; akunKredit = '4104';
+                                     namaDebit = 'Kas Bank Wakaf'; namaKredit = 'Donasi Pembangunan Wakaf';
+                                  }
+
+                                  const tanggalKini = new Date().toISOString().split('T')[0];
                                   const newJournal: JurnalEntry = {
                                     id: `JU-ZIS-${Date.now()}`,
-                                    tanggal: tanggal,
-                                    noBukti: noBukti,
-                                    keterangan: `Penerimaan Donasi Jamaah: ${d.programName}`,
-                                    sumber: 'Donasi Umum',
+                                    tanggal: tanggalKini,
+                                    noBukti: `BKM-DONASI-${d.id}`,
+                                    keterangan: `Penerimaan Donasi ZISWAF a.n ${d.namaDonatur || 'Hamba Allah'}`,
+                                    sumber: 'Donasi Portal Jamaah',
                                     baris: [
-                                      { kodeAkun: isZakat ? '1104' : (isWakaf ? '1105' : '1106'), namaAkun: 'Bank (Debit)', debit: d.nominal, kredit: 0 },
-                                      { 
-                                        kodeAkun: isZakat ? '4106' : (isWakaf ? '4105' : '4103'), 
-                                        namaAkun: isZakat ? 'Pendapatan Zakat' : (isWakaf ? 'Pendapatan Wakaf' : 'Pendapatan Infaq/Sedekah'), 
-                                        debit: 0, kredit: d.nominal 
-                                      },
+                                      { kodeAkun: akunDebit, namaAkun: namaDebit, debit: d.nominal, kredit: 0 },
+                                      { kodeAkun: akunKredit, namaAkun: namaKredit, debit: 0, kredit: d.nominal }
                                     ],
                                     status: 'Posted',
-                                    dibuatOleh: 'Admin Masjid',
-                                    tanggalBuat: tanggal,
+                                    dibuatOleh: 'Sistem ZISWAF',
+                                    tanggalBuat: tanggalKini,
                                   };
-                                  setJournals(prev => [newJournal, ...prev]);
                                   
-                                  supabase.from('jurnal_umum').insert([
-                                    {
-                                      id: `JU-${Date.now()}-1`,
-                                      tanggal: tanggal,
-                                      no_bukti: noBukti,
-                                      keterangan: newJournal.keterangan,
-                                      kode_akun: newJournal.baris[0].kodeAkun,
-                                      debit: d.nominal,
-                                      kredit: 0,
-                                      user_input: 'Admin Masjid'
-                                    },
-                                    {
-                                      id: `JU-${Date.now()}-2`,
-                                      tanggal: tanggal,
-                                      no_bukti: noBukti,
-                                      keterangan: newJournal.keterangan,
-                                      kode_akun: newJournal.baris[1].kodeAkun,
-                                      debit: 0,
-                                      kredit: d.nominal,
-                                      user_input: 'Admin Masjid'
-                                    }
-                                  ]).then(() => {});
+                                  setJournals(prev => [newJournal, ...prev]);
+
                                   alert(`Donasi berhasil diverifikasi. Dana masuk ke Kas Pemasukan & Jurnal Akuntansi otomatis tercatat.`);
                                 }} 
                                 className="px-3 py-1.5 bg-lime-100 text-lime-700 hover:bg-lime-200 rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-1 font-bold text-xs" title="Terima"
