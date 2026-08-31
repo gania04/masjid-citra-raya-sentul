@@ -60,7 +60,7 @@ class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasErr
     if (this.state.hasError) {
       return (
         <div className="p-8 m-4 text-red-700 bg-red-50 border border-red-200 rounded-xl shadow-sm">
-          <h2 className="text-xl font-bold mb-2 flex items-center gap-2">⚠️ Terjadi Kesalahan pada Modul Keuangan</h2>
+          <h2 className="text-xl font-bold mb-2 flex items-center gap-2">âš ï¸ Terjadi Kesalahan pada Modul Keuangan</h2>
           <p className="mb-4">Modul ini gagal dimuat karena ada kesalahan sistem (Blank Screen Error).</p>
           <div className="bg-white p-4 rounded border overflow-auto text-xs font-mono max-h-64">
             {this.state.error && this.state.error.toString()}
@@ -116,10 +116,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
         icon: Book,
         action: () => { setActiveMenu('kas'); setKasTab('ringkasan'); },
         subItems: [
-          { id: 'ringkasan', label: '📊 Ringkasan Kas', action: () => { setActiveMenu('kas'); setKasTab('ringkasan'); } },
-          { id: 'pemasukan', label: '📥 Input Pemasukan', action: () => { setActiveMenu('kas'); setKasTab('pemasukan'); } },
-          { id: 'pengeluaran', label: '📤 Input Pengeluaran', action: () => { setActiveMenu('kas'); setKasTab('pengeluaran'); } },
-          { id: 'laporan', label: '📈 Laporan Keuangan', action: () => { setActiveMenu('kas'); setKasTab('laporan'); } }
+          { id: 'ringkasan', label: 'ðŸ“Š Ringkasan Kas', action: () => { setActiveMenu('kas'); setKasTab('ringkasan'); } },
+          { id: 'pemasukan', label: 'ðŸ“¥ Input Pemasukan', action: () => { setActiveMenu('kas'); setKasTab('pemasukan'); } },
+          { id: 'pengeluaran', label: 'ðŸ“¤ Input Pengeluaran', action: () => { setActiveMenu('kas'); setKasTab('pengeluaran'); } },
+          { id: 'laporan', label: 'ðŸ“ˆ Laporan Keuangan', action: () => { setActiveMenu('kas'); setKasTab('laporan'); } }
         ]
       },
       { 
@@ -128,11 +128,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
         icon: Scale, 
         action: () => { setActiveMenu('lapkeu'); setLapkeuTab('neraca'); },
         subItems: [
-          { id: 'neraca', label: '⚖️ Neraca Aktivitas (PSAK 409)', action: () => { setActiveMenu('lapkeu'); setLapkeuTab('neraca'); } },
-          { id: 'jurnal', label: '📄 Jurnal Umum Double-Entry', action: () => { setActiveMenu('lapkeu'); setLapkeuTab('jurnal'); } },
-          { id: 'bukubesar', label: '📕 Buku Besar', action: () => { setActiveMenu('lapkeu'); setLapkeuTab('bukubesar'); } },
-          { id: 'coa', label: '📖 Chart of Accounts (CoA)', action: () => { setActiveMenu('lapkeu'); setLapkeuTab('coa'); } },
-          { id: 'anggaran', label: '📋 Anggaran & Approval Flow', action: () => { setActiveMenu('lapkeu'); setLapkeuTab('anggaran'); } }
+          { id: 'neraca', label: 'âš–ï¸ Neraca Aktivitas (PSAK 409)', action: () => { setActiveMenu('lapkeu'); setLapkeuTab('neraca'); } },
+          { id: 'jurnal', label: 'ðŸ“„ Jurnal Umum Double-Entry', action: () => { setActiveMenu('lapkeu'); setLapkeuTab('jurnal'); } },
+          { id: 'bukubesar', label: 'ðŸ“• Buku Besar', action: () => { setActiveMenu('lapkeu'); setLapkeuTab('bukubesar'); } },
+          { id: 'coa', label: 'ðŸ“– Chart of Accounts (CoA)', action: () => { setActiveMenu('lapkeu'); setLapkeuTab('coa'); } },
+          { id: 'anggaran', label: 'ðŸ“‹ Anggaran & Approval Flow', action: () => { setActiveMenu('lapkeu'); setLapkeuTab('anggaran'); } }
         ]
       },
     ],
@@ -146,9 +146,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
         icon: Database,
         action: () => { setActiveMenu('konten'); setKontenTab('program'); },
         subItems: [
-          { id: 'program', label: '📢 Program & Campaign', action: () => { setActiveMenu('konten'); setKontenTab('program'); } },
-          { id: 'berita', label: '📰 Pengumuman & Berita', action: () => { setActiveMenu('konten'); setKontenTab('berita'); } },
-          { id: 'galeri', label: '🖼️ Galeri & Kajian', action: () => { setActiveMenu('konten'); setKontenTab('galeri'); } }
+          { id: 'program', label: 'ðŸ“¢ Program & Campaign', action: () => { setActiveMenu('konten'); setKontenTab('program'); } },
+          { id: 'berita', label: 'ðŸ“° Pengumuman & Berita', action: () => { setActiveMenu('konten'); setKontenTab('berita'); } },
+          { id: 'galeri', label: 'ðŸ–¼ï¸ Galeri & Kajian', action: () => { setActiveMenu('konten'); setKontenTab('galeri'); } }
         ]
       },
     ],
@@ -160,8 +160,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
         icon: Camera,
         action: () => { setActiveMenu('aset'); setAsetTab('semua'); },
         subItems: [
-          { id: 'semua', label: '📦 Semua Aset Inventaris', action: () => { setActiveMenu('aset'); setAsetTab('semua'); } },
-          { id: 'rusak', label: '⚠️ Daftar Barang Rusak', action: () => { setActiveMenu('aset'); setAsetTab('rusak'); } }
+          { id: 'semua', label: 'ðŸ“¦ Semua Aset Inventaris', action: () => { setActiveMenu('aset'); setAsetTab('semua'); } },
+          { id: 'rusak', label: 'âš ï¸ Daftar Barang Rusak', action: () => { setActiveMenu('aset'); setAsetTab('rusak'); } }
         ]
       },
       { id: 'ttd', label: 'Tanda Tangan Laporan', icon: FileText },
@@ -304,7 +304,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
   const [editedPrograms, setEditedPrograms] = useState<Record<number, any>>({});
   const [showCampaignModal, setShowCampaignModal] = useState(false);
   const [editCampaignModalData, setEditCampaignModalData] = useState<any>(null);
-  const [newCampaignData, setNewCampaignData] = useState({ judul: '', target: '', kategori: 'Zakat', gambar: '' });
+  const [newCampaignData, setNewCampaignData] = useState({ judul: '', target: '', kategori: 'Zakat', gambar: '', akunDebit: '1104', akunKredit: '4106' });
   const [selectedProgram, setSelectedProgram] = useState<number>(programs[0].id);
   const [nominalStr, setNominalStr] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
@@ -1469,7 +1469,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
             <div className="bg-gradient-to-r from-lime-800 via-lime-700 to-lime-800 rounded-xl p-4 text-white shadow-md flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 border border-lime-500/30">
               <div className="space-y-1">
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/20 text-lime-100 text-[10px] font-extrabold uppercase tracking-wider backdrop-blur-md">
-                  🔗 Terhubung Otomatis Sistem Akuntansi Double-Entry
+                  ðŸ”— Terhubung Otomatis Sistem Akuntansi Double-Entry
                 </span>
                 <h2 className="text-lg font-extrabold text-white">Riwayat Transaksi Kas Masjid</h2>
                 <p className="text-lime-100 text-[11px] max-w-3xl leading-relaxed">
@@ -1493,7 +1493,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                   onClick={() => { setActiveMenu('lapkeu'); setLapkeuTab('neraca'); }}
                   className="px-3 py-1.5 bg-lime-400 hover:bg-lime-300 text-lime-950 font-extrabold rounded-lg text-xs shadow transition-all flex items-center gap-1 cursor-pointer"
                 >
-                  <Scale className="w-3.5 h-3.5 text-lime-950" /> Neraca Laba Rugi ➔
+                  <Scale className="w-3.5 h-3.5 text-lime-950" /> Neraca Laba Rugi âž”
                 </button>
               </div>
             </div>
@@ -1970,7 +1970,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                     }} className="w-full bg-lime-50 text-lime-700 border border-lime-200 hover:bg-lime-100 font-bold py-2 rounded-lg text-xs transition-colors cursor-pointer">Lihat Donatur</button>
                     <div className="flex w-full gap-2">
                       <button onClick={() => {
-                        setEditCampaignModalData({ id: p.id, judul: p.judul, target: p.targetRp.toString(), kategori: p.kategori, gambar: p.gambar });
+                        let parsed = { desc: p.deskripsi, akunDebit: '', akunKredit: '' };
+                        try { parsed = JSON.parse(p.deskripsi); } catch(e){}
+                        setEditCampaignModalData({ id: p.id, judul: p.judul, target: p.targetRp.toString(), kategori: p.kategori, gambar: p.gambar, akunDebit: parsed.akunDebit, akunKredit: parsed.akunKredit, rawDesc: parsed.desc || p.deskripsi });
                       }} className="flex-1 bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold py-2 rounded-lg text-xs transition-colors cursor-pointer">Edit</button>
                       <button onClick={async () => {
                         if(window.confirm(`Yakin ingin menutup program "${p.judul}"? Program ini tidak akan ditampilkan lagi.`)) {
@@ -2074,19 +2076,29 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                                   const kat = prog ? prog.kategori.toLowerCase() : 'sedekah';
                                   let akunDebit = '1106';
                                   let akunKredit = '4103';
-                                  let namaDebit = 'Kas Bank Infak & Sodaqoh';
-                                  let namaKredit = 'Sedekah Jamaah';
-
-                                  if (kat.includes('zakat')) {
-                                     akunDebit = '1104'; akunKredit = '4106';
-                                     namaDebit = 'Kas Bank Zakat'; namaKredit = 'Penerimaan Zakat Maal & Fitrah';
-                                  } else if (kat.includes('infaq') || kat.includes('infak')) {
-                                     akunDebit = '1106'; akunKredit = '4102';
-                                     namaDebit = 'Kas Bank Infak & Sodaqoh'; namaKredit = 'Infak Harian';
-                                  } else if (kat.includes('wakaf')) {
-                                     akunDebit = '1105'; akunKredit = '4104';
-                                     namaDebit = 'Kas Bank Wakaf'; namaKredit = 'Donasi Pembangunan Wakaf';
+                                  
+                                  // Parse custom COA dari deskripsi program (JSON format)
+                                  if (prog && prog.deskripsi) {
+                                    try {
+                                      const parsed = JSON.parse(prog.deskripsi);
+                                      if (parsed.akunDebit) akunDebit = parsed.akunDebit;
+                                      if (parsed.akunKredit) akunKredit = parsed.akunKredit;
+                                    } catch(e) { /* ignore if not JSON */ }
                                   }
+
+                                  // Fallback ke default logic jika custom COA tidak ditemukan
+                                  if (akunDebit === '1106' && akunKredit === '4103') {
+                                    if (kat.includes('zakat')) {
+                                       akunDebit = '1104'; akunKredit = '4106';
+                                    } else if (kat.includes('infaq') || kat.includes('infak')) {
+                                       akunDebit = '1106'; akunKredit = '4102';
+                                    } else if (kat.includes('wakaf')) {
+                                       akunDebit = '1105'; akunKredit = '4104';
+                                    }
+                                  }
+
+                                  const namaDebit = accounts.find(a => a.kode === akunDebit)?.nama || 'Kas/Bank Debit';
+                                  const namaKredit = accounts.find(a => a.kode === akunKredit)?.nama || 'Pendapatan/Kredit';
 
                                   const tanggalKini = new Date().toISOString().split('T')[0];
                                   const newJournal: JurnalEntry = {
@@ -2839,7 +2851,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-slate-800">Penjadwalan Imam, Muadzin, & Khatib Jumat</h2>
               <button onClick={() => { setActiveMenu('pengaturan'); setSettingTab('admin_utama'); }} className="bg-lime-900/40 border border-lime-700/50 text-lime-600 font-bold py-2 px-4 rounded-xl text-sm hover:bg-lime-900/60 transition-colors cursor-pointer">
-                ⚙️ Pengaturan Khutbah Jumat Lengkap
+                âš™ï¸ Pengaturan Khutbah Jumat Lengkap
               </button>
             </div>
             
@@ -2932,7 +2944,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                       {broadcastState === 'sending' ? (
                         <>Sedang Mengirim...</>
                       ) : (
-                        <><span className="transform -rotate-45 text-lg">✈</span> Kirim Pesan Siaran</>
+                        <><span className="transform -rotate-45 text-lg">âœˆ</span> Kirim Pesan Siaran</>
                       )}
                     </button>
                   )}
@@ -3053,7 +3065,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
             <div className="bg-lime-50/50 p-6 rounded-2xl border border-lime-200 flex justify-between items-center shadow-xl">
               <div>
                 <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2 mb-1">
-                  <span className="text-red-600">♡</span> Manajemen Akun & Role Pengguna
+                  <span className="text-red-600">â™¡</span> Manajemen Akun & Role Pengguna
                 </h2>
                 <p className="text-slate-600 text-sm">Kelola data jamaah, atur hak akses (role) pengurus, jabatan DKM, dan kelola sandi pengguna.</p>
               </div>
@@ -3166,7 +3178,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
           </div>
         )}
 
-        {/* ── MODUL LAPORAN KEUANGAN & AKUNTANSI TERINTEGRASI ── */}
+        {/* â”€â”€ MODUL LAPORAN KEUANGAN & AKUNTANSI TERINTEGRASI â”€â”€ */}
         {['lapkeu', 'jurnal', 'bukubesar', 'coa', 'anggaran'].includes(activeMenu) && (
           <ErrorBoundary>
             <div className="animate-in fade-in space-y-6">
@@ -3174,7 +3186,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
               <div className="bg-white rounded-2xl p-4 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-3 border border-slate-200">
                 <div>
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wider mb-1.5 border border-slate-200">
-                    📊 Modul Akuntansi Standar PSAK 409
+                    ðŸ“Š Modul Akuntansi Standar PSAK 409
                   </span>
                   <h2 className="text-lg font-extrabold text-slate-800 leading-none">Fitur Laporan Keuangan & Akuntansi Masjid</h2>
                   <p className="text-slate-500 text-[11px] mt-1.5 max-w-3xl leading-snug">
@@ -3201,7 +3213,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
           </ErrorBoundary>
         )}
 
-        {/* ── MODUL LAINNYA ── */}
+        {/* â”€â”€ MODUL LAINNYA â”€â”€ */}
 
         {showCampaignModal && (
           <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
@@ -3212,7 +3224,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">Kategori Program</label>
-                  <select value={newCampaignData.kategori} onChange={e => setNewCampaignData({...newCampaignData, kategori: e.target.value})} className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-lime-500">
+                  <select value={newCampaignData.kategori} onChange={e => {
+                    const k = e.target.value;
+                    let d = '1104', c = '4106';
+                    if (k === 'Infaq') { d = '1106'; c = '4102'; }
+                    if (k === 'Wakaf') { d = '1105'; c = '4104'; }
+                    if (k === 'Sedekah') { d = '1106'; c = '4103'; }
+                    setNewCampaignData({...newCampaignData, kategori: k, akunDebit: d, akunKredit: c});
+                  }} className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-lime-500">
                     <option value="Zakat">Zakat</option>
                     <option value="Infaq">Infaq</option>
                     <option value="Wakaf">Wakaf</option>
@@ -3241,6 +3260,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                   }} className="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-lime-50 file:text-lime-700 hover:file:bg-lime-100 cursor-pointer" />
                   {newCampaignData.gambar && <img src={newCampaignData.gambar} className="mt-3 h-28 w-auto rounded-lg border border-slate-200 object-cover" alt="Preview" />}
                 </div>
+                
+                <div className="bg-lime-50 border border-lime-200 rounded-xl p-4 mt-2">
+                  <h4 className="font-bold text-lime-800 text-sm mb-3">Pengaturan Akuntansi (Otomatis Tersinkron)</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Akun Debit (Kas Masuk)</label>
+                      <select value={newCampaignData.akunDebit} onChange={e => setNewCampaignData({...newCampaignData, akunDebit: e.target.value})} className="w-full p-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-lime-500">
+                        {accounts.filter(a => a.jenis === 'Aktiva').map(a => (
+                          <option key={a.kode} value={a.kode}>{a.kode} - {a.nama}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Akun Kredit (Pendapatan)</label>
+                      <select value={newCampaignData.akunKredit} onChange={e => setNewCampaignData({...newCampaignData, akunKredit: e.target.value})} className="w-full p-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-lime-500">
+                        {accounts.filter(a => a.jenis !== 'Aktiva' && a.jenis !== 'Kewajiban').map(a => (
+                          <option key={a.kode} value={a.kode}>{a.kode} - {a.nama}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div className="mt-8 flex gap-3">
@@ -3253,7 +3294,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                     const { data, error } = await supabase.from('programs').insert([{
                       kategori: newCampaignData.kategori,
                       judul: newCampaignData.judul,
-                      deskripsi: 'Dibuat dari form admin',
+                      deskripsi: JSON.stringify({ desc: 'Dibuat dari form admin', akunDebit: newCampaignData.akunDebit, akunKredit: newCampaignData.akunKredit }),
                       terkumpul_persen: 0,
                       terkumpul_rp: 0,
                       target_rp: targetRpNum,
@@ -3306,7 +3347,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">Kategori Program</label>
-                  <select value={editCampaignModalData.kategori} onChange={e => setEditCampaignModalData({...editCampaignModalData, kategori: e.target.value})} className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-lime-500">
+                  <select value={editCampaignModalData.kategori} onChange={e => {
+                    const k = e.target.value;
+                    let d = editCampaignModalData.akunDebit || '1104', c = editCampaignModalData.akunKredit || '4106';
+                    if (k !== editCampaignModalData.kategori) {
+                      if (k === 'Infaq') { d = '1106'; c = '4102'; }
+                      else if (k === 'Wakaf') { d = '1105'; c = '4104'; }
+                      else if (k === 'Sedekah') { d = '1106'; c = '4103'; }
+                      else if (k === 'Zakat') { d = '1104'; c = '4106'; }
+                    }
+                    setEditCampaignModalData({...editCampaignModalData, kategori: k, akunDebit: d, akunKredit: c});
+                  }} className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-lime-500">
                     <option value="Zakat">Zakat</option>
                     <option value="Infaq">Infaq</option>
                     <option value="Wakaf">Wakaf</option>
@@ -3335,6 +3386,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                   }} className="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-lime-50 file:text-lime-700 hover:file:bg-lime-100 cursor-pointer" />
                   {editCampaignModalData.gambar && <img src={editCampaignModalData.gambar} className="mt-3 h-28 w-auto rounded-lg border border-slate-200 object-cover" alt="Preview" />}
                 </div>
+                
+                <div className="bg-lime-50 border border-lime-200 rounded-xl p-4 mt-2">
+                  <h4 className="font-bold text-lime-800 text-sm mb-3">Pengaturan Akuntansi (Otomatis Tersinkron)</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Akun Debit (Kas Masuk)</label>
+                      <select value={editCampaignModalData.akunDebit || '1104'} onChange={e => setEditCampaignModalData({...editCampaignModalData, akunDebit: e.target.value})} className="w-full p-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-lime-500">
+                        {accounts.filter(a => a.jenis === 'Aktiva').map(a => (
+                          <option key={a.kode} value={a.kode}>{a.kode} - {a.nama}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Akun Kredit (Pendapatan)</label>
+                      <select value={editCampaignModalData.akunKredit || '4106'} onChange={e => setEditCampaignModalData({...editCampaignModalData, akunKredit: e.target.value})} className="w-full p-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-lime-500">
+                        {accounts.filter(a => a.jenis !== 'Aktiva' && a.jenis !== 'Kewajiban').map(a => (
+                          <option key={a.kode} value={a.kode}>{a.kode} - {a.nama}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div className="mt-8 flex gap-3">
@@ -3349,7 +3422,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                       judul: editCampaignModalData.judul,
                       target_rp: targetRpNum,
                       kategori: editCampaignModalData.kategori,
-                      gambar: editCampaignModalData.gambar
+                      gambar: editCampaignModalData.gambar,
+                      deskripsi: JSON.stringify({ desc: editCampaignModalData.rawDesc || 'Dibuat dari form admin', akunDebit: editCampaignModalData.akunDebit, akunKredit: editCampaignModalData.akunKredit })
                     }).eq('id', editCampaignModalData.id);
                   } catch (err) { console.error('Error update program:', err); }
 
@@ -3925,7 +3999,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                                setShowDonaturModal(null);
                                setActiveMenu('verifikasi');
                              }} className="px-3 py-1.5 bg-amber-100 text-amber-700 hover:bg-amber-200 border border-amber-200 rounded-lg text-xs font-bold cursor-pointer transition-colors shadow-sm flex items-center gap-1 group">
-                               Menunggu Verifikasi <span className="group-hover:translate-x-0.5 transition-transform">➔</span>
+                               Menunggu Verifikasi <span className="group-hover:translate-x-0.5 transition-transform">âž”</span>
                              </button>
                            ) : (
                              <span className="px-3 py-1.5 bg-red-100 text-red-700 border border-red-200 rounded-lg text-xs font-bold flex items-center gap-1">
@@ -3951,3 +4025,4 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
     </div>
   );
 };
+

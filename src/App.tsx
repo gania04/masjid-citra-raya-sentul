@@ -250,15 +250,27 @@ export default function App() {
         let akunDebit = '1106'; // default Bank Infak & Sodaqoh
         let akunKredit = '4103'; // default Sedekah Jamaah
         
-        if (kat === 'zakat') {
-           akunDebit = '1104'; // Kas Bank Zakat
-           akunKredit = '4106'; // Penerimaan Zakat
-        } else if (kat === 'infaq') {
-           akunDebit = '1106'; // Kas Bank Infak
-           akunKredit = '4102'; // Infak Harian
-        } else if (kat === 'wakaf') {
-           akunDebit = '1105'; // Kas Bank Wakaf
-           akunKredit = '4104'; // Donasi Pembangunan Wakaf
+        // Coba parse custom COA dari deskripsi program (JSON format)
+        if (prog && prog.deskripsi) {
+          try {
+            const parsed = JSON.parse(prog.deskripsi);
+            if (parsed.akunDebit) akunDebit = parsed.akunDebit;
+            if (parsed.akunKredit) akunKredit = parsed.akunKredit;
+          } catch(e) { /* ignore */ }
+        }
+
+        // Fallback jika tidak ada custom COA
+        if (akunDebit === '1106' && akunKredit === '4103') {
+          if (kat === 'zakat') {
+             akunDebit = '1104'; // Kas Bank Zakat
+             akunKredit = '4106'; // Penerimaan Zakat
+          } else if (kat === 'infaq') {
+             akunDebit = '1106'; // Kas Bank Infak
+             akunKredit = '4102'; // Infak Harian
+          } else if (kat === 'wakaf') {
+             akunDebit = '1105'; // Kas Bank Wakaf
+             akunKredit = '4104'; // Donasi Pembangunan Wakaf
+          }
         }
 
         const tanggalKini = new Date().toISOString().split('T')[0];
