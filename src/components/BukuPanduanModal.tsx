@@ -141,7 +141,7 @@ export const BukuPanduanModal: React.FC<BukuPanduanModalProps> = ({
       summary: 'Penjelasan kewenangan akses berdasarkan role (Admin, Bendahara, Direktur, Jamaah).',
       steps: [
         '**Admin**: Memiliki kendali penuh pada operasional harian, manajemen jamaah, serta pendaftaran inventaris dan kalender masjid.',
-        '**Bendahara**: Akses eksklusif untuk modul **Keuangan** (ZISWAF, Jurnal Umum, Laporan Keuangan ISAK 35) dan persetujuan pengeluaran (Tahap 1).',
+        '**Bendahara**: Akses eksklusif untuk modul **Keuangan** (ZISWAF, Jurnal Umum, Laporan Keuangan PSAK 409) dan persetujuan pengeluaran (Tahap 1).',
         '**Direktur**: Memiliki akses Super Admin dengan fungsi pengawasan tinggi. Memegang otorisasi final (Tahap 3) dalam alur pencairan anggaran operasional.',
         '**Jamaah**: Akses standar. Memiliki akses ke Portal Jamaah (ZISWAF, Jadwal Kajian, Al-Qur\'an Digital, Laporan Transparansi) dan riwayat donasinya sendiri.',
       ],

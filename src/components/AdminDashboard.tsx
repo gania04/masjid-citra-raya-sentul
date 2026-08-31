@@ -43,16 +43,19 @@ interface AdminDashboardProps {
 }
 
 class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean, error: Error | null}> {
-  constructor(props: any) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
+  state = {
+    hasError: false,
+    error: null as Error | null
+  };
+
   static getDerivedStateFromError(error: Error) {
     return { hasError: true, error };
   }
+  
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error("ErrorBoundary caught an error", error, errorInfo);
   }
+  
   render() {
     if (this.state.hasError) {
       return (
@@ -65,7 +68,7 @@ class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasErr
             {this.state.error && this.state.error.stack}
           </div>
           <button 
-            onClick={() => this.setState({ hasError: false })} 
+            onClick={() => this.setState({ hasError: false, error: null })} 
             className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 font-bold"
           >
             Coba Muat Ulang
@@ -125,7 +128,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
         icon: Scale, 
         action: () => { setActiveMenu('lapkeu'); setLapkeuTab('neraca'); },
         subItems: [
-          { id: 'neraca', label: '⚖️ Neraca Aktivitas (ISAK 35)', action: () => { setActiveMenu('lapkeu'); setLapkeuTab('neraca'); } },
+          { id: 'neraca', label: '⚖️ Neraca Aktivitas (PSAK 409)', action: () => { setActiveMenu('lapkeu'); setLapkeuTab('neraca'); } },
           { id: 'jurnal', label: '📄 Jurnal Umum Double-Entry', action: () => { setActiveMenu('lapkeu'); setLapkeuTab('jurnal'); } },
           { id: 'bukubesar', label: '📕 Buku Besar', action: () => { setActiveMenu('lapkeu'); setLapkeuTab('bukubesar'); } },
           { id: 'coa', label: '📖 Chart of Accounts (CoA)', action: () => { setActiveMenu('lapkeu'); setLapkeuTab('coa'); } },
@@ -206,10 +209,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
 
   const handleDeleteKas = async (id: any) => {
     if (window.confirm('Yakin ingin menghapus transaksi ini?')) {
+      const entryToDelete = kasEntries.find(e => e.id === id);
       setKasEntries(prev => prev.filter(e => e.id !== id));
       setJournals(prev => prev.filter(j => j.id !== id));
       try {
-        await supabase.from('jurnal_umum').delete().eq('no_bukti', id);
+        if (entryToDelete?.isNewTable) {
+           const prefix = entryToDelete.type === 'in' ? 'Pemasukan: ' : 'Pengeluaran: ';
+           if (entryToDelete.type === 'in') await supabase.from('pemasukan').delete().eq('id', id);
+           else await supabase.from('pengeluaran').delete().eq('id', id);
+           
+           // Best effort delete from jurnal_umum
+           await supabase.from('jurnal_umum').delete().eq('keterangan', `${prefix}${entryToDelete.desc}`);
+        } else {
+           await supabase.from('jurnal_umum').delete().eq('no_bukti', id);
+        }
       } catch (err) { console.error(err); }
     }
   };
@@ -233,13 +246,30 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
         }));
         
         try {
-          const { data: lines } = await supabase.from('jurnal_umum').select('id, debit, kredit').eq('no_bukti', entry.id);
-          if (lines) {
-             for (const line of lines) {
-                const updateData: any = { keterangan: newDesc };
-                if (line.debit > 0) updateData.debit = Number(newAmount);
-                if (line.kredit > 0) updateData.kredit = Number(newAmount);
-                await supabase.from('jurnal_umum').update(updateData).eq('id', line.id);
+          if (entry.isNewTable) {
+             const prefix = entry.type === 'in' ? 'Pemasukan: ' : 'Pengeluaran: ';
+             if (entry.type === 'in') await supabase.from('pemasukan').update({ keterangan: newDesc, nominal: Number(newAmount) }).eq('id', entry.id);
+             else await supabase.from('pengeluaran').update({ keterangan: newDesc, nominal: Number(newAmount) }).eq('id', entry.id);
+             
+             // Best effort update jurnal_umum
+             const { data: lines } = await supabase.from('jurnal_umum').select('id, debit, kredit').eq('keterangan', `${prefix}${entry.desc}`);
+             if (lines) {
+                for (const line of lines) {
+                   const updateData: any = { keterangan: `${prefix}${newDesc}` };
+                   if (line.debit > 0) updateData.debit = Number(newAmount);
+                   if (line.kredit > 0) updateData.kredit = Number(newAmount);
+                   await supabase.from('jurnal_umum').update(updateData).eq('id', line.id);
+                }
+             }
+          } else {
+             const { data: lines } = await supabase.from('jurnal_umum').select('id, debit, kredit').eq('no_bukti', entry.id);
+             if (lines) {
+                for (const line of lines) {
+                   const updateData: any = { keterangan: newDesc };
+                   if (line.debit > 0) updateData.debit = Number(newAmount);
+                   if (line.kredit > 0) updateData.kredit = Number(newAmount);
+                   await supabase.from('jurnal_umum').update(updateData).eq('id', line.id);
+                }
              }
           }
         } catch (err) { console.error(err); }
@@ -279,6 +309,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
   const [nominalStr, setNominalStr] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
   const [showDonaturModal, setShowDonaturModal] = useState<number | null>(null);
+
+  // Program Updates State
+  const [programUpdates, setProgramUpdates] = useState<Record<number, { id: number, date: string, text: string }[]>>({});
+  const [activeUpdateInput, setActiveUpdateInput] = useState<number | null>(null);
+  const [newUpdateText, setNewUpdateText] = useState('');
 
   // Kas State (Riwayat Transaksi)
   const [kasEntries, setKasEntries] = useState<any[]>([]);
@@ -531,7 +566,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
           const formatted = coaData.map((d: any) => ({
             kode: d.kode,
             nama: d.nama,
-            jenis: d.kategori === 'Aset' ? 'Aktiva' : (d.kategori === 'Liabilitas' ? 'Kewajiban' : (d.kategori === 'Aset Bersih' ? 'Ekuitas' : (d.kategori === 'Penerimaan' ? 'Pendapatan' : 'Beban'))),
+            jenis: d.kategori === 'Aset' ? 'Aktiva' : (d.kategori === 'Liabilitas' ? 'Kewajiban' : (d.kategori === 'Saldo Dana' ? 'Ekuitas' : (d.kategori === 'Penerimaan' ? 'Pendapatan' : 'Beban'))),
             kelompok: d.kelompok,
             saldoNormal: d.is_debit ? 'Debit' : 'Kredit',
             saldoAwal: Number(d.saldo) || 0,
@@ -569,20 +604,73 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
           const journalsArray = Array.from(grouped.values());
           setJournals(journalsArray);
           
-          // Generate kasEntries
-          const kasList: any[] = [];
+          // Generate kasEntries (Legacy extraction from jurnal_umum for older data)
+          const kasListLegacy: any[] = [];
           journalsArray.forEach(j => {
-             const kasLine = j.baris.find(b => b.kodeAkun.startsWith('110'));
+             const kasLine = j.baris.find(b => b.kodeAkun.startsWith('110') || b.kodeAkun.startsWith('1-10'));
              if (kasLine) {
                 const dateFormatted = j.tanggal ? (j.tanggal.includes('/') ? j.tanggal : j.tanggal.split('-').reverse().join('/')) : '';
                 if (kasLine.debit > 0) {
-                   kasList.push({ id: j.id, date: dateFormatted, desc: j.keterangan, type: 'in', amount: kasLine.debit });
+                   kasListLegacy.push({ id: j.id, date: dateFormatted, desc: j.keterangan, type: 'in', amount: kasLine.debit, isLegacy: true });
                 } else if (kasLine.kredit > 0) {
-                   kasList.push({ id: j.id, date: dateFormatted, desc: j.keterangan, type: 'out', amount: kasLine.kredit });
+                   kasListLegacy.push({ id: j.id, date: dateFormatted, desc: j.keterangan, type: 'out', amount: kasLine.kredit, isLegacy: true });
                 }
              }
           });
-          setKasEntries(kasList);
+
+          // Failsafe: Render legacy kas immediately to prevent UI from being empty if new fetch fails
+          setKasEntries(kasListLegacy);
+
+          try {
+             // Fetch new dedicated tables
+             const { data: dataPemasukan, error: errPemasukan } = await supabase.from('pemasukan').select('*');
+             const { data: dataPengeluaran, error: errPengeluaran } = await supabase.from('pengeluaran').select('*');
+             
+             let kasListNew: any[] = [];
+             if (!errPemasukan && !errPengeluaran && dataPemasukan && dataPengeluaran) {
+               kasListNew = [
+                 ...dataPemasukan.map((d: any) => ({
+                   id: d.id,
+                   date: d.tanggal ? d.tanggal.split('-').reverse().join('/') : '',
+                   desc: d.keterangan,
+                   type: 'in',
+                   amount: Number(d.nominal),
+                   isNewTable: true
+                 })),
+                 ...dataPengeluaran.map((d: any) => ({
+                   id: d.id,
+                   date: d.tanggal ? d.tanggal.split('-').reverse().join('/') : '',
+                   desc: d.keterangan,
+                   type: 'out',
+                   amount: Number(d.nominal),
+                   isNewTable: true
+                 }))
+               ];
+             }
+
+             // Merge legacy and new
+             const combinedKasList = [...kasListNew];
+             kasListLegacy.forEach(legacy => {
+                // Check if it exists in new (heuristic matching)
+                const existsInNew = kasListNew.some(n => n.desc === legacy.desc && n.amount === legacy.amount && n.date === legacy.date && n.type === legacy.type);
+                if (!existsInNew) {
+                   combinedKasList.push(legacy);
+                }
+             });
+             
+             combinedKasList.sort((a, b) => {
+                const dateA = a.date.split('/').reverse().join('');
+                const dateB = b.date.split('/').reverse().join('');
+                if (dateA === dateB) {
+                   return String(b.id).localeCompare(String(a.id));
+                }
+                return dateB.localeCompare(dateA);
+             });
+
+             setKasEntries(combinedKasList);
+          } catch (e) {
+             console.error("Error fetching new tables, relying on legacy:", e);
+          }
         }
       } catch (err) {
         console.error('Error fetching jurnal_umum:', err);
@@ -760,8 +848,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
     const dateInput = (form.elements.namedItem('tgl') as HTMLInputElement).value;
     const descInput = (form.elements.namedItem('ket') as HTMLInputElement).value;
     const amountInput = parseFloat((form.elements.namedItem('nom') as HTMLInputElement).value);
-    const akunDebit = (form.elements.namedItem('akun_debit') as HTMLSelectElement)?.value || '1101';
-    const akunKredit = (form.elements.namedItem('akun_kredit') as HTMLSelectElement)?.value || '4101';
+    const akunDebit = (form.elements.namedItem('akun_debit') as HTMLSelectElement)?.value || '1-10002';
+    const akunKredit = (form.elements.namedItem('akun_kredit') as HTMLSelectElement)?.value || '4-10001';
 
     if (descInput && amountInput > 0) {
       const dateFormatted = dateInput ? dateInput.split('-').reverse().join('/') : new Date().toLocaleDateString('id-ID');
@@ -792,6 +880,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
       setJournals(prev => [newJournal, ...prev]);
       
       try {
+        const { data: insertedPemasukan } = await supabase.from('pemasukan').insert([{
+           tanggal: tanggal,
+           keterangan: descInput,
+           nominal: amountInput,
+           kategori: 'Pemasukan Kas',
+           metode_pembayaran: 'Tunai/Transfer',
+           dibuat_oleh: 'Admin Masjid'
+        }]).select();
+
+        if (insertedPemasukan && insertedPemasukan[0]) {
+           setKasEntries(prev => prev.map(e => e.id === newKas.id ? { ...e, id: insertedPemasukan[0].id, isNewTable: true } : e));
+        }
+
         await supabase.from('jurnal_umum').insert([
           {
             id: `JU-${Date.now()}-1`,
@@ -814,7 +915,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
             user_input: 'Admin Masjid'
           }
         ]);
-      } catch (err) { console.error('Error insert jurnal_umum:', err); }
+      } catch (err) { console.error('Error insert pemasukan/jurnal_umum:', err); }
 
       alert('Data Pemasukan berhasil disimpan & terposting otomatis ke Jurnal Umum, Buku Besar, CoA, & Laporan Keuangan!');
       setKasTab('ringkasan');
@@ -828,8 +929,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
     const dateInput = (form.elements.namedItem('tgl') as HTMLInputElement).value;
     const descInput = (form.elements.namedItem('ket') as HTMLInputElement).value;
     const amountInput = parseFloat((form.elements.namedItem('nom') as HTMLInputElement).value);
-    const akunDebit = (form.elements.namedItem('akun_debit') as HTMLSelectElement)?.value || '5104';
-    const akunKredit = (form.elements.namedItem('akun_kredit') as HTMLSelectElement)?.value || '1101';
+    const akunDebit = (form.elements.namedItem('akun_debit') as HTMLSelectElement)?.value || '5-10001';
+    const akunKredit = (form.elements.namedItem('akun_kredit') as HTMLSelectElement)?.value || '1-10002';
 
     if (descInput && amountInput > 0) {
       const dateFormatted = dateInput ? dateInput.split('-').reverse().join('/') : new Date().toLocaleDateString('id-ID');
@@ -860,6 +961,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
       setJournals(prev => [newJournal, ...prev]);
       
       try {
+        const { data: insertedPengeluaran } = await supabase.from('pengeluaran').insert([{
+           tanggal: tanggal,
+           keterangan: descInput,
+           nominal: amountInput,
+           kategori: 'Pengeluaran Kas',
+           metode_pembayaran: 'Tunai/Transfer',
+           dibuat_oleh: 'Admin Masjid'
+        }]).select();
+
+        if (insertedPengeluaran && insertedPengeluaran[0]) {
+           setKasEntries(prev => prev.map(e => e.id === newKas.id ? { ...e, id: insertedPengeluaran[0].id, isNewTable: true } : e));
+        }
+
         await supabase.from('jurnal_umum').insert([
           {
             id: `JU-${Date.now()}-1`,
@@ -882,7 +996,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
             user_input: 'Admin Masjid'
           }
         ]);
-      } catch (err) { console.error('Error insert jurnal_umum:', err); }
+      } catch (err) { console.error('Error insert pengeluaran/jurnal_umum:', err); }
 
       alert('Data Pengeluaran berhasil disimpan & terposting otomatis ke Jurnal Umum, Buku Besar, CoA, & Laporan Keuangan!');
       setKasTab('ringkasan');
@@ -1220,7 +1334,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                 <div className="relative z-10 flex justify-between items-start mb-6">
                   <div>
                     <h3 className="text-xl font-bold text-emerald-50 tracking-wide">Saldo Kas Utama</h3>
-                    <p className="text-emerald-200/70 text-xs font-medium mt-1">Terhubung dengan ISAK 35</p>
+                    <p className="text-emerald-200/70 text-xs font-medium mt-1">Terhubung dengan PSAK 409</p>
                   </div>
                   <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-md border border-white/20">
                     <Wallet className="w-6 h-6 text-emerald-300" />
@@ -1444,13 +1558,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                     <div>
                       <label className="block text-sm font-bold text-slate-500 mb-2">Akun CoA Penerimaan (Debit: Kas/Bank)</label>
                       <select name="akun_debit" className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-lime-600" required>
-                        {accounts.filter(a => a.jenis === 'Aktiva').map(a => <option key={a.kode} value={a.kode}>{a.kode} - {a.nama}</option>)}
+                        {accounts.filter(a => a.jenis === 'Aset').map(a => <option key={a.kode} value={a.kode}>{a.kode} - {a.nama}</option>)}
                       </select>
                     </div>
                     <div>
                       <label className="block text-sm font-bold text-slate-500 mb-2">Akun CoA Pendapatan (Kredit)</label>
                       <select name="akun_kredit" className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-lime-600" required>
-                        {accounts.filter(a => a.jenis === 'Pendapatan' || a.jenis === 'Kewajiban' || a.jenis === 'Ekuitas').map(a => <option key={a.kode} value={a.kode}>{a.kode} - {a.nama}</option>)}
+                        {accounts.filter(a => a.jenis === 'Penerimaan' || a.jenis === 'Pendapatan' || a.jenis === 'Liabilitas' || a.jenis === 'Saldo Dana').map(a => <option key={a.kode} value={a.kode}>{a.kode} - {a.nama}</option>)}
                       </select>
                     </div>
                     <div>
@@ -1522,13 +1636,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                     <div>
                       <label className="block text-sm font-bold text-slate-500 mb-2">Akun CoA Pengeluaran (Debit: Beban/Aset)</label>
                       <select name="akun_debit" className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-lime-600" required>
-                        {accounts.filter(a => a.jenis === 'Beban' || a.jenis === 'Aktiva').map(a => <option key={a.kode} value={a.kode}>{a.kode} - {a.nama}</option>)}
+                        {accounts.filter(a => a.jenis === 'Beban' || a.jenis === 'Aset').map(a => <option key={a.kode} value={a.kode}>{a.kode} - {a.nama}</option>)}
                       </select>
                     </div>
                     <div>
                       <label className="block text-sm font-bold text-slate-500 mb-2">Akun CoA Sumber Kas (Kredit: Kas/Bank)</label>
                       <select name="akun_kredit" className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-lime-600" required>
-                        {accounts.filter(a => a.jenis === 'Aktiva').map(a => <option key={a.kode} value={a.kode}>{a.kode} - {a.nama}</option>)}
+                        {accounts.filter(a => a.jenis === 'Aset').map(a => <option key={a.kode} value={a.kode}>{a.kode} - {a.nama}</option>)}
                       </select>
                     </div>
                     <div>
@@ -1757,12 +1871,51 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                           }} className="text-xs bg-lime-100 text-lime-700 hover:bg-lime-200 font-bold py-2 px-4 rounded-lg transition-colors cursor-pointer w-full">
                             Lihat Daftar Donatur
                           </button>
-                          <button onClick={() => {
-                            const newStatus = prompt(`Update perkembangan terbaru untuk ${p.judul}:`);
-                            if (newStatus) alert(`Berhasil menyimpan update perkembangan: "${newStatus}"`);
-                          }} className="text-xs bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-4 rounded-lg shadow-sm transition-colors cursor-pointer w-full">
-                            + Update Perkembangan Donasi
-                          </button>
+                          
+                          {activeUpdateInput !== p.id ? (
+                            <button onClick={() => setActiveUpdateInput(p.id)} className="text-xs bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-4 rounded-lg shadow-sm transition-colors cursor-pointer w-full">
+                              + Update Perkembangan Donasi
+                            </button>
+                          ) : (
+                            <div className="mt-2 text-left bg-amber-50 border border-amber-200 rounded-lg p-3">
+                               <p className="text-[10px] font-bold text-amber-800 mb-2 uppercase">Update Terbaru:</p>
+                               <textarea 
+                                  autoFocus
+                                  value={newUpdateText}
+                                  onChange={(e) => setNewUpdateText(e.target.value)}
+                                  placeholder={`Update perkembangan untuk ${p.judul}...`}
+                                  className="w-full p-2 text-xs border border-amber-300 rounded mb-2 focus:outline-none focus:border-amber-500"
+                                  rows={2}
+                               />
+                               <div className="flex gap-2">
+                                  <button onClick={() => {
+                                     if(newUpdateText.trim()) {
+                                        setProgramUpdates(prev => ({
+                                           ...prev,
+                                           [p.id]: [{ id: Date.now(), date: new Date().toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' }), text: newUpdateText }, ...(prev[p.id] || [])]
+                                        }));
+                                        setNewUpdateText('');
+                                        setActiveUpdateInput(null);
+                                     }
+                                  }} className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold py-1.5 px-3 rounded w-full transition-colors cursor-pointer">Simpan</button>
+                                  <button onClick={() => { setActiveUpdateInput(null); setNewUpdateText(''); }} className="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold py-1.5 px-3 rounded w-full transition-colors cursor-pointer">Batal</button>
+                               </div>
+                            </div>
+                          )}
+
+                          {programUpdates[p.id] && programUpdates[p.id].length > 0 && (
+                            <div className="mt-3 text-left">
+                               <p className="text-[10px] font-bold text-slate-500 mb-2 uppercase border-b border-slate-200 pb-1">Riwayat Update:</p>
+                               <div className="space-y-2 max-h-32 overflow-y-auto pr-1">
+                                  {programUpdates[p.id].map((upd) => (
+                                     <div key={upd.id} className="bg-slate-50 border border-slate-200 rounded p-2 text-xs">
+                                        <div className="text-[9px] text-slate-400 font-bold mb-1">{upd.date}</div>
+                                        <p className="text-slate-700">{upd.text}</p>
+                                     </div>
+                                  ))}
+                               </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -3034,7 +3187,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
               <div className="bg-white rounded-2xl p-4 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-3 border border-slate-200">
                 <div>
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wider mb-1.5 border border-slate-200">
-                    📊 Modul Akuntansi Standar ISAK 35
+                    📊 Modul Akuntansi Standar PSAK 409
                   </span>
                   <h2 className="text-lg font-extrabold text-slate-800 leading-none">Fitur Laporan Keuangan & Akuntansi Masjid</h2>
                   <p className="text-slate-500 text-[11px] mt-1.5 max-w-3xl leading-snug">

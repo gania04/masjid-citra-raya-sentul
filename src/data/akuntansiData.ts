@@ -107,8 +107,8 @@ export const INITIAL_CHART_OF_ACCOUNTS: AkunCoA[] = [
   { kode: '2103', nama: 'Kewajiban Penyaluran Zakat (Mustahik)', jenis: 'Kewajiban', kelompok: 'Liabilitas Zakat', saldoNormal: 'Kredit', saldoAwal: 0, kategoriDana: 'Zakat' },
   { kode: '2201', nama: 'Utang Jangka Panjang', jenis: 'Kewajiban', kelompok: 'Liabilitas', saldoNormal: 'Kredit', saldoAwal: 0, kategoriDana: 'Operasional' },
 
-  // SALDO DANA & ASET NETO (3000 - 3105)
-  { kode: '3000', nama: 'SALDO DANA & ASET NETO', jenis: 'Ekuitas', kelompok: 'Header Ekuitas', saldoNormal: 'Kredit', saldoAwal: 0, kategoriDana: 'Operasional' },
+  // SALDO DANA (3000 - 3105)
+  { kode: '3000', nama: 'SALDO DANA', jenis: 'Ekuitas', kelompok: 'Header Ekuitas', saldoNormal: 'Kredit', saldoAwal: 0, kategoriDana: 'Operasional' },
   { kode: '3101', nama: 'Saldo Dana Infak', jenis: 'Ekuitas', kelompok: 'Saldo Dana Infak', saldoNormal: 'Kredit', saldoAwal: 0, kategoriDana: 'Infaq' },
   { kode: '3102', nama: 'Saldo Dana Wakaf (Aset Terikat)', jenis: 'Ekuitas', kelompok: 'Saldo Dana Wakaf', saldoNormal: 'Kredit', saldoAwal: 0, kategoriDana: 'Wakaf' },
   { kode: '3103', nama: 'Saldo Dana Zakat', jenis: 'Ekuitas', kelompok: 'Saldo Dana Zakat', saldoNormal: 'Kredit', saldoAwal: 0, kategoriDana: 'Zakat' },

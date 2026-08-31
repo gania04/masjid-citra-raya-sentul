@@ -34,8 +34,13 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
   const [filterEndDate, setFilterEndDate] = useState('');
 
   const formatRp = (n: number) => {
-    if (tab === 'neraca') return '-';
-    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n || 0);
+  };
+
+  const isSharedAccount = (kode: string) => {
+    const clean = kode.replace('-', '');
+    return clean === '110001' || clean === '110002' || clean === '110004' || 
+           clean === '1101' || clean === '1102' || clean === '1103' || clean === '1106';
   };
 
   const filteredJournals = journals.filter(j => {
@@ -47,35 +52,68 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
   });
 
   // Compute Live Balance for an account by adding posted journal entries
-  const getLiveBalance = (kode: string) => {
+  const getLiveBalance = (kode: string, fundFilter: FundCategory = 'Semua') => {
     const akun = accounts.find(a => a.kode === kode);
     if (!akun) return 0;
-    let balance = akun.saldoAwal;
+    
+    const mainCategory = getAccountFundCategory(akun);
+    const isShared = isSharedAccount(kode);
+
+    if (fundFilter !== 'Semua' && fundFilter !== 'Komparatif' && fundFilter !== 'Multi') {
+      if (!isShared && mainCategory !== fundFilter) {
+        return 0;
+      }
+    }
+
+    let balance = 0;
+    if (fundFilter === 'Semua' || fundFilter === 'Komparatif' || fundFilter === 'Multi') {
+      balance = akun.saldoAwal;
+    } else {
+      if (!isShared && mainCategory === fundFilter) {
+        balance = akun.saldoAwal;
+      } else if (isShared && fundFilter === 'Operasional') {
+        balance = akun.saldoAwal;
+      }
+    }
 
     filteredJournals.forEach(j => {
       if (j.status === 'Posted') {
-        j.baris.forEach(b => {
-          if (b.kodeAkun === kode) {
-            if (akun.saldoNormal === 'Debit') {
-              balance += (b.debit - b.kredit);
-            } else {
-              balance += (b.kredit - b.debit);
-            }
+        let matchesFund = true;
+        if (fundFilter !== 'Semua' && fundFilter !== 'Komparatif' && fundFilter !== 'Multi') {
+          matchesFund = j.baris.some(b => {
+            const otherAkun = accounts.find(a => a.kode === b.kodeAkun);
+            return otherAkun && !isSharedAccount(b.kodeAkun) && getAccountFundCategory(otherAkun) === fundFilter;
+          });
+          if (!matchesFund && fundFilter === 'Operasional') {
+            matchesFund = j.baris.every(b => isSharedAccount(b.kodeAkun));
           }
-        });
+        }
+
+        if (matchesFund) {
+          j.baris.forEach(b => {
+            if (b.kodeAkun === kode) {
+              if (akun.saldoNormal === 'Debit') {
+                balance += (b.debit - b.kredit);
+              } else {
+                balance += (b.kredit - b.debit);
+              }
+            }
+          });
+        }
       }
     });
+
     return balance;
   };
 
   // Helper for fund specific metrics
   const getFundMetrics = (fundCategory: 'Zakat' | 'Infaq' | 'Wakaf' | 'Sodaqoh' | 'Operasional') => {
-    const fundAccounts = accounts.filter(a => getAccountFundCategory(a) === fundCategory);
-    const aktiva = fundAccounts.filter(a => a.jenis === 'Aktiva').reduce((s, a) => s + getLiveBalance(a.kode), 0);
-    const kewajiban = fundAccounts.filter(a => a.jenis === 'Kewajiban').reduce((s, a) => s + getLiveBalance(a.kode), 0);
-    const ekuitas = fundAccounts.filter(a => a.jenis === 'Ekuitas').reduce((s, a) => s + getLiveBalance(a.kode), 0);
-    const pendapatan = fundAccounts.filter(a => a.jenis === 'Pendapatan').reduce((s, a) => s + getLiveBalance(a.kode), 0);
-    const beban = fundAccounts.filter(a => a.jenis === 'Beban').reduce((s, a) => s + getLiveBalance(a.kode), 0);
+    const fundAccounts = accounts.filter(a => getAccountFundCategory(a) === fundCategory || isSharedAccount(a.kode));
+    const aktiva = fundAccounts.filter(a => a.jenis === 'Aktiva').reduce((s, a) => s + getLiveBalance(a.kode, fundCategory), 0);
+    const kewajiban = fundAccounts.filter(a => a.jenis === 'Kewajiban').reduce((s, a) => s + getLiveBalance(a.kode, fundCategory), 0);
+    const ekuitas = fundAccounts.filter(a => a.jenis === 'Ekuitas').reduce((s, a) => s + getLiveBalance(a.kode, fundCategory), 0);
+    const pendapatan = fundAccounts.filter(a => a.jenis === 'Pendapatan').reduce((s, a) => s + getLiveBalance(a.kode, fundCategory), 0);
+    const beban = fundAccounts.filter(a => a.jenis === 'Beban').reduce((s, a) => s + getLiveBalance(a.kode, fundCategory), 0);
     const surplus = pendapatan - beban;
 
     return { aktiva, kewajiban, ekuitas, pendapatan, beban, surplus, totalSaldoNeto: ekuitas + surplus, accounts: fundAccounts };
@@ -90,7 +128,7 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
   // Filter lists based on selected fund category tab
   const filterByFund = (list: AkunCoA[]) => {
     if (selectedFundFilter === 'Semua' || selectedFundFilter === 'Komparatif' || selectedFundFilter === 'Multi') return list;
-    return list.filter(a => getAccountFundCategory(a) === selectedFundFilter);
+    return list.filter(a => getAccountFundCategory(a) === selectedFundFilter || (isSharedAccount(a.kode) && getLiveBalance(a.kode, selectedFundFilter) !== 0));
   };
 
   const aktivaList = filterByFund(accounts.filter(a => a.jenis === 'Aktiva'));
@@ -99,12 +137,12 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
   const pendapatanList = filterByFund(accounts.filter(a => a.jenis === 'Pendapatan'));
   const bebanList = filterByFund(accounts.filter(a => a.jenis === 'Beban'));
 
-  const totalAktiva = aktivaList.reduce((s, a) => s + getLiveBalance(a.kode), 0);
-  const totalKewajiban = kewajibanList.reduce((s, a) => s + getLiveBalance(a.kode), 0);
-  const totalEkuitas = ekuitasList.reduce((s, a) => s + getLiveBalance(a.kode), 0);
+  const totalAktiva = aktivaList.reduce((s, a) => s + getLiveBalance(a.kode, selectedFundFilter), 0);
+  const totalKewajiban = kewajibanList.reduce((s, a) => s + getLiveBalance(a.kode, selectedFundFilter), 0);
+  const totalEkuitas = ekuitasList.reduce((s, a) => s + getLiveBalance(a.kode, selectedFundFilter), 0);
 
-  const totalPendapatan = pendapatanList.reduce((s, a) => s + getLiveBalance(a.kode), 0);
-  const totalBeban = bebanList.reduce((s, a) => s + getLiveBalance(a.kode), 0);
+  const totalPendapatan = pendapatanList.reduce((s, a) => s + getLiveBalance(a.kode, selectedFundFilter), 0);
+  const totalBeban = bebanList.reduce((s, a) => s + getLiveBalance(a.kode, selectedFundFilter), 0);
   const surplusDefisit = totalPendapatan - totalBeban;
 
   const isBalanced = Math.abs(totalAktiva - (totalKewajiban + totalEkuitas + surplusDefisit)) < 1;
@@ -116,17 +154,17 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
   const handleExportExcel = () => {
     const data = [];
     data.push({ Kategori: 'AKTIVA', Kode: '', Nama: '', Saldo: '' });
-    aktivaList.forEach(a => data.push({ Kategori: 'Aktiva', Kode: a.kode, Nama: a.nama, Saldo: getLiveBalance(a.kode) }));
+    aktivaList.forEach(a => data.push({ Kategori: 'Aktiva', Kode: a.kode, Nama: a.nama, Saldo: getLiveBalance(a.kode, selectedFundFilter) }));
     data.push({ Kategori: '', Kode: '', Nama: 'Total Aktiva', Saldo: totalAktiva });
     
     data.push({ Kategori: '', Kode: '', Nama: '', Saldo: '' });
     data.push({ Kategori: 'KEWAJIBAN', Kode: '', Nama: '', Saldo: '' });
-    kewajibanList.forEach(a => data.push({ Kategori: 'Kewajiban', Kode: a.kode, Nama: a.nama, Saldo: getLiveBalance(a.kode) }));
+    kewajibanList.forEach(a => data.push({ Kategori: 'Kewajiban', Kode: a.kode, Nama: a.nama, Saldo: getLiveBalance(a.kode, selectedFundFilter) }));
     data.push({ Kategori: '', Kode: '', Nama: 'Total Kewajiban', Saldo: totalKewajiban });
 
     data.push({ Kategori: '', Kode: '', Nama: '', Saldo: '' });
     data.push({ Kategori: 'SALDO DANA', Kode: '', Nama: '', Saldo: '' });
-    ekuitasList.forEach(a => data.push({ Kategori: 'Ekuitas', Kode: a.kode, Nama: a.nama, Saldo: getLiveBalance(a.kode) }));
+    ekuitasList.forEach(a => data.push({ Kategori: 'Ekuitas', Kode: a.kode, Nama: a.nama, Saldo: getLiveBalance(a.kode, selectedFundFilter) }));
     
     data.push({ Kategori: 'Surplus/Defisit', Kode: '', Nama: 'Periode Berjalan', Saldo: surplusDefisit });
     data.push({ Kategori: '', Kode: '', Nama: 'Total Kewajiban & Ekuitas', Saldo: totalKewajiban + totalEkuitas + surplusDefisit });
@@ -145,17 +183,17 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
     
     const tableData: any[] = [];
     tableData.push(['AKTIVA', '', '']);
-    aktivaList.forEach(a => tableData.push([a.kode, a.nama, formatRp(getLiveBalance(a.kode))]));
+    aktivaList.forEach(a => tableData.push([a.kode, a.nama, formatRp(getLiveBalance(a.kode, selectedFundFilter))]));
     tableData.push(['', 'Total Aktiva', formatRp(totalAktiva)]);
     tableData.push(['', '', '']);
     
     tableData.push(['KEWAJIBAN', '', '']);
-    kewajibanList.forEach(a => tableData.push([a.kode, a.nama, formatRp(getLiveBalance(a.kode))]));
+    kewajibanList.forEach(a => tableData.push([a.kode, a.nama, formatRp(getLiveBalance(a.kode, selectedFundFilter))]));
     tableData.push(['', 'Total Kewajiban', formatRp(totalKewajiban)]);
     tableData.push(['', '', '']);
     
     tableData.push(['SALDO DANA', '', '']);
-    ekuitasList.forEach(a => tableData.push([a.kode, a.nama, formatRp(getLiveBalance(a.kode))]));
+    ekuitasList.forEach(a => tableData.push([a.kode, a.nama, formatRp(getLiveBalance(a.kode, selectedFundFilter))]));
     tableData.push(['', 'Surplus/Defisit', formatRp(surplusDefisit)]);
     tableData.push(['', 'Total Kewajiban & Saldo Dana', formatRp(totalKewajiban + totalEkuitas + surplusDefisit)]);
 
@@ -177,13 +215,13 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
     themeBorder: string,
     metrics: ReturnType<typeof getFundMetrics>
   ) => {
-    const fundAktiva = metrics.accounts.filter(a => a.jenis === 'Aktiva');
-    const fundKewajiban = metrics.accounts.filter(a => a.jenis === 'Kewajiban');
-    const fundEkuitas = metrics.accounts.filter(a => a.jenis === 'Ekuitas');
+    const fundAktiva = metrics.accounts.filter(a => a.jenis === 'Aktiva' && (!isSharedAccount(a.kode) || getLiveBalance(a.kode, fundName) !== 0));
+    const fundKewajiban = metrics.accounts.filter(a => a.jenis === 'Kewajiban' && (!isSharedAccount(a.kode) || getLiveBalance(a.kode, fundName) !== 0));
+    const fundEkuitas = metrics.accounts.filter(a => a.jenis === 'Ekuitas' && (!isSharedAccount(a.kode) || getLiveBalance(a.kode, fundName) !== 0));
 
-    const totalFktiva = fundAktiva.reduce((s, a) => s + getLiveBalance(a.kode), 0);
-    const totalFkewajiban = fundKewajiban.reduce((s, a) => s + getLiveBalance(a.kode), 0);
-    const totalFekuitas = fundEkuitas.reduce((s, a) => s + getLiveBalance(a.kode), 0);
+    const totalFktiva = fundAktiva.reduce((s, a) => s + getLiveBalance(a.kode, fundName), 0);
+    const totalFkewajiban = fundKewajiban.reduce((s, a) => s + getLiveBalance(a.kode, fundName), 0);
+    const totalFekuitas = fundEkuitas.reduce((s, a) => s + getLiveBalance(a.kode, fundName), 0);
     const fSurplus = metrics.surplus;
 
     const fBalanced = Math.abs(totalFktiva - (totalFkewajiban + totalFekuitas + fSurplus)) < 1;
@@ -201,12 +239,12 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
               <h4 className="text-base sm:text-lg font-black text-slate-900">
                 LAPORAN NERACA AKTIVITAS DANA {fundName.toUpperCase()}
               </h4>
-              <p className="text-[11px] text-slate-500 font-medium">Standar ISAK 35 - Posisi Keuangan Terpisah Dana {fundName}</p>
+              <p className="text-[11px] text-slate-500 font-medium">Standar PSAK 409 - Posisi Keuangan Terpisah Dana {fundName}</p>
             </div>
           </div>
           <div className="text-right">
             <span className="text-xs font-mono font-extrabold text-slate-700 block">
-              Total Aktiva Neto: {formatRp(metrics.totalSaldoNeto)}
+              Total Saldo Dana: {formatRp(metrics.totalSaldoNeto)}
             </span>
           </div>
         </div>
@@ -230,7 +268,7 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
                   {fundAktiva.filter(a => a.kelompok === grp).map(a => (
                     <div key={a.kode} className="flex justify-between py-1 border-b border-slate-100">
                       <span className="text-slate-700 font-medium">{a.kode} – {a.nama}</span>
-                      <span className="font-mono font-bold text-slate-900">{formatRp(getLiveBalance(a.kode))}</span>
+                      <span className="font-mono font-bold text-slate-900">{formatRp(getLiveBalance(a.kode, fundName))}</span>
                     </div>
                   ))}
                 </div>
@@ -258,7 +296,7 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
                 fundKewajiban.map(a => (
                   <div key={a.kode} className="flex justify-between py-1 border-b border-slate-100">
                     <span className="text-slate-700 font-medium">{a.kode} – {a.nama}</span>
-                    <span className="font-mono font-bold text-slate-900">{formatRp(getLiveBalance(a.kode))}</span>
+                    <span className="font-mono font-bold text-slate-900">{formatRp(getLiveBalance(a.kode, fundName))}</span>
                   </div>
                 ))
               )}
@@ -278,7 +316,7 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
               {fundEkuitas.map(a => (
                 <div key={a.kode} className="flex justify-between py-1 border-b border-slate-100">
                   <span className="text-slate-700 font-medium">{a.kode} – {a.nama}</span>
-                  <span className="font-mono font-bold text-slate-900">{formatRp(getLiveBalance(a.kode))}</span>
+                  <span className="font-mono font-bold text-slate-900">{formatRp(getLiveBalance(a.kode, fundName))}</span>
                 </div>
               ))}
               <div className="flex justify-between py-1 border-b border-slate-100 font-semibold text-lime-800">
@@ -328,7 +366,7 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
           </div>
           <div>
             <h2 className="text-lg font-extrabold tracking-tight text-slate-800">Laporan Neraca Aktivitas & Keuangan</h2>
-            <p className="text-slate-500 text-[11px]">Terintegrasi Pemisahan Dana Zakat, Infaq, Wakaf & Sodaqoh (ISAK 35 / PSAK 409)</p>
+            <p className="text-slate-500 text-[11px]">Terintegrasi Pemisahan Dana Zakat, Infaq, Wakaf & Sodaqoh (PSAK 409 / PSAK 409)</p>
           </div>
         </div>
 
@@ -485,11 +523,11 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
                 {selectedFundFilter === 'Wakaf' && 'LAPORAN NERACA AKTIVITAS DANA WAKAF'}
                 {selectedFundFilter === 'Sodaqoh' && 'LAPORAN NERACA AKTIVITAS DANA SODAQOH'}
                 {selectedFundFilter === 'Operasional' && 'LAPORAN NERACA AKTIVITAS DANA OPERASIONAL'}
-                {selectedFundFilter === 'Komparatif' && 'MATRIX PERBANDINGAN NERACA AKTIVITAS 4 DANA (ISAK 35)'}
+                {selectedFundFilter === 'Komparatif' && 'MATRIX PERBANDINGAN NERACA AKTIVITAS 4 DANA (PSAK 409)'}
                 {selectedFundFilter === 'Multi' && 'KUMPULAN LAPORAN NERACA AKTIVITAS TERPISAH (ZAKAT, INFAQ, WAKAF, SODAQOH)'}
               </h3>
               <p className="text-xs text-slate-500 font-medium mt-1">
-                Rincian Posisi Keuangan & Perubahan Aktiva Neto Berdasarkan Pemisahan Dana Zakat, Infaq, Wakaf & Sodaqoh (ISAK 35)
+                Rincian Posisi Keuangan & Perubahan Saldo Dana Berdasarkan Pemisahan Dana Zakat, Infaq, Wakaf & Sodaqoh (PSAK 409)
               </p>
 
               {/* Fund Breakdown Filter Controls (Dropdown) */}
@@ -526,7 +564,7 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
               <div className="p-6 overflow-x-auto space-y-4">
                 <div className="bg-lime-50/60 border border-lime-200 p-4 rounded-2xl flex items-center justify-between text-xs text-lime-900 font-semibold">
                   <span className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-lime-700" /> Matrix Laporan Neraca Aktivitas Terpisah Berdasarkan Standar Akuntansi Syariah ISAK 35
+                    <CheckCircle className="w-4 h-4 text-lime-700" /> Matrix Laporan Neraca Aktivitas Terpisah Berdasarkan Standar Akuntansi Syariah PSAK 409
                   </span>
                   <span className="font-mono text-lime-700 font-bold">Mata Uang: IDR (Rupiah)</span>
                 </div>
@@ -734,7 +772,7 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
                       <div key={grp} className="space-y-2">
                         <p className="font-bold text-slate-400 text-xs uppercase tracking-wider">{grp}</p>
                         {aktivaList.filter(a => a.kelompok === grp).map(a => {
-                          const b = getLiveBalance(a.kode);
+                          const b = getLiveBalance(a.kode, selectedFundFilter);
                           const fund = getAccountFundCategory(a);
                           return (
                             <div key={a.kode} className="flex justify-between py-1.5 border-b border-slate-100">
@@ -781,7 +819,7 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
                       kewajibanList.map(a => (
                         <div key={a.kode} className="flex justify-between py-1.5 border-b border-slate-100">
                           <span className="text-slate-700 font-medium">{a.kode} – {a.nama}</span>
-                          <span className="font-mono font-bold text-slate-900">{formatRp(getLiveBalance(a.kode))}</span>
+                          <span className="font-mono font-bold text-slate-900">{formatRp(getLiveBalance(a.kode, selectedFundFilter))}</span>
                         </div>
                       ))
                     )}
@@ -801,7 +839,7 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
                     {ekuitasList.map(a => (
                       <div key={a.kode} className="flex justify-between py-1.5 border-b border-slate-100">
                         <span className="text-slate-700 font-medium">{a.kode} – {a.nama}</span>
-                        <span className="font-mono font-bold text-slate-900">{formatRp(getLiveBalance(a.kode))}</span>
+                        <span className="font-mono font-bold text-slate-900">{formatRp(getLiveBalance(a.kode, selectedFundFilter))}</span>
                       </div>
                     ))}
                     <div className="flex justify-between py-1.5 border-b border-slate-100 font-semibold text-lime-700">
@@ -847,7 +885,7 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
             <div className="space-y-6 pt-2">
               <div className="bg-lime-800 text-white p-4 rounded-2xl flex items-center justify-between text-xs font-bold shadow-sm">
                 <span className="flex items-center gap-2">
-                  <Layers className="w-4 h-4 text-lime-300" /> Kumpulan 4 Dokumen Laporan Neraca Aktivitas Terpisah Berdasarkan Standar ISAK 35
+                  <Layers className="w-4 h-4 text-lime-300" /> Kumpulan 4 Dokumen Laporan Neraca Aktivitas Terpisah Berdasarkan Standar PSAK 409
                 </span>
                 <span className="text-lime-200 font-mono">Zakat • Infaq • Wakaf • Sodaqoh</span>
               </div>
@@ -890,7 +928,7 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
                 <div key={grp} className="space-y-1.5 pl-2">
                   <p className="font-bold text-slate-400 text-xs uppercase tracking-wider">{grp}</p>
                   {pendapatanList.filter(a => a.kelompok === grp).map(a => {
-                    const bal = getLiveBalance(a.kode);
+                    const bal = getLiveBalance(a.kode, selectedFundFilter);
                     const fund = getAccountFundCategory(a);
                     return (
                       <div key={a.kode} className="flex justify-between py-1.5 border-b border-slate-100 pl-4">
@@ -928,7 +966,7 @@ export const ModulLaporanKeuangan: React.FC<ModulLaporanKeuanganProps> = ({
                 <div key={grp} className="space-y-1.5 pl-2">
                   <p className="font-bold text-slate-400 text-xs uppercase tracking-wider">{grp}</p>
                   {bebanList.filter(a => a.kelompok === grp).map(a => {
-                    const bal = getLiveBalance(a.kode);
+                    const bal = getLiveBalance(a.kode, selectedFundFilter);
                     const fund = getAccountFundCategory(a);
                     return (
                       <div key={a.kode} className="flex justify-between py-1.5 border-b border-slate-100 pl-4">

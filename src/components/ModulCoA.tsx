@@ -24,7 +24,7 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
   const mapKategoriToJenis = (kategori: string): any => {
     if (kategori === 'Aset') return 'Aktiva';
     if (kategori === 'Liabilitas') return 'Kewajiban';
-    if (kategori === 'Aset Bersih') return 'Ekuitas';
+    if (kategori === 'Saldo Dana') return 'Ekuitas';
     if (kategori === 'Penerimaan') return 'Pendapatan';
     return 'Beban';
   };
@@ -32,7 +32,7 @@ export const ModulCoA: React.FC<ModulCoAProps> = ({ journals = [] }) => {
   const mapJenisToKategori = (jenis: string) => {
     if (jenis === 'Aktiva') return 'Aset';
     if (jenis === 'Kewajiban') return 'Liabilitas';
-    if (jenis === 'Ekuitas') return 'Aset Bersih';
+    if (jenis === 'Ekuitas') return 'Saldo Dana';
     if (jenis === 'Pendapatan') return 'Penerimaan';
     return 'Beban';
   };
