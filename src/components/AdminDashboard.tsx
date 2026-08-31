@@ -858,8 +858,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
     const dateInput = (form.elements.namedItem('tgl') as HTMLInputElement).value;
     const descInput = (form.elements.namedItem('ket') as HTMLInputElement).value;
     const amountInput = parseFloat((form.elements.namedItem('nom') as HTMLInputElement).value);
-    const akunDebit = (form.elements.namedItem('akun_debit') as HTMLSelectElement)?.value || '1-10002';
-    const akunKredit = (form.elements.namedItem('akun_kredit') as HTMLSelectElement)?.value || '4-10001';
+    const akunDebit = (form.elements.namedItem('akun_debit') as HTMLSelectElement)?.value || '1101';
+    const akunKredit = (form.elements.namedItem('akun_kredit') as HTMLSelectElement)?.value || '4101';
 
     if (descInput && amountInput > 0) {
       const dateFormatted = dateInput ? dateInput.split('-').reverse().join('/') : new Date().toLocaleDateString('id-ID');
@@ -939,8 +939,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
     const dateInput = (form.elements.namedItem('tgl') as HTMLInputElement).value;
     const descInput = (form.elements.namedItem('ket') as HTMLInputElement).value;
     const amountInput = parseFloat((form.elements.namedItem('nom') as HTMLInputElement).value);
-    const akunDebit = (form.elements.namedItem('akun_debit') as HTMLSelectElement)?.value || '5-10001';
-    const akunKredit = (form.elements.namedItem('akun_kredit') as HTMLSelectElement)?.value || '1-10002';
+    const akunDebit = (form.elements.namedItem('akun_debit') as HTMLSelectElement)?.value || '5100';
+    const akunKredit = (form.elements.namedItem('akun_kredit') as HTMLSelectElement)?.value || '1101';
 
     if (descInput && amountInput > 0) {
       const dateFormatted = dateInput ? dateInput.split('-').reverse().join('/') : new Date().toLocaleDateString('id-ID');
@@ -2070,7 +2070,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
                                   setKasEntries(prev => [newKas, ...prev]);
 
                                   // Optimistic UI Update: Jurnal Umum & Neraca
-                                  const kat = d.programName.toLowerCase();
+                                  const prog = programs.find(p => p.judul === d.programName || p.id === d.programId);
+                                  const kat = prog ? prog.kategori.toLowerCase() : 'sedekah';
                                   let akunDebit = '1106';
                                   let akunKredit = '4103';
                                   let namaDebit = 'Kas Bank Infak & Sodaqoh';
