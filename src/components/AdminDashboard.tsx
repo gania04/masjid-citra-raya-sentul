@@ -3056,19 +3056,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
           </div>
         )}
 
-        {/* MODUL BARU: VERIFIKASI ZISWAF */}
-        {activeMenu === 'verifikasi' && (
-          <div className="animate-in fade-in bg-white p-8 rounded-xl border border-slate-200">
-            <h2 className="text-xl font-bold text-slate-800 mb-6">Antrean Verifikasi Transfer ZISWAF</h2>
-            <div className="bg-lime-900/20 border border-lime-500/20 p-5 rounded-xl flex justify-between items-center">
-              <div><h3 className="font-bold text-lime-600">Transfer Rp 500.000</h3><p className="text-xs text-slate-500">Dari: 0812*** (BCA) - Program Pembangunan Masjid</p></div>
-              <div className="flex gap-2">
-                <button onClick={() => alert('Donasi Ditolak. Pesan penolakan terkirim ke donatur.')} className="bg-slate-100 hover:bg-red-600 text-slate-700 hover:text-white px-3 py-1 rounded text-xs transition-colors cursor-pointer font-bold border border-slate-200 hover:border-red-600">Tolak</button>
-                <button onClick={() => alert('Donasi Berhasil Diverifikasi! Dana telah masuk ke sistem.')} className="bg-lime-600 hover:bg-lime-700 text-white px-3 py-1 rounded text-xs font-bold transition-colors cursor-pointer">Verifikasi</button>
-              </div>
-            </div>
-          </div>
-        )}
+
 
         {/* MODUL BARU: ROLE & AUDIT */}
         {activeMenu === 'role' && (
