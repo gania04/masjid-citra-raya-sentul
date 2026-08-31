@@ -242,31 +242,55 @@ export default function App() {
     try {
       await supabase.from('donations').update({ status }).eq('id', id);
 
-      // Auto-post ke Jurnal Umum untuk integrasi Neraca Laporan Keuangan
+      // Auto-post ke Pemasukan dan Jurnal Umum untuk integrasi Neraca Laporan Keuangan
       if (status === 'Berhasil' && donation && donation.status !== 'Berhasil') {
         const prog = programs.find(p => p.id === donation.programId);
         const kat = prog ? prog.kategori.toLowerCase() : 'sedekah';
-        let akunKredit = '4-10002'; // default sedekah
-        if (kat === 'zakat') akunKredit = '4-20001';
-        if (kat === 'infaq') akunKredit = '4-10001';
-        if (kat === 'wakaf') akunKredit = '4-30001';
+        
+        let akunDebit = '1106'; // default Bank Infak & Sodaqoh
+        let akunKredit = '4103'; // default Sedekah Jamaah
+        
+        if (kat === 'zakat') {
+           akunDebit = '1104'; // Kas Bank Zakat
+           akunKredit = '4106'; // Penerimaan Zakat
+        } else if (kat === 'infaq') {
+           akunDebit = '1106'; // Kas Bank Infak
+           akunKredit = '4102'; // Infak Harian
+        } else if (kat === 'wakaf') {
+           akunDebit = '1105'; // Kas Bank Wakaf
+           akunKredit = '4104'; // Donasi Pembangunan Wakaf
+        }
 
+        const tanggalKini = new Date().toISOString().split('T')[0];
+        const keterangan = `Penerimaan Donasi ${prog?.judul || 'ZISWAF'} a.n ${donation.namaDonatur || 'Hamba Allah'}`;
+
+        // 1. Insert ke tabel pemasukan (Riwayat Kas)
+        await supabase.from('pemasukan').insert([{
+           tanggal: tanggalKini,
+           keterangan: keterangan,
+           nominal: donation.nominal,
+           kategori: 'Penerimaan ZISWAF',
+           metode_pembayaran: donation.metode || 'Transfer',
+           dibuat_oleh: 'Sistem ZISWAF'
+        }]);
+
+        // 2. Insert ke Jurnal Umum (Double Entry)
         await supabase.from('jurnal_umum').insert([
           {
             id: `JU-${Date.now()}-1`,
-            tanggal: new Date().toISOString().split('T')[0],
+            tanggal: tanggalKini,
             no_bukti: `BKM-DONASI-${id}`,
-            keterangan: `Penerimaan Donasi ${prog?.judul || 'ZISWAF'} a.n ${donation.namaDonatur || 'Hamba Allah'}`,
-            kode_akun: '1-10002', // Bank BSI
+            keterangan: keterangan,
+            kode_akun: akunDebit,
             debit: donation.nominal,
             kredit: 0,
             user_input: 'Sistem ZISWAF'
           },
           {
             id: `JU-${Date.now()}-2`,
-            tanggal: new Date().toISOString().split('T')[0],
+            tanggal: tanggalKini,
             no_bukti: `BKM-DONASI-${id}`,
-            keterangan: `Penerimaan Donasi ${prog?.judul || 'ZISWAF'} a.n ${donation.namaDonatur || 'Hamba Allah'}`,
+            keterangan: keterangan,
             kode_akun: akunKredit,
             debit: 0,
             kredit: donation.nominal,

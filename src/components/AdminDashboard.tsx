@@ -778,6 +778,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack, programs
           }
         ]);
         
+        // Simpan ke tabel pemasukan (Riwayat Kas)
+        await supabase.from('pemasukan').insert([{
+           tanggal: tanggal,
+           keterangan: newJournal.keterangan,
+           nominal: nominal,
+           kategori: 'Penerimaan ZISWAF',
+           metode_pembayaran: 'Tunai / Admin',
+           dibuat_oleh: newJournal.dibuatOleh
+        }]);
+
         // Simpan ke tabel donations (Riwayat Transaksi) dengan status Berhasil
         const donasiId = `INV-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
         
